@@ -1,5 +1,7 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* WorldPacket.h
+ *
+ * Copyright (C) 2004 Wow Daemon
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,7 +31,7 @@ class WorldPacket : public ByteBuffer
         WorldPacket(size_t res) : ByteBuffer(res), m_opcode(0) { }
         WorldPacket(const WorldPacket &packet) : ByteBuffer(packet), m_opcode(packet.m_opcode) {}
 
-        
+        //! Clear packet and set opcode all in one mighty blow
         void Initialize(uint16 opcode )
         {
             clear();

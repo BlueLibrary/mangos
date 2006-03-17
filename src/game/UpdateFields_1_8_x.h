@@ -20,7 +20,7 @@
 
 #ifdef _VERSION_1_8_0_
 
-#include "Common.h"
+#pragma once
 
 #ifndef _UPDATEFIELDS_AUTO_H
 #define _UPDATEFIELDS_AUTO_H
@@ -91,11 +91,6 @@ enum EUnitFields
     UNIT_VIRTUAL_ITEM_SLOT_DISPLAY_01       =   38,
     UNIT_VIRTUAL_ITEM_SLOT_DISPLAY_02       =   39,
     UNIT_VIRTUAL_ITEM_INFO                  =   40,       //  6 of them
-	UNIT_VIRTUAL_ITEM_INFO_01               =   41,
-	UNIT_VIRTUAL_ITEM_INFO_02               =   42,
-	UNIT_VIRTUAL_ITEM_INFO_03               =   43,
-	UNIT_VIRTUAL_ITEM_INFO_04               =   44,
-	UNIT_VIRTUAL_ITEM_INFO_05               =   45,
     UNIT_FIELD_FLAGS                        =   46,
     UNIT_FIELD_AURA                         =   47,       //  64 of them
     UNIT_FIELD_AURAFLAGS                    =  111,       //  8 of them
@@ -135,9 +130,8 @@ enum EUnitFields
     UNIT_FIELD_SPIRIT = UNIT_FIELD_STAT3,
     UNIT_FIELD_STAT4                        =  172,
     UNIT_FIELD_IQ = UNIT_FIELD_STAT4,
-    //UNIT_FIELD_ARMOR = UNIT_FIELD_STAT4,    // UQ1: I dont think this is correct! Was IQ +1 in old code...
+    UNIT_FIELD_ARMOR = UNIT_FIELD_STAT4,    // UQ1: I dont think this is correct! Was IQ +1 in old code...
     UNIT_FIELD_RESISTANCES                  =  173,
-	UNIT_FIELD_ARMOR = UNIT_FIELD_RESISTANCES,    // UQ1: I dont think this is correct! Was IQ +1 in old code...
     UNIT_FIELD_RESISTANCES_01               =  174,
     UNIT_FIELD_RESISTANCES_02               =  175,
     UNIT_FIELD_RESISTANCES_03               =  176,

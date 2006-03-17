@@ -1,5 +1,7 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* MiscHandler.h
+ *
+ * Copyright (C) 2004 Wow Daemon
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,25 +23,25 @@
 
 struct GraveyardTeleport
 {
-  
+  //  uint32 ID;
     float X;
     float Y;
     float Z;
-   
+   // float O;
     uint32 MapId;
-   
-    
+   // uint32 ZoneId;
+    //uint32 FactionID;
 };
 
 struct AreaTrigger
 {
-    
-   
+    //int trigger;
+   // char name[256];
     uint32 mapId;
     float X;
     float Y;
     float Z;
-    
+    //int totrigger;
 };
 
 #endif

@@ -1,5 +1,7 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* WorldSession.h
+ *
+ * Copyright (C) 2004 Wow Daemon
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,8 +20,6 @@
 
 #ifndef __WORLDSESSION_H
 #define __WORLDSESSION_H
-
-struct ItemPrototype;
 
 class Player;
 class WorldPacket;
@@ -74,41 +74,15 @@ class WorldSession
         void QueuePacket(WorldPacket& packet);
         bool Update(uint32 diff);
 
-		
-		void SendTestCreatureQueryOpcode( uint32 entry, uint64 guid, uint32 testvalue );
-		
-		void SendCreatureQuery( uint32 entry, uint64 guid );
-		void SendProficiency (uint8 pr1, uint8 pr2=0, uint8 pr3=0, uint8 pr4=0, uint8 pr5=0);
-		void SendTrainerList( uint64 guid );
-		void SendTrainerList( uint64 guid,std::string strTitle );
-		void SendListInventory( uint64 guid );
-		void SendShowBank( uint64 guid );
-		void SendAuctionHello( uint64 guid );
-		void SendTabardVendorActivate( uint64 guid );
-		void SendTaxiStatus( uint64 guid );
-		void SendSpiritRessurect();
-
     protected:
 
+        /// Login screen opcodes (PlayerHandler.cpp):
         void HandleCharEnumOpcode(WorldPacket& recvPacket);
         void HandleCharDeleteOpcode(WorldPacket& recvPacket);
         void HandleCharCreateOpcode(WorldPacket& recvPacket);
         void HandlePlayerLoginOpcode(WorldPacket& recvPacket);
 
-	// new
-	void HandleMooveUnRootAck(WorldPacket& recvPacket);
-	void HandleMooveRootAck(WorldPacket& recvPacket);
-	void HandleLookingForGroup(WorldPacket& recvPacket);
-
-	void HandleMoveWaterWalkAck(WorldPacket& recvPacket);
-
-	// repair
-	void HandleRepairItemOpcode(WorldPacket& recvPacket);
-
-	void HandleMoveTeleportAck(WorldPacket& recvPacket);
-	void HandleForceRunSpeedChangeAck(WorldPacket& recvPacket);
-	void HandleForceSwimSpeedChangeAck(WorldPacket& recvPacket);
-        
+        /// Authentification and misc opcodes (MiscHandler.cpp):
         void HandlePingOpcode(WorldPacket& recvPacket);
         void HandleAuthSessionOpcode(WorldPacket& recvPacket);
         void HandleRepopRequestOpcode(WorldPacket& recvPacket);
@@ -124,11 +98,11 @@ class WorldSession
         void HandleGMTicketCreateOpcode(WorldPacket& recvPacket);
         void HandleGMTicketSystemStatusOpcode(WorldPacket& recvPacket);
 
-        
+        // new ticket handlers sani
         void HandleGMTicketDeleteOpcode(WorldPacket& recvPacket);
         void HandleGMTicketUpdateTextOpcode(WorldPacket& recvPacket);
 
-        
+        //PvP
         void HandleEnablePvP(WorldPacket& recvPacket);
 
         void HandleZoneUpdateOpcode(WorldPacket& recvPacket);
@@ -144,42 +118,38 @@ class WorldSession
         void HandleSetAmmoOpcode(WorldPacket& recvPacket);
 
         void HandleAreaTriggerOpcode(WorldPacket& recvPacket);
-		
-	void HandleSetFactionAtWar( WorldPacket & recv_data );
-	void HandleSetFactionCheat( WorldPacket & recv_data );
 
         void HandleUpdateAccountData(WorldPacket& recvPacket);
         void HandleRequestAccountData(WorldPacket& recvPacket);
         void HandleSetActionButtonOpcode(WorldPacket& recvPacket);
-        
-        
+        // void HandleJoinChannelOpcode(WorldPacket& recvPacket);
+        // void HandleLeaveChannelOpcode(WorldPacket& recvPacket);
         void HandleGameObjectUseOpcode(WorldPacket& recPacket);
         void HandleMeetingStoneInfo(WorldPacket& recPacket);
 
-        
+        /// Opcode implemented in QueryHandler.cpp:
         void HandleNameQueryOpcode(WorldPacket& recvPacket);
-        
+        /// Opcode implemented in QueryHandler.cpp:
         void HandleQueryTimeOpcode(WorldPacket& recvPacket);
-        
+        /// Opcode implemented in QueryHandler.cpp:
         void HandleCreatureQueryOpcode(WorldPacket& recvPacket);
-        
+        /// Opcode implemented in QueryHandler.cpp:
         void HandleGameObjectQueryOpcode(WorldPacket& recvPacket);
-      
-             
+
+        /// Opcode implemented in MovementHandler.cpp
+        void HandleMoveHeartbeatOpcode(WorldPacket& recvPacket);
+        /// Opcode implemented in MovementHandler.cpp
         void HandleMoveWorldportAckOpcode(WorldPacket& recvPacket);
-        
+        /// Opcode implemented in MovementHandler.cpp
         void HandleMovementOpcodes(WorldPacket& recvPacket);
         void HandleFallOpcode( WorldPacket & recv_data );
         void HandleSetActiveMoverOpcode(WorldPacket &recv_data);
         void HandleMoveTimeSkippedOpcode(WorldPacket &recv_data);
 
-	
-        
-
-        
+        /// Battlefield status
         void HandleBattlefieldStatusOpcode(WorldPacket &recv_data);
 
-        
+        /// Opcodes implemented in GroupHandler.cpp:
         void HandleGroupInviteOpcode(WorldPacket& recvPacket);
         void HandleGroupCancelOpcode(WorldPacket& recvPacket);
         void HandleGroupAcceptOpcode(WorldPacket& recvPacket);
@@ -190,38 +160,14 @@ class WorldSession
         void HandleGroupDisbandOpcode(WorldPacket& recvPacket);
         void HandleLootMethodOpcode(WorldPacket& recvPacket);
 
-		
-		void HandleGuildQueryOpcode(WorldPacket& recvPacket);
-		void HandleGuildCreateOpcode(WorldPacket& recvPacket);
-		void HandleGuildInviteOpcode(WorldPacket& recvPacket);
-		void HandleGuildRemoveOpcode(WorldPacket& recvPacket);
-		void HandleGuildAcceptOpcode(WorldPacket& recvPacket);
-		void HandleGuildDeclineOpcode(WorldPacket& recvPacket);
-		void HandleGuildInfoOpcode(WorldPacket& recvPacket);
-		void HandleGuildRosterOpcode(WorldPacket& recvPacket);
-		void HandleGuildPromoteOpcode(WorldPacket& recvPacket);
-		void HandleGuildDemoteOpcode(WorldPacket& recvPacket);
-		void HandleGuildLeaveOpcode(WorldPacket& recvPacket);
-		void HandleGuildDisbandOpcode(WorldPacket& recvPacket);
-		void HandleGuildLeaderOpcode(WorldPacket& recvPacket);
-		void HandleGuildMOTDOpcode(WorldPacket& recvPacket);
-		void HandleGuildSetPublicNoteOpcode(WorldPacket& recvPacket);
-		void HandleGuildSetOfficerNoteOpcode(WorldPacket& recvPacket);
-		void HandleGuildRankOpcode(WorldPacket& recvPacket);
-		void HandleGuildAddRankOpcode(WorldPacket& recvPacket);
-		void HandleGuildDelRankOpcode(WorldPacket& recvPacket);
-		void HandleGuildChangeInfoOpcode(WorldPacket& recvPacket);
-		void SendCommandResult(uint32 typecmd,std::string str,uint32 cmdresult);
-
-        
+        /// Taxi opcodes (TaxiHandler.cpp)
         void HandleTaxiNodeStatusQueryOpcode(WorldPacket& recvPacket);
         void HandleTaxiQueryAviableNodesOpcode(WorldPacket& recvPacket);
         void HandleActivateTaxiOpcode(WorldPacket& recvPacket);
 
-        
+        /// NPC opcodes (NPCHandler.cpp)
         void HandleTabardVendorActivateOpcode(WorldPacket& recvPacket);
         void HandleBankerActivateOpcode(WorldPacket& recvPacket);
-		void HandleBuyBankSlotOpcode(WorldPacket& recvPacket);
         void HandleTrainerListOpcode(WorldPacket& recvPacket);
         void HandleTrainerBuySpellOpcode(WorldPacket& recvPacket);
         void HandlePetitionShowListOpcode(WorldPacket& recvPacket);
@@ -230,13 +176,12 @@ class WorldSession
         void HandleSpiritHealerActivateOpcode(WorldPacket& recvPacket);
         void HandleNpcTextQueryOpcode(WorldPacket& recvPacket);
         void HandleBinderActivateOpcode(WorldPacket& recvPacket);
-
         
-        
+        // Duel opcodes
         void HandleDuelAcceptedOpcode(WorldPacket& recvPacket);
         void HandleDuelCancelledOpcode(WorldPacket& recvPacket);
 
-        
+        //Trade opcodes (TradeHandler.cpp)
         void ClearTrade();
         void UpdateTrade();
         void HandleAcceptTradeOpcode(WorldPacket& recvPacket);
@@ -250,7 +195,7 @@ class WorldSession
         void HandleSetTradeItemOpcode(WorldPacket& recvPacket);
         void HandleUnacceptTradeOpcode(WorldPacket& recvPacket);
 
-        
+        // Auction House opcodes
         void HandleAuctionHelloOpcode(WorldPacket& recvPacket);
         void HandleAuctionListItems( WorldPacket & recv_data );
         void HandleAuctionListBidderItems( WorldPacket & recv_data );
@@ -258,7 +203,7 @@ class WorldSession
         void HandleAuctionListOwnerItems( WorldPacket & recv_data );
         void HandleAuctionPlaceBid( WorldPacket & recv_data );
 
-        
+        // Mail opcodes
         void HandleGetMail( WorldPacket & recv_data );
         void HandleSendMail( WorldPacket & recv_data );
         void HandleTakeMoney( WorldPacket & recv_data );
@@ -267,69 +212,51 @@ class WorldSession
         void HandleReturnToSender( WorldPacket & recv_data );
         void HandleMailDelete( WorldPacket & recv_data );
         void HandleItemTextQuery( WorldPacket & recv_data);
-		bool SendItemInfo( uint32 itemid, WorldPacket data );
         void HandleMailCreateTextItem(WorldPacket & recv_data );
-		void HandleMsgQueryNextMailtime(WorldPacket & recv_data ); 
-		void HandleCancelChanneling(WorldPacket & recv_data );	
-		
-		void SendItemPageInfo( ItemPrototype *itemProto );
-		void HandleSplitItemOpcode(WorldPacket& recvPacket);
-		void HandleSwapInvItemOpcode(WorldPacket& recvPacket);
-		void HandleDestroyItemOpcode(WorldPacket& recvPacket);
-		void HandleAutoEquipItemOpcode(WorldPacket& recvPacket);
-		void HandleItemQuerySingleOpcode(WorldPacket& recvPacket);
-		void HandleSellItemOpcode(WorldPacket& recvPacket);
-		void HandleBuyItemInSlotOpcode(WorldPacket& recvPacket);
-		void HandleBuyItemOpcode(WorldPacket& recvPacket);
-		void HandleListInventoryOpcode(WorldPacket& recvPacket);
-		void HandleAutoStoreBagItemOpcode(WorldPacket& recvPacket);
-		void HandleReadItem(WorldPacket& recvPacket);
-		void HandleSwapItem( WorldPacket & recvPacket);
-		void HandleBuybackItem(WorldPacket & recvPacket);
-		void HandleAutoBankItemOpcode(WorldPacket& recvPacket);
-		void HandleAutoStoreBankItemOpcode(WorldPacket& recvPacket);
 
-		void HandleAttackSwingOpcode(WorldPacket& recvPacket);
-		void HandleAttackStopOpcode(WorldPacket& recvPacket);
-		void HandleSetSheathedOpcode(WorldPacket& recvPacket);
+        /// Item opcodes (ItemHandler.cpp)
+        void HandleSwapInvItemOpcode(WorldPacket& recvPacket);
+        void HandleDestroyItemOpcode(WorldPacket& recvPacket);
+        void HandleAutoEquipItemOpcode(WorldPacket& recvPacket);
+        void HandleItemQuerySingleOpcode(WorldPacket& recvPacket);
+        void HandleSellItemOpcode(WorldPacket& recvPacket);
+        void HandleBuyItemInSlotOpcode(WorldPacket& recvPacket);
+        void HandleBuyItemOpcode(WorldPacket& recvPacket);
+        void HandleListInventoryOpcode(WorldPacket& recvPacket);
+        void HandleAutoStoreBagItemOpcode(WorldPacket& recvPacket);
 
-        
+        /// Combat opcodes (CombatHandler.cpp)
+        void HandleAttackSwingOpcode(WorldPacket& recvPacket);
+        void HandleAttackStopOpcode(WorldPacket& recvPacket);
+
+        /// Spell opcodes (SpellHandler.cpp)
         void HandleUseItemOpcode(WorldPacket& recvPacket);
         void HandleCastSpellOpcode(WorldPacket& recvPacket);
         void HandleCancelCastOpcode(WorldPacket& recvPacket);
         void HandleCancelAuraOpcode(WorldPacket& recvPacket);
-        void HandleCancelAutoRepeatSpellOpcode(WorldPacket& recvPacket);
 
-        
-        
+        /// Skill opcodes (SkillHandler.spp)
+        // void HandleSkillLevelUpOpcode(WorldPacket& recvPacket);
         void HandleLearnTalentOpcode(WorldPacket& recvPacket);
 
-        
+        /// Quest opcodes (QuestHandler.cpp)
         void HandleQuestgiverStatusQueryOpcode(WorldPacket& recvPacket);
         void HandleQuestgiverHelloOpcode(WorldPacket& recvPacket);
         void HandleQuestgiverAcceptQuestOpcode(WorldPacket& recvPacket);
-        void HandleQuestgiverQuestQueryOpcode(WorldPacket& recvPacket);
         void HandleQuestgiverChooseRewardOpcode(WorldPacket& recvPacket);
         void HandleQuestgiverRequestRewardOpcode(WorldPacket& recvPacket);
         void HandleQuestQueryOpcode(WorldPacket& recvPacket);
-		void HandleQuestgiverCancel(WorldPacket& recv_data );
-		void HandleQuestLogSwapQuest(WorldPacket& recv_data );
-		void HandleQuestLogRemoveQuest(WorldPacket& recv_data);
-		void HandleQuestConfirmAccept(WorldPacket& recv_data);
-		void HandleQuestComplete(WorldPacket& recv_data);
-		void HandleQuestAutoLaunch(WorldPacket& recvPacket);
 
-        
+        /// Chat opcodes (Chat.cpp)
         void HandleMessagechatOpcode(WorldPacket& recvPacket);
         void HandleTextEmoteOpcode(WorldPacket& recvPacket);
-        void HandleChatIgnoredOpcode(WorldPacket& recvPacket);
 
-        
+        /// Corpse opcodes (Corpse.cpp)
         void HandleCorpseReclaimOpcode( WorldPacket& recvPacket );
         void HandleCorpseQueryOpcode( WorldPacket& recvPacket );
         void HandleResurrectResponseOpcode(WorldPacket& recvPacket);
 
-        
+        /// Channel Opcodes (ChannelHandler.cpp)
         void HandleChannelJoin(WorldPacket& recvPacket);
         void HandleChannelLeave(WorldPacket& recvPacket);
         void HandleChannelList(WorldPacket& recvPacket);
@@ -347,41 +274,24 @@ class WorldSession
         void HandleChannelAnnounce(WorldPacket& recvPacket);
         void HandleChannelModerate(WorldPacket& recvPacket);
 
-        
+        /// cinema
         void HandleCompleteCinema(WorldPacket& recvPacket);
         void HandleNextCinematicCamera(WorldPacket& recvPacket);
 
-		
-		void HandlePageQuerySkippedOpcode(WorldPacket& recvPacket);
-		void HandlePageQueryOpcode(WorldPacket& recvPacket);
+        /// Helper functions
+        void SetNpcFlagsForTalkToQuest(const uint64& guid, const uint64& targetGuid);
 
-		
-		void HandleTutorialFlag ( WorldPacket & recv_data );
-		void HandleTutorialClear( WorldPacket & recv_data );
-		void HandleTutorialReset( WorldPacket & recv_data );
-
-		//Pet
-		void HandlePetAction( WorldPacket & recv_data );
-        void HandlePetNameQuery( WorldPacket & recv_data );
-		void HandlePetSetAction( WorldPacket & recv_data );
-
-
-		void HandleSetActionBar(WorldPacket& recv_data);
-
-		void HandleChangePlayerNameOpcode(WorldPacket& recv_data);
-
-
-
+        //! Returns handlers table
         OpcodeHandler* _GetOpcodeHandlerTable() const;
 
     private:
         Player *_player;
         WorldSocket *_socket;
 
-        uint32 _security;                         
+        uint32 _security;                         // 0 - normal, >= 1 - GM
         uint32 _accountId;
 
-        time_t _logoutTime;                       
+        time_t _logoutTime;                       // time we received a logout request -- wait 20 seconds, and quit
 
         ZThread::LockedQueue<WorldPacket*,ZThread::FastMutex> _recvQueue;
 };

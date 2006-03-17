@@ -1,5 +1,7 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* DatabaseMysql.cpp
+ *
+ * Copyright (C) 2004 Wow Daemon
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,15 +20,11 @@
 
 #include "DatabaseEnv.h"
 #include "Util.h"
-#include "Policies/SingletonImp.h"
-
-INSTANTIATE_SINGLETON_1(DatabaseMysql);
 
 using namespace std;
 
 DatabaseMysql::DatabaseMysql() : Database(), mMysql(0)
 {
-    DatabaseRegistry::RegisterDatabase(this);
 }
 
 
@@ -43,7 +41,8 @@ bool DatabaseMysql::Initialize(const char *infoString)
     mysqlInit = mysql_init(NULL);
     if (!mysqlInit)
     {
-        sLog.outError( "Could not initialize Mysql" );
+        // sLog.Log(L_CRITICAL, "Could not initialize Mysql\n");
+        Log::getSingleton().outError( "Could not initialize Mysql" );
         return false;
     }
 
@@ -68,11 +67,15 @@ bool DatabaseMysql::Initialize(const char *infoString)
         password.c_str(), database.c_str(), 0, 0, 0);
 
     if (mMysql)
-        sLog.outDetail( "Connected to MySQL database at %s\n",
-				       host.c_str());
+        // sLog.Log(L_INFO, "Connected to MySQL database at %s\n",
+        //     parsedInfoString[0]);
+        Log::getSingleton().outDetail( "Connected to MySQL database at %s\n",
+            host.c_str());
     else
-        sLog.outError( "Could not connect to MySQL database at %s: %s\n",
-				      host.c_str(),mysql_error(mysqlInit));
+        // sLog.Log(L_ERROR, "Could not connect to MySQL database at %s\n",
+        //     parsedInfoString[0]);
+        Log::getSingleton().outError( "Could not connect to MySQL database at %s: %s\n",
+            host.c_str(),mysql_error(mysqlInit));
 
     if(mMysql)
         return true;
@@ -80,43 +83,13 @@ bool DatabaseMysql::Initialize(const char *infoString)
         return false;
 }
 
-QueryResult* DatabaseMysql::PQuery(const char *format,...)
-{
-	if( !format || !mMysql) return NULL;
-    
 
-	va_list ap;
-	char szQuery [512];
-	va_start(ap, format);
-	vsprintf( szQuery, format, ap );
-	va_end(ap);
-
-    if (mysql_query(mMysql, szQuery))
-        return NULL;
-
-    MYSQL_RES *result = mysql_store_result(mMysql);
-    uint64 rowCount = mysql_affected_rows(mMysql);
-    uint32 fieldCount = mysql_field_count(mMysql);
-    if (!result)
-	   return NULL;
-	else if( !rowCount )
-       return NULL;
-
-    QueryResultMysql *queryResult = new QueryResultMysql(result, rowCount, fieldCount);
-    if(!queryResult)
-        return NULL;
-    
-    queryResult->NextRow();
-	
-    DEBUG_LOG( "query = %s\n", szQuery );
-    return queryResult;
-}
 QueryResult* DatabaseMysql::Query(const char *sql)
 {
     if (!mMysql)
         return 0;
 
-    
+    // Log::getSingleton().outDetail( (std::string("SQL: ") + sql).c_str() );
 
     if (mysql_query(mMysql, sql))
         return 0;
@@ -126,17 +99,30 @@ QueryResult* DatabaseMysql::Query(const char *sql)
     uint64 rowCount = mysql_affected_rows(mMysql);
     uint32 fieldCount = mysql_field_count(mMysql);
 
-	if (!result )
-        return 0;
+    // uint64 rowCount = mysql_num_rows(result);
+    // uint32 fieldCount = mysql_num_fields(result);
+
+    // Did the query succeed? And did it return any result set?
+    if (result == 0)
+    {
+        if (fieldCount == 0)
+            return 0;                             // no results
+        else
+        {
+            // sLog.Log(L_ERROR, "Query result storage failed in query \"%s\"\n", sql);
+            return 0;
+        }
+    }
     else
-    if (!rowCount)
-        return 0;
-    
+    {
+        if (rowCount == 0)
+            return 0;
+    }
 
     QueryResultMysql *queryResult = new QueryResultMysql(result, rowCount, fieldCount);
     if(!queryResult)
     {
-        
+        // sLog.Log(L_ERROR, "Out of memory on query result allocation in query \"%s\"\n", sql);
         return 0;
     }
 
@@ -151,27 +137,9 @@ bool DatabaseMysql::Execute(const char *sql)
     if (!mMysql)
         return false;
 
-    DEBUG_LOG( (std::string("SQL: ") + sql).c_str() );
+    Log::getSingleton().outDetail( (std::string("SQL: ") + sql).c_str() );
+
     if (mysql_query(mMysql, sql))
-        return false;
-
-    return true;
-}
-
-bool DatabaseMysql::PExecute(const char * format,...)
-{
-    if (!mMysql||!format)
-        return false;
-	va_list ap;
-	char szQuery [512];
-	va_start(ap, format);
-	vsprintf( szQuery, format, ap );
-	va_end(ap);
-
-    
-
-    DEBUG_LOG( (std::string("SQL: ") + szQuery).c_str() );
-    if (mysql_query(mMysql, szQuery))
         return false;
 
     return true;

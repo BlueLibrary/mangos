@@ -14,7 +14,8 @@
 
 @SET_MAKE@
 
-# Copyright (C) 2005 MaNGOS <http://www.mangosproject.org/>
+# Copyright (C) 2004 Wow Daemon
+# Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +30,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
 
 SOURCES = $(mangosd_SOURCES)
 
@@ -57,20 +57,20 @@ build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = mangosd$(EXEEXT)
 subdir = src/mangosd
-DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
+DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
+	$(srcdir)/Master.h.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/config.h
-CONFIG_CLEAN_FILES =
-am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(sysconfdir)"
+CONFIG_CLEAN_FILES = Master.h
+am__installdirs = "$(DESTDIR)$(bindir)"
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_mangosd_OBJECTS = Main.$(OBJEXT) Master.$(OBJEXT) \
-	WorldRunnable.$(OBJEXT) CliRunnable.$(OBJEXT) \
-	RASocket.$(OBJEXT)
+	WorldRunnable.$(OBJEXT) HttpdRunnable.$(OBJEXT)
 mangosd_OBJECTS = $(am_mangosd_OBJECTS)
 mangosd_DEPENDENCIES =
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
@@ -94,14 +94,6 @@ LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(mangosd_SOURCES)
 DIST_SOURCES = $(mangosd_SOURCES)
-am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
-am__vpath_adj = case $$p in \
-    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
-    *) f=$$p;; \
-  esac;
-am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
-sysconfDATA_INSTALL = $(INSTALL_DATA)
-DATA = $(sysconf_DATA)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -139,7 +131,7 @@ EXTRA_LINKER_OPTIONS = @EXTRA_LINKER_OPTIONS@
 F77 = @F77@
 FFLAGS = @FFLAGS@
 INCLUDES = @INCLUDES@ -I$(srcdir) -I$(srcdir)/../../dep/include \
-	-I$(top_builddir)/src/shared -I$(srcdir)/../shared \
+	-I$(srcdir)/../shared -I$(srcdir)/../realmlist \
 	-I$(srcdir)/../game -I$(srcdir)/../framework
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -152,10 +144,6 @@ LIBTOOL = @LIBTOOL@
 LINKER_OPTIONS = @LINKER_OPTIONS@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
-LTMS_AGE = @LTMS_AGE@
-LTMS_CURRENT = @LTMS_CURRENT@
-LTMS_RELEASE = @LTMS_RELEASE@
-LTMS_REVISION = @LTMS_REVISION@
 LT_AGE = @LT_AGE@
 LT_CURRENT = @LT_CURRENT@
 LT_RELEASE = @LT_RELEASE@
@@ -165,10 +153,9 @@ MAINTAINER_MODE_FALSE = @MAINTAINER_MODE_FALSE@
 MAINTAINER_MODE_TRUE = @MAINTAINER_MODE_TRUE@
 MAKEINFO = @MAKEINFO@
 MANGOSD_CONFIG = @MANGOSD_CONFIG@
-MANGOSD_CONFIGDIR = @MANGOSD_CONFIGDIR@
 MANGOSD_DATA = @MANGOSD_DATA@
-MANGOSD_ENABLE_CLI = @MANGOSD_ENABLE_CLI@
-MANGOSD_ENABLE_RA = @MANGOSD_ENABLE_RA@
+NEWFRAMEWORK_FALSE = @NEWFRAMEWORK_FALSE@
+NEWFRAMEWORK_TRUE = @NEWFRAMEWORK_TRUE@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
@@ -182,12 +169,9 @@ SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
-WITH_APIDOCS = @WITH_APIDOCS@
-WITH_APIDOCS_TARGET = @WITH_APIDOCS_TARGET@
 WITH_PYTHON_SUBDIR = @WITH_PYTHON_SUBDIR@
 WITH_PYTHON_SUBPACKAGE = @WITH_PYTHON_SUBPACKAGE@
 WITH_PYTHON_VERSION = @WITH_PYTHON_VERSION@
-__DOXYGEN = @__DOXYGEN@
 __PYTHON = @__PYTHON@
 ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
@@ -238,23 +222,19 @@ mangosd_SOURCES = \
     Master.h \
     WorldRunnable.cpp \
     WorldRunnable.h \
-    CliRunnable.cpp \
-    CliRunnable.h \
-    RASocket.cpp \
-    RASocket.h
+    HttpdRunnable.cpp \
+    HttpdRunnable.h
 
-mangosd_LDADD = -lgame -ldatabase -lconfig -lauth -lshared -lframework -lZThread -lzlib  -lnetwork -lMaNGOSScript
-mangosd_LDFLAGS = -L$(top_builddir)/src/shared \
-               -L$(top_builddir)/src/framework \
-               -L$(top_builddir)/src/game \
-               -L$(top_builddir)/dep/src/zthread \
-               -L$(top_builddir)/dep/src/zlib \
-	       -L$(top_builddir)/src/bindings/universal
+mangosd_LDADD = -lgame -ldatabase -lrealmlist -lconfig -lauth -lshared -lframework -lZThread -lzlib  -lnetwork
+mangosd_LDFLAGS = -L$(srcdir)/../shared \
+               -L$(srcdir)/../framework \
+               -L$(srcdir)/../realmlist \
+               -L$(srcdir)/../game \
+               -L$(srcdir)/../../dep/src/zthread \
+               -L$(srcdir)/../../dep/src/zlib
 
-
-# install mangosd.conf to $(sysconfdir)
-sysconf_DATA = \
-    mangosd.conf
+CLEANFILES = \
+    Master.h
 
 all: all-am
 
@@ -289,6 +269,8 @@ $(top_srcdir)/configure: @MAINTAINER_MODE_TRUE@ $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
+Master.h: $(top_builddir)/config.status $(srcdir)/Master.h.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
@@ -327,10 +309,9 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CliRunnable.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/HttpdRunnable.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Master.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RASocket.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/WorldRunnable.Po@am__quote@
 
 .cpp.o:
@@ -363,23 +344,6 @@ clean-libtool:
 distclean-libtool:
 	-rm -f libtool
 uninstall-info-am:
-install-sysconfDATA: $(sysconf_DATA)
-	@$(NORMAL_INSTALL)
-	test -z "$(sysconfdir)" || $(mkdir_p) "$(DESTDIR)$(sysconfdir)"
-	@list='$(sysconf_DATA)'; for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  f=$(am__strip_dir) \
-	  echo " $(sysconfDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(sysconfdir)/$$f'"; \
-	  $(sysconfDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(sysconfdir)/$$f"; \
-	done
-
-uninstall-sysconfDATA:
-	@$(NORMAL_UNINSTALL)
-	@list='$(sysconf_DATA)'; for p in $$list; do \
-	  f=$(am__strip_dir) \
-	  echo " rm -f '$(DESTDIR)$(sysconfdir)/$$f'"; \
-	  rm -f "$(DESTDIR)$(sysconfdir)/$$f"; \
-	done
 
 ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
 	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
@@ -458,9 +422,9 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(PROGRAMS) $(DATA)
+all-am: Makefile $(PROGRAMS)
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(sysconfdir)"; do \
+	for dir in "$(DESTDIR)$(bindir)"; do \
 	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
 	done
 install: install-am
@@ -480,6 +444,7 @@ install-strip:
 mostlyclean-generic:
 
 clean-generic:
+	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
 distclean-generic:
 	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
@@ -509,7 +474,7 @@ info-am:
 
 install-data-am:
 
-install-exec-am: install-binPROGRAMS install-sysconfDATA
+install-exec-am: install-binPROGRAMS
 
 install-info: install-info-am
 
@@ -535,8 +500,7 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS uninstall-info-am \
-	uninstall-sysconfDATA
+uninstall-am: uninstall-binPROGRAMS uninstall-info-am
 
 .PHONY: CTAGS GTAGS all all-am check check-am clean clean-binPROGRAMS \
 	clean-generic clean-libtool ctags distclean distclean-compile \
@@ -544,12 +508,11 @@ uninstall-am: uninstall-binPROGRAMS uninstall-info-am \
 	dvi-am html html-am info info-am install install-am \
 	install-binPROGRAMS install-data install-data-am install-exec \
 	install-exec-am install-info install-info-am install-man \
-	install-strip install-sysconfDATA installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-compile mostlyclean-generic \
-	mostlyclean-libtool pdf pdf-am ps ps-am tags uninstall \
-	uninstall-am uninstall-binPROGRAMS uninstall-info-am \
-	uninstall-sysconfDATA
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
+	pdf pdf-am ps ps-am tags uninstall uninstall-am \
+	uninstall-binPROGRAMS uninstall-info-am
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

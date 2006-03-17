@@ -1,5 +1,7 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* DBCStores.cpp
+ *
+ * Copyright (C) 2004 Wow Daemon
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,72 +19,53 @@
  */
 
 #include "DBCStores.h"
-//#include "DataStore.h"
-#include "Policies/SingletonImp.h"
+#include "DataStore.h"
 
-#include "DBCfmt.cpp"
+// You need a line like this for every DBC store. If you use createDBCStore (no
+// Indexed), the lines will be ordered the way they are in the file
+// SpellEntry is the file struct entry (for Spell.dbc here).
+implementIndexedDBCStore(SpellStore,SpellEntry)
+implementIndexedDBCStore(DurationStore,SpellDuration)
+implementIndexedDBCStore(RangeStore,SpellRange)
+implementIndexedDBCStore(EmoteStore,emoteentry)
+implementIndexedDBCStore(RadiusStore,SpellRadius)
+implementIndexedDBCStore(CastTimeStore,SpellCastTime)
+implementIndexedDBCStore(TalentStore,TalentEntry)
 
+//Made by Andre2k2
+implementIndexedDBCStore(AreaTableStore,AreaTableEntry)
+implementIndexedDBCStore(WorldMapAreaStore,WorldMapAreaEntry)
+implementDBCStore(WorldMapOverlayStore,WorldMapOverlayEntry)
+//end Made
 
-
-
-DBCStorage <AreaTableEntry> sAreaStore(AreaTableEntryfmt);
-
-DBCStorage <TalentEntry> sTalentStore(TalentEntryfmt);
-DBCStorage <SpellRadius> sSpellRadius(SpellRadiusfmt); 
-
-DBCStorage <FactionTemplateEntry> sFactionTemplateStore(FactionTemplateEntryfmt);
-
-DBCStorage <SpellRange> sSpellRange(SpellRangefmt);
-DBCStorage <emoteentry> sEmoteStore(emoteentryfmt);
-
-DBCStorage <SpellEntry> sSpellStore(SpellEntryfmt);
-DBCStorage <SpellCastTime> sCastTime(SpellCastTimefmt);
-DBCStorage <SpellDuration> sSpellDuration(SpellDurationfmt);
-DBCStorage <FactionEntry> sFactionStore(FactionEntryfmt);
-
-DBCStorage <ItemSetEntry> sItemSetStore(ItemSetEntryfmt);
-DBCStorage <ItemDisplayTemplateEntry> sItemDisplayTemplateStore(ItemDisplayTemplateEntryfmt);
+implementDBCStore(SkillStore,skilllinespell)
+// When loading this DBC, just write new SpellStore("spell.dbc");
 
 float GetRadius(SpellRadius *radius)
 {
-	if(radius)
-        return radius->Radius;
-	else
-        return 0;
+    return radius->Radius;
 }
 
 
 uint32 GetCastTime(SpellCastTime *time)
 {
-	if(time)
-        return time->CastTime;
-	else
-		return 0;
+    return time->CastTime;
 }
 
 
 float GetMaxRange(SpellRange *range)
 {
-	if(range)
-        return range->maxRange;
-	else
-		return 0;
+    return range->maxRange;
 }
 
 
 float GetMinRange(SpellRange *range)
 {
-	if(range)
-        return range->minRange;
-	else
-		return 0;
+    return range->minRange;
 }
 
 
 uint32 GetDuration(SpellDuration *dur)
 {
-	if(dur)
-        return dur->Duration1;
-	else
-		return 0;
+    return dur->Duration1;
 }

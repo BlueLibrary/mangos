@@ -1,5 +1,7 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* Group.cpp
+ *
+ * Copyright (C) 2004 Wow Daemon
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,8 +27,10 @@
 #include "ObjectMgr.h"
 #include "Group.h"
 #include "Chat.h"
-#include "ObjectAccessor.h"
 
+#ifdef ENABLE_GRID_SYSTEM
+#include "ObjectAccessor.h"
+#endif
 
 void Group::ChangeLeader(const uint64 &guid)
 {
@@ -49,7 +53,11 @@ void Group::ChangeLeader(const uint64 &guid)
 
     for( i = 0; i < m_count; i++ )
     {
-	player = ObjectAccessor::Instance().FindPlayer( m_members[i].guid );
+#ifndef ENABLE_GRID_SYSTEM
+        player = objmgr.GetObject<Player>( m_members[i].guid );
+#else
+    player = ObjectAccessor::Instance().FindPlayer( m_members[i].guid );
+#endif
         ASSERT( player );
 
         player->SetLeader(guid );
@@ -70,7 +78,11 @@ void Group::Disband()
 
     for( i = 0; i < m_count; i++ )
     {
-	player = ObjectAccessor::Instance().FindPlayer( m_members[i].guid );
+#ifndef ENABLE_GRID_SYSTEM
+        player = objmgr.GetObject<Player>( m_members[i].guid );
+#else
+    player = ObjectAccessor::Instance().FindPlayer( m_members[i].guid );
+#endif
         ASSERT( player );
 
         player->UnSetInGroup();
@@ -88,7 +100,11 @@ void Group::SendUpdate()
 
     for( i = 0; i < m_count; i ++ )
     {
-	player = ObjectAccessor::Instance().FindPlayer( m_members[i].guid );
+#ifndef ENABLE_GRID_SYSTEM
+        player = objmgr.GetObject<Player>( m_members[i].guid );
+#else
+    player = ObjectAccessor::Instance().FindPlayer( m_members[i].guid );
+#endif
         ASSERT( player );
 
         data.Initialize(SMSG_GROUP_LIST);
@@ -153,7 +169,11 @@ void Group::BroadcastToGroup(WorldSession *session, std::string msg)
         {
             WorldPacket data;
             sChatHandler.FillMessageData(&data, session, CHAT_MSG_PARTY, LANG_UNIVERSAL, NULL, msg.c_str());
-	    Player *pl = ObjectAccessor::Instance().FindPlayer(m_members[i].guid);
+#ifndef ENABLE_GRID_SYSTEM
+            Player *pl = objmgr.GetObject<Player>(m_members[i].guid);
+#else
+        Player *pl = ObjectAccessor::Instance().FindPlayer(m_members[i].guid);
+#endif
             if (pl && pl->GetSession())
                 pl->GetSession()->SendPacket(&data);
         }

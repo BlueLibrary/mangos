@@ -1,5 +1,7 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* AuctionHouse.cpp
+ *
+ * Copyright (C) 2004 Wow Daemon
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -108,13 +110,17 @@ void WorldSession::HandleAuctionPlaceBid( WorldPacket & recv_data )
             n->time = time(NULL) + (30 * 3600);
             n->COD = 0;
             n->checked = 0;
-            uint64 rc = ah->bidder;
+            uint64 rc;
+            GUID_LOPART(rc) = ah->bidder;
+            GUID_HIPART(rc) = 0;
             std::string name;
             objmgr.GetPlayerNameByGUID(rc,name);
             Player *rpl = objmgr.GetPlayer(name.c_str());
-
-	    sDatabase.PExecute("INSERT INTO mail (mailId,sender,reciever,subject,body,item,time,money,COD,checked) VALUES( '%u', '%u', '%u', '%s', '%s', '%u', '%u', '%u', '%u', '%u');", n->messageID , n->sender , n->reciever , n->subject.c_str() , n->body.c_str(),  n->item , n->time ,n->money ,n->COD ,n->checked);
-
+            std::stringstream ss;
+            ss << "INSERT INTO mail (mailId,sender,reciever,subject,body,item,time,money,COD,checked) VALUES ( " <<
+                n->messageID << ", " << n->sender << ", " << n->reciever << ",' " << n->subject.c_str() << "' ,' " <<
+                n->body.c_str() << "', " << n->item << ", " << n->time << ", " << n->money << ", " << n->COD << ", " << n->checked << " )";
+            sDatabase.Execute( ss.str().c_str( ) );
             if (rpl)
             {
                 rpl->AddMail(n);
@@ -218,7 +224,7 @@ void WorldSession::HandleAuctionPlaceBid( WorldPacket & recv_data )
             objmgr.AddMItem(it);
             std::stringstream ss;
             ss << "INSERT INTO mailed_items (guid, data) VALUES ("
-                << it->GetGUIDLow() << ", '";     
+                << it->GetGUIDLow() << ", '";     // TODO: use full guids
             for(uint16 i = 0; i < it->GetValuesCount(); i++ )
             {
                 ss << it->GetUInt32Value(i) << " ";
@@ -226,10 +232,20 @@ void WorldSession::HandleAuctionPlaceBid( WorldPacket & recv_data )
             ss << "' )";
             sDatabase.Execute( ss.str().c_str() );
 
-	    sDatabase.PExecute("DELETE FROM mail WHERE mailID = '%u';", m->messageID);
-            sDatabase.PExecute("INSERT INTO mail (mailId,sender,reciever,subject,body,item,time,money,COD,checked) VALUES ('%u', '%u', '%u', '%s', '%s', '%u', '%u', '%u', '%u', '%u');",m->messageID, pl->GetGUIDLow(), m->reciever, m->subject.c_str(), m->body.c_str(), m->item, m->time, m->money, 0, m->checked);
+            std::stringstream md;
+            // TODO: use full guids
+            md << "DELETE FROM mail WHERE mailID = " << m->messageID;
+            sDatabase.Execute( md.str().c_str( ) );
 
-            uint64 rcpl = m->reciever;
+            std::stringstream mi;
+            mi << "INSERT INTO mail (mailId,sender,reciever,subject,body,item,time,money,COD,checked) VALUES ( " <<
+                m->messageID << ", " << pl->GetGUIDLow() << ", " << m->reciever << ",' " << m->subject.c_str() << "' ,' " <<
+                m->body.c_str() << "', " << m->item << ", " << m->time << ", " << m->money << ", " << 0 << ", " << m->checked << " )";
+            sDatabase.Execute( mi.str().c_str( ) );
+
+            uint64 rcpl;
+            GUID_LOPART(rcpl) = m->reciever;
+            GUID_HIPART(rcpl) = 0;
             std::string pname;
             objmgr.GetPlayerNameByGUID(rcpl,pname);
             Player *rpl = objmgr.GetPlayer(pname.c_str());
@@ -238,10 +254,21 @@ void WorldSession::HandleAuctionPlaceBid( WorldPacket & recv_data )
                 rpl->AddMail(m);
             }
 
-	    sDatabase.PExecute("DELETE FROM auctionhouse WHERE itemowner =  '%d'",ah->owner);
-	    sDatabase.PExecute("DELETE FROM auctioned_items WHERE guid = '%u'",ah->item);
-	    sDatabase.PExecute("DELETE FROM bids WHERE Id = '%d'",ah->Id);
+            std::stringstream delinvq;
+            std::stringstream id;
+            std::stringstream bd;
 
+            // TODO: use full guids
+            delinvq << "DELETE FROM auctionhouse WHERE itemowner = " << ah->owner;
+            sDatabase.Execute( delinvq.str().c_str( ) );
+
+            // TODO: use full guids
+            id << "DELETE FROM auctioned_items WHERE guid = " << ah->item;
+            sDatabase.Execute( id.str().c_str( ) );
+
+            // TODO: use full guids
+            bd << "DELETE FROM bids WHERE Id = " << ah->Id;
+            sDatabase.Execute( bd.str().c_str( ) );
             data.Initialize( SMSG_AUCTION_LIST_RESULT );
             data << uint32(0);
             data << uint32(0);
@@ -258,11 +285,20 @@ void WorldSession::HandleAuctionPlaceBid( WorldPacket & recv_data )
             mn->money = ah->bid;
             mn->item = 0;
             mn->time = time(NULL) + (29 * 3600);
-            
-	    sDatabase.PExecute("DELETE FROM mail WHERE mailID = '%u';", mn->messageID);
-            sDatabase.PExecute("INSERT INTO mail (mailId,sender,reciever,subject,body,item,time,money,COD,checked) VALUES ('%u', '%u', '%u', '%s', '%s', '%u', '%u', '%u', '%u', '%u');", mn->messageID, mn->sender, mn->reciever,  mn->subject.c_str(), mn->body.c_str(), mn->item, mn->time, mn->money, 0, mn->checked);
+            std::stringstream mdn;
+            // TODO: use full guids
+            mdn << "DELETE FROM mail WHERE mailID = " << mn->messageID;
+            sDatabase.Execute( mdn.str().c_str( ) );
 
-            uint64 rcpln = mn->reciever;
+            std::stringstream min;
+            min << "INSERT INTO mail (mailId,sender,reciever,subject,body,item,time,money,COD,checked) VALUES ( " <<
+                mn->messageID << ", " << mn->sender << ", " << mn->reciever << ",' " << mn->subject.c_str() << "' ,' " <<
+                mn->body.c_str() << "', " << mn->item << ", " << mn->time << ", " << mn->money << ", " << 0 << ", " << mn->checked << " )";
+            sDatabase.Execute( min.str().c_str( ) );
+
+            uint64 rcpln;
+            GUID_LOPART(rcpln) = mn->reciever;
+            GUID_HIPART(rcpln) = 0;
             std::string pnamen;
             objmgr.GetPlayerNameByGUID(rcpln,pnamen);
             Player *rpln = objmgr.GetPlayer(pnamen.c_str());
@@ -293,9 +329,9 @@ void WorldSession::HandleAuctionSellItem( WorldPacket & recv_data )
     AH->buyout = buyout;
     time_t base = time(NULL);
     AH->time = ((time_t)(etime * 60)) + base;
-    
+    //AH->time = base + 300;
     AH->Id = objmgr.GenerateAuctionID();
-    sLog.outString("selling item %u to auctioneer %u with inital bid %u with buyout %u and with time %u (in minutes)",GUID_LOPART(item),GUID_LOPART(auctioneer),bid,buyout,time);
+    Log::getSingleton().outString("selling item %u to auctioneer %u with inital bid %u with buyout %u and with time %u (in minutes)",GUID_LOPART(item),GUID_LOPART(auctioneer),bid,buyout,time);
     objmgr.AddAuction(AH);
     uint32 slot = pl->GetSlotByItemGUID(item);
     Item *it = pl->GetItemBySlot((uint8)slot);
@@ -303,7 +339,7 @@ void WorldSession::HandleAuctionSellItem( WorldPacket & recv_data )
 
     std::stringstream ss;
     ss << "INSERT INTO auctioned_items (guid, data) VALUES ("
-        << it->GetGUIDLow() << ", '";             
+        << it->GetGUIDLow() << ", '";             // TODO: use full guids
     for(uint16 i = 0; i < it->GetValuesCount(); i++ )
     {
         ss << it->GetUInt32Value(i) << " ";
@@ -311,8 +347,7 @@ void WorldSession::HandleAuctionSellItem( WorldPacket & recv_data )
     ss << "' )";
     sDatabase.Execute( ss.str().c_str() );
 
-    //pl->RemoveItemFromSlot((uint8)slot);
-	pl->RemoveItemFromSlot(0,(uint8)slot,true);
+    pl->RemoveItemFromSlot((uint8)slot);
     WorldPacket data;
     ObjectMgr::AuctionEntryMap::iterator itr;
     uint32 cnt = 0;
@@ -323,7 +358,7 @@ void WorldSession::HandleAuctionSellItem( WorldPacket & recv_data )
             cnt++;
         }
     }
-    sLog.outString("sending owner list with %u items",cnt);
+    Log::getSingleton().outString("sending owner list with %u items",cnt);
     data.Initialize( SMSG_AUCTION_OWNER_LIST_RESULT );
     if (cnt < 51)
     {
@@ -379,8 +414,7 @@ void WorldSession::HandleAuctionListOwnerItems( WorldPacket & recv_data )
             cnt++;
         }
     }
-
-    sLog.outString("sending owner list with %u items",cnt);
+    Log::getSingleton().outString("sending owner list with %u items",cnt);
     data.Initialize( SMSG_AUCTION_OWNER_LIST_RESULT );
     if (cnt < 51)
     {
@@ -397,7 +431,7 @@ void WorldSession::HandleAuctionListOwnerItems( WorldPacket & recv_data )
         {
             AuctionEntry *Aentry = itr->second;
             data << Aentry->Id;
-            sLog.outString("getting item with id %u",Aentry->item);
+            Log::getSingleton().outString("getting item with id %u",Aentry->item);
             Item *it = objmgr.GetAItem(Aentry->item);
             data << it->GetUInt32Value(OBJECT_FIELD_ENTRY);
             data << uint32(0);
@@ -434,8 +468,8 @@ void WorldSession::HandleAuctionListItems( WorldPacket & recv_data )
     recv_data >> auctionSlotID >> auctionMainCatagory >> auctionSubCatagory;
     recv_data >> rarityCheck >> usableCheck;
 
-    sLog.outBasic("%s",auctionString.c_str( ) );
-    sLog.outBasic("\n unkAuction = %u\n Level Start = %u\n Level End = %u\n auctionSlotID = %u\n auctionMainCatagory = %u\n auctionSubCatagory = %u\n rarityCheck = %u\n usableCheck = %u\n", unk1, levelRange1, levelRange2, auctionSlotID, auctionMainCatagory, auctionSubCatagory, rarityCheck, usableCheck);
+    Log::getSingleton( ).outBasic("%s",auctionString.c_str( ) );
+    Log::getSingleton( ).outBasic("\n unkAuction = %u\n Level Start = %u\n Level End = %u\n auctionSlotID = %u\n auctionMainCatagory = %u\n auctionSubCatagory = %u\n rarityCheck = %u\n usableCheck = %u\n", unk1, levelRange1, levelRange2, auctionSlotID, auctionMainCatagory, auctionSubCatagory, rarityCheck, usableCheck);
 
     WorldPacket data;
     ObjectMgr::AuctionEntryMap::iterator itr;

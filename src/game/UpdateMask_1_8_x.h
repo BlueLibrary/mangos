@@ -34,7 +34,7 @@ public:
     ~UpdateMask( )
     {
         if(mUpdateMask)
-            delete [] mUpdateMask;
+            delete mUpdateMask;
     }
 
     inline void SetBit (uint32 index)
@@ -60,7 +60,7 @@ public:
     inline void SetCount (uint32 valuesCount)
     {
         if(mUpdateMask)
-            delete [] mUpdateMask;
+            delete mUpdateMask;
 
         mCount = valuesCount;
         mBlocks = (valuesCount + 31) / 32;

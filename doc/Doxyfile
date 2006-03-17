@@ -67,14 +67,12 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 # configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = ../src/framework/ \
-			 ../src/game/ \
+INPUT                  = ../src/game/ \
                          ../src/realmlist/ \
                          ../src/shared/ \
                          ../src/mangosd/
 FILE_PATTERNS          = *.cpp \
-                         *.h \
-			 *.hpp
+                         *.h
 RECURSIVE              = NO
 EXCLUDE                = 
 EXCLUDE_SYMLINKS       = NO

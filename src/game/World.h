@@ -1,5 +1,7 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* World.h
+ *
+ * Copyright (C) 2004 Wow Daemon
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,12 +22,13 @@
 #define __WORLD_H
 
 #include "Timer.h"
-#include "Policies/Singleton.h"
-#include "SharedDefines.h" 
 
 class Object;
 class WorldPacket;
 class WorldSession;
+#ifndef ENABLE_GRID_SYSTEM
+class MapMgr;
+#endif
 
 enum WorldTimers
 {
@@ -56,7 +59,7 @@ enum EnviromentalDamage
     DAMAGE_FIRE = 5
 };
 
-class World 
+class World : public Singleton<World>
 {
     public:
         World();
@@ -83,9 +86,13 @@ class World
         void SendWorldText(const char *text, WorldSession *self = 0);
         void SendGlobalMessage(WorldPacket *packet, WorldSession *self = 0);
 
-        
+        // update the world server every frame
         void Update(time_t diff);
 
+#ifndef ENABLE_GRID_SYSTEM
+        // get map manager
+        MapMgr* GetMap(uint32 id);
+#endif
         void setRate(int index,float value)
         {
             if((index>=0)&&(index<MAX_RATES))
@@ -96,17 +103,17 @@ class World
         {
             if((index>=0)&&(index<MAX_RATES))
                 return regen_values[index];
-			else
-				return 0;
         }
-		
-      
+
+        // map text emote to spell prices
+        typedef std::map< uint32, uint32> SpellPricesMap;
+        SpellPricesMap mPrices;
 
     protected:
-       
+        // update Stuff, FIXME: use diff
         time_t _UpdateGameTime()
         {
-            
+            // Update Server time
             time_t thisTime = time(NULL);
             m_gameTime += thisTime - m_lastTick;
             m_lastTick = thisTime;
@@ -115,11 +122,15 @@ class World
         }
 
     private:
-        
+        //! Timers
         IntervalTimer m_timers[WUPDATE_COUNT];
 
         typedef HM_NAMESPACE::hash_map<uint32, WorldSession*> SessionMap;
         SessionMap m_sessions;
+#ifndef ENABLE_GRID_SYSTEM
+        typedef HM_NAMESPACE::hash_map<uint32, MapMgr*> MapMgrMap;
+        MapMgrMap m_maps;
+#endif
         float regen_values[5];
         uint32 m_playerLimit;
         bool m_allowMovement;
@@ -131,5 +142,5 @@ class World
         time_t m_nextThinkTime;
 };
 
-#define sWorld MaNGOS::Singleton<World>::Instance()
+#define sWorld World::getSingleton()
 #endif

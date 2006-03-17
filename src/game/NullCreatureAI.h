@@ -1,5 +1,6 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* NullCreatureAI.h
+ *
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +20,9 @@
 #ifndef MANGOS_NULLCREATUREAI_H
 #define MANGOS_NULLCREATUREAI_H
 
-
+/** NullCreatureAI are creatures that don't attack.  This is
+ * a classic Null Object pattern.
+ */
 
 #include "CreatureAI.h"
 
@@ -27,18 +30,11 @@ class MANGOS_DLL_DECL NullCreatureAI : public CreatureAI
 {
 public:
     
-    NullCreatureAI(Creature &) {}
-    NullCreatureAI() {}
-
     void MoveInLineOfSight(Unit *) {}
     void AttackStart(Unit *) {}
     void AttackStop(Unit *) {}
+    void Update(uint32, Unit *);
     void HealBy(Unit *healer, uint32 amount_healed) {}
-    void DamageInflict(Unit *healer, uint32 amount_healed) {}
-    bool IsVisible(Unit *) const { return false;  }
-
-    void UpdateAI(const uint32) {}
-    static int Permissible(const Creature *) { return IDLE_PERMIT_BASE;  }
 };
 
 

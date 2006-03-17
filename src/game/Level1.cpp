@@ -1,5 +1,7 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* Level1.cpp
+ *
+ * Copyright (C) 2004 Wow Daemon
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +18,10 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+/////////////////////////////////////////////////
+//  GM Chat Commands
+//
+
 #include "Common.h"
 #include "Database/DatabaseEnv.h"
 #include "WorldPacket.h"
@@ -26,9 +32,11 @@
 #include "Opcodes.h"
 #include "Chat.h"
 #include "Log.h"
+
+#ifdef ENABLE_GRID_SYSTEM
 #include "MapManager.h"
 #include "ObjectAccessor.h"
-
+#endif
 
 bool ChatHandler::HandleAnnounceCommand(const char* args)
 {
@@ -38,9 +46,9 @@ bool ChatHandler::HandleAnnounceCommand(const char* args)
         return false;
 
     char pAnnounce[256];
-    
+    // Adds BROADCAST:
     sprintf((char*)pAnnounce, "BROADCAST: %s", args);
-    sWorld.SendWorldText(pAnnounce);              
+    sWorld.SendWorldText(pAnnounce);              // send message
 
     return true;
 }
@@ -72,7 +80,11 @@ bool ChatHandler::HandleGPSCommand(const char* args)
     uint64 guid = m_session->GetPlayer()->GetSelection();
     if (guid != 0)
     {
+#ifndef ENABLE_GRID_SYSTEM
+        if(!(obj = (Object*)objmgr.GetObject<Player>(guid)) && !(obj = (Object*)objmgr.GetObject<Creature>(guid)))
+#else
         if(!(obj = (Object*)ObjectAccessor::Instance().FindPlayer(guid)) && !(obj = (Object*)ObjectAccessor::Instance().GetCreature(*m_session->GetPlayer(),guid)))
+#endif
         {
             FillSystemMessageData(&data, m_session, "You should select a character or a creature.");
             m_session->SendPacket( &data );
@@ -94,9 +106,60 @@ bool ChatHandler::HandleGPSCommand(const char* args)
 }
 
 
+/*
+bool ChatHandler::HandleKickCommand(const char* args)
+{
+    WorldPacket data;
 
+    if(!*args)
+        return false;
 
-bool ChatHandler::HandleNamegoCommand(const char* args)
+    Player *chr = objmgr.getPlayer((char*)args);
+    if (chr)
+    {
+        if(m_session->getAccountLvl() < chr->GetSession()->getAccountLvl())
+        {
+            // send message to user
+            char buf[256];
+            sprintf((char*)buf,"You try to kick %s.", chr->getName());
+            FillSystemMessageData(&data, m_session, buf);
+            m_session->SendPacket( &data );
+
+            // send message to player
+            char buf0[256];
+            sprintf((char*)buf0,"%s try kick you.", m_session->GetPlayer()->getName());
+            FillSystemMessageData(&data, m_session, buf0);
+            sWorld.SendMessageToPlayer(&data, chr->GetGUIDLow());
+
+            return true;
+        }
+        // send message to user
+        char buf[256];
+        sprintf((char*)buf,"You kick %s.", chr->getName());
+        FillSystemMessageData(&data, m_session, buf);
+        m_session->SendPacket( &data );
+
+        // send message to player
+        char buf0[256];
+        sprintf((char*)buf0,"%s kick you.", m_session->GetPlayer()->getName());
+        FillSystemMessageData(&data, m_session, buf0);
+        sWorld.SendMessageToPlayer(&data, chr->GetGUIDLow());
+
+        sWorld.disconnect_client(reinterpret_cast < Server::nlink_client *> (chr->GetSession()->GetNLink()));
+    }
+    else
+    {
+        char buf[256];
+        sprintf((char*)buf,"Player (%s) does not exist or is not logged in.", args);
+        FillSystemMessageData(&data, m_session, buf);
+        m_session->SendPacket( &data );
+    }
+
+    return true;
+}
+*/
+
+bool ChatHandler::HandleSummonCommand(const char* args)
 {
     WorldPacket data;
 
@@ -106,7 +169,7 @@ bool ChatHandler::HandleNamegoCommand(const char* args)
     Player *chr = objmgr.GetPlayer(args);
     if (chr)
     {
-        
+        // send message to user
         char buf[256];
         char buf0[256];
         if(chr->IsBeingTeleported()==true)
@@ -120,16 +183,16 @@ bool ChatHandler::HandleNamegoCommand(const char* args)
         FillSystemMessageData(&data, m_session, buf);
         m_session->SendPacket( &data );
 
-        
+        // send message to player
         sprintf((char*)buf0,"You are being summoned by %s.", m_session->GetPlayer()->GetName());
         FillSystemMessageData(&data, m_session, buf0);
         chr->GetSession()->SendPacket( &data );
 
-        chr->smsg_NewWorld(m_session->GetPlayer()->GetMapId(),
+        smsg_NewWorld(chr->GetSession(),
+            m_session->GetPlayer()->GetMapId(),
             m_session->GetPlayer()->GetPositionX(),
             m_session->GetPlayer()->GetPositionY(),
-            m_session->GetPlayer()->GetPositionZ()
-            ,0.0f);
+            m_session->GetPlayer()->GetPositionZ());
     }
     else
     {
@@ -142,7 +205,7 @@ bool ChatHandler::HandleNamegoCommand(const char* args)
 }
 
 
-bool ChatHandler::HandleGonameCommand(const char* args)
+bool ChatHandler::HandleAppearCommand(const char* args)
 {
     WorldPacket data;
 
@@ -160,7 +223,7 @@ bool ChatHandler::HandleGonameCommand(const char* args)
             m_session->SendPacket( &data );
             return true;
         }
-        
+        // -- europa
         sprintf((char*)buf,"Appearing at %s's location.", chr->GetName());
         FillSystemMessageData(&data, m_session, buf);
         m_session->SendPacket( &data );
@@ -171,7 +234,7 @@ bool ChatHandler::HandleGonameCommand(const char* args)
 
         chr->GetSession()->SendPacket(&data);
 
-        m_session->GetPlayer()->smsg_NewWorld(chr->GetMapId(), chr->GetPositionX(), chr->GetPositionY(), chr->GetPositionZ(),0.0f);
+        smsg_NewWorld(m_session, chr->GetMapId(), chr->GetPositionX(), chr->GetPositionY(), chr->GetPositionZ());
     }
     else
     {
@@ -191,25 +254,25 @@ bool ChatHandler::HandleRecallCommand(const char* args)
         return false;
 
     if (strncmp((char*)args,"sunr",5)==0)
-        m_session->GetPlayer()->smsg_NewWorld(1, -180.949f, -296.467f, 11.5384f,0.0f);
+        smsg_NewWorld(m_session, 1, -180.949f, -296.467f, 11.5384f);
     else if (strncmp((char*)args,"thun",5)==0)
-        m_session->GetPlayer()->smsg_NewWorld(1, -1196.22f, 29.0941f, 176.949f,0.0f);
+        smsg_NewWorld(m_session, 1, -1196.22f, 29.0941f, 176.949f);
     else if (strncmp((char*)args,"cross",6)==0)
-        m_session->GetPlayer()->smsg_NewWorld(1, -443.128f, -2598.87f, 96.2114f,0.0f);
+        smsg_NewWorld(m_session, 1, -443.128f, -2598.87f, 96.2114f);
     else if (strncmp((char*)args,"ogri",5)==0)
-        m_session->GetPlayer()->smsg_NewWorld(1, 1676.21f, -4315.29f, 61.5293f,0.0f);
+        smsg_NewWorld(m_session, 1, 1676.21f, -4315.29f, 61.5293f);
     else if (strncmp((char*)args,"neth",5)==0)
-        m_session->GetPlayer()->smsg_NewWorld(0, -10996.9f, -3427.67f, 61.996f,0.0f);
+        smsg_NewWorld(m_session, 0, -10996.9f, -3427.67f, 61.996f);
     else if (strncmp((char*)args,"thel",5)==0)
-        m_session->GetPlayer()->smsg_NewWorld(0, -5395.57f, -3015.79f, 327.58f,0.0f);
+        smsg_NewWorld(m_session, 0, -5395.57f, -3015.79f, 327.58f);
     else if (strncmp((char*)args,"storm",6)==0)
-        m_session->GetPlayer()->smsg_NewWorld(0, -8913.23f, 554.633f, 93.7944f,0.0f);
+        smsg_NewWorld(m_session, 0, -8913.23f, 554.633f, 93.7944f);
     else if (strncmp((char*)args,"iron",5)==0)
-        m_session->GetPlayer()->smsg_NewWorld(0, -4981.25f, -881.542f, 501.66f,0.0f);
+        smsg_NewWorld(m_session, 0, -4981.25f, -881.542f, 501.66f);
     else if (strncmp((char*)args,"under",6)==0)
-        m_session->GetPlayer()->smsg_NewWorld(0, 1586.48f, 239.562f, -52.149f,0.0f);
+        smsg_NewWorld(m_session, 0, 1586.48f, 239.562f, -52.149f);
     else if (strncmp((char*)args,"darr",5)==0)
-        m_session->GetPlayer()->smsg_NewWorld(1, 10037.6f, 2496.8f, 1318.4f,0.0f);
+        smsg_NewWorld(m_session, 1, 10037.6f, 2496.8f, 1318.4f);
     else
         return false;
 
@@ -221,22 +284,17 @@ bool ChatHandler::HandleModifyHPCommand(const char* args)
 {
     WorldPacket data;
 
-    
-//    char* pHp = strtok((char*)args, " ");
-//    if (!pHp)
-//        return false;
+    // change level of char
+    char* pHp = strtok((char*)args, " ");
+    if (!pHp)
+        return false;
 
-//    char* pHpMax = strtok(NULL, " ");
-//    if (!pHpMax)
-//        return false;
+    char* pHpMax = strtok(NULL, " ");
+    if (!pHpMax)
+        return false;
 
-//    int32 hpm = atoi(pHpMax);
-//    int32 hp = atoi(pHp);
-
-    int32 hp = atoi((char*)args);
-    int32 hpm = atoi((char*)args);
-
-
+    int32 hpm = atoi(pHpMax);
+    int32 hp = atoi(pHp);
 
     if (hp <= 0 || hpm <= 0 || hpm < hp)
     {
@@ -246,7 +304,7 @@ bool ChatHandler::HandleModifyHPCommand(const char* args)
     }
 
     Player *chr = getSelectedChar(m_session);
-    if (chr == NULL)                              
+    if (chr == NULL)                              // Ignatich: what should NOT happen but just in case...
     {
         FillSystemMessageData(&data, m_session, "No character selected.");
         m_session->SendPacket( &data );
@@ -255,12 +313,12 @@ bool ChatHandler::HandleModifyHPCommand(const char* args)
 
     char buf[256];
 
-    
+    // send message to user
     sprintf((char*)buf,"You change the HP to %i/%i of %s.", hp, hpm, chr->GetName());
     FillSystemMessageData(&data, m_session, buf);
     m_session->SendPacket( &data );
 
-    
+    // send message to player
     sprintf((char*)buf,"%s changed your HP to %i/%i.", m_session->GetPlayer()->GetName(), hp, hpm);
     FillSystemMessageData(&data, m_session, buf);
 
@@ -296,7 +354,7 @@ bool ChatHandler::HandleModifyManaCommand(const char* args)
     }
 
     Player *chr = getSelectedChar(m_session);
-    if (chr == NULL)                              
+    if (chr == NULL)                              // Ignatich: what should NOT happen but just in case...
     {
         FillSystemMessageData(&data, m_session, "No character selected.");
         m_session->SendPacket( &data );
@@ -305,12 +363,12 @@ bool ChatHandler::HandleModifyManaCommand(const char* args)
 
     char buf[256];
 
-    
+    // send message to user
     sprintf((char*)buf,"You change the MANA to %i/%i of %s.", mana, manam, chr->GetName());
     FillSystemMessageData(&data, m_session, buf);
     m_session->SendPacket( &data );
 
-    
+    // send message to player
     sprintf((char*)buf,"%s changed your MANA to %i/%i.", m_session->GetPlayer()->GetName(), mana, manam);
     FillSystemMessageData(&data, m_session, buf);
 
@@ -346,7 +404,7 @@ bool ChatHandler::HandleModifyEnergyCommand(const char* args)
     }
 
     Player *chr = getSelectedChar(m_session);
-    if (chr == NULL)                              
+    if (chr == NULL)                              // Ignatich: what should NOT happen but just in case...
     {
         FillSystemMessageData(&data, m_session, "No character selected.");
         m_session->SendPacket( &data );
@@ -355,12 +413,12 @@ bool ChatHandler::HandleModifyEnergyCommand(const char* args)
 
     char buf[256];
 
-    
+    // send message to user
     sprintf((char*)buf,"You change the ENERGY to %i/%i of %s.", mana, manam, chr->GetName());
     FillSystemMessageData(&data, m_session, buf);
     m_session->SendPacket( &data );
 
-    
+    // send message to player
     sprintf((char*)buf,"%s changed your ENERGY to %i/%i.", m_session->GetPlayer()->GetName(), mana, manam);
     FillSystemMessageData(&data, m_session, buf);
 
@@ -398,7 +456,7 @@ bool ChatHandler::HandleModifyRageCommand(const char* args)
     }
 
     Player *chr = getSelectedChar(m_session);
-    if (chr == NULL)                              
+    if (chr == NULL)                              // Ignatich: what should NOT happen but just in case...
     {
         FillSystemMessageData(&data, m_session, "No character selected.");
         m_session->SendPacket( &data );
@@ -407,12 +465,12 @@ bool ChatHandler::HandleModifyRageCommand(const char* args)
 
     char buf[256];
 
-    
+    // send message to user
     sprintf((char*)buf,"You change the RAGE to %i/%i of %s.", mana, manam, chr->GetName());
     FillSystemMessageData(&data, m_session, buf);
     m_session->SendPacket( &data );
 
-    
+    // send message to player
     sprintf((char*)buf,"%s changed your RAGE to %i/%i.", m_session->GetPlayer()->GetName(), mana, manam);
     FillSystemMessageData(&data, m_session, buf);
 
@@ -442,7 +500,7 @@ bool ChatHandler::HandleModifyLevelCommand(const char* args)
     }
 
     Player *chr = getSelectedChar(m_session);
-    if (chr == NULL)                              
+    if (chr == NULL)                              // Ignatich: what should NOT happen but just in case...
     {
         FillSystemMessageData(&data, m_session, "No character selected.");
         m_session->SendPacket( &data );
@@ -451,12 +509,12 @@ bool ChatHandler::HandleModifyLevelCommand(const char* args)
 
     char buf[256];
 
-    
+    // send message to user
     sprintf((char*)buf,"You change the LVL to %i of %s.", lvl, chr->GetName());
     FillSystemMessageData(&data, m_session, buf);
     m_session->SendPacket( &data );
 
-    
+    // send message to player
     sprintf((char*)buf,"%s changed your LVL to %i.", m_session->GetPlayer()->GetName(), lvl);
     FillSystemMessageData(&data, m_session, buf);
 
@@ -471,108 +529,14 @@ bool ChatHandler::HandleModifyFactionCommand(const char* args)
 {
 
     WorldPacket data;
-  
-	uint32 factionid; 
-    uint32 flag;
-	uint32  npcflag;
-	uint32 dyflag;
-    char buf[256];
 
-    char* pfactionid = strtok((char*)args, " ");
-	Unit* chr =NULL; 
-	chr	= ObjectAccessor::Instance().GetUnit(*m_session->GetPlayer(), m_session->GetPlayer()->GetSelection());
-
-	if(!pfactionid){
-		if(chr)
-		{
-            factionid = chr->GetUInt32Value(UNIT_FIELD_FACTIONTEMPLATE);
-            flag      = chr->GetUInt32Value(UNIT_FIELD_FLAGS);
-			npcflag   = chr->GetUInt32Value(UNIT_NPC_FLAGS);
-			dyflag   = chr->GetUInt32Value(UNIT_DYNAMIC_FLAGS);
-		    sprintf((char*)buf,"GUID %i,faction is %i,flags is %i,npcflag is %i,DY flag is %i",chr->GetGUIDLow(),factionid,flag,npcflag,dyflag);
-            FillSystemMessageData(&data, m_session, buf);
-            m_session->SendPacket( &data );
-		}
-		return true;
-	}
-
-    if (chr == NULL)                              
-    {
-        FillSystemMessageData(&data, m_session, "No character selected.");
-        m_session->SendPacket( &data );
-        return true;
-    }
-
-    factionid = atoi(pfactionid);
-
-	char*  pflag = strtok(NULL, " ");
-    if (!pflag)
-        flag = chr->GetUInt32Value(UNIT_FIELD_FLAGS);
-	else
-        flag = atoi(pflag);
-
-	char* pnpcflag = strtok(NULL, " ");
-	if(!pnpcflag)
-       npcflag   = chr->GetUInt32Value(UNIT_NPC_FLAGS);
-	else
-	   npcflag = atoi(pnpcflag);
-
-	char* pdyflag = strtok(NULL, " ");
-	if(!pdyflag)
-       dyflag   = chr->GetUInt32Value(UNIT_DYNAMIC_FLAGS);
-	else
-	   dyflag = atoi(pdyflag);
-
-    sprintf((char*)buf,"You change GUID=%i 's Faction to %i ,flags to %i,npcflag to %i,dyflag to %i.", chr->GetGUIDLow(),factionid,flag,npcflag,dyflag);
-    FillSystemMessageData(&data, m_session, buf);
-    m_session->SendPacket( &data );
-
-    
-    //sprintf((char*)buf,"%s changed your Faction to %i.", m_session->GetPlayer()->GetName(), factionid);
-    //FillSystemMessageData(&data, m_session, buf);
-
-    //chr->GetSession()->SendPacket(&data);
-
-    chr->SetUInt32Value(UNIT_FIELD_FACTIONTEMPLATE,factionid);
-	chr->SetUInt32Value(UNIT_FIELD_FLAGS,flag);
-    chr->SetUInt32Value(UNIT_NPC_FLAGS,npcflag);
-	chr->SetUInt32Value(UNIT_DYNAMIC_FLAGS,dyflag);
-	
-	
-    return true;
-}
-
-bool ChatHandler::HandleModifySpellCommand(const char* args)
-{
-
-    WorldPacket data;
-
-    char* pspellflatid = strtok((char*)args, " ");
-    if (!pspellflatid)
+    if(!*args)
         return false;
 
-    char* pop = strtok(NULL, " ");
-    if (!pop)
-        return false;
-
-    char* pval = strtok(NULL, " ");
-    if (!pval)
-        return false;
-    
-    uint16 mark;
-
-    char* pmark = strtok(NULL, " ");
-   
-    uint8 spellflatid = atoi(pspellflatid);
-    uint8 op   = atoi(pop);
-    uint16 val = atoi(pval);
-    if(!pmark)
-        mark = 65535;
-    else
-        mark = atoi(pmark);
+    uint32 factionid = atoi((char*)args);
 
     Player *chr = getSelectedChar(m_session);
-    if (chr == NULL)                              
+    if (chr == NULL)                              // Ignatich: what should NOT happen but just in case...
     {
         FillSystemMessageData(&data, m_session, "No character selected.");
         m_session->SendPacket( &data );
@@ -581,26 +545,22 @@ bool ChatHandler::HandleModifySpellCommand(const char* args)
 
     char buf[256];
 
-    
-    sprintf((char*)buf,"You change the spellflatid=%i,val= %i ,mark =%i to %s.", spellflatid, val, mark, chr->GetName());
+    // send message to user
+    sprintf((char*)buf,"You change the Faction to %i of %s.", factionid, chr->GetName());
     FillSystemMessageData(&data, m_session, buf);
     m_session->SendPacket( &data );
 
-    
-    sprintf((char*)buf,"%s changed your spellflatid=%i,val= %i ,mark =%i.", m_session->GetPlayer()->GetName(), spellflatid, val, mark);
+    // send message to player
+    sprintf((char*)buf,"%s changed your Faction to %i.", m_session->GetPlayer()->GetName(), factionid);
     FillSystemMessageData(&data, m_session, buf);
 
     chr->GetSession()->SendPacket(&data);
 
-    data.Initialize(SMSG_SET_FLAT_SPELL_MODIFIER);
-    data << uint8(spellflatid);
-    data << uint8(op);
-    data << uint16(val);
-    data << uint16(mark);
-    chr->GetSession()->SendPacket(&data);       
+    chr->SetUInt32Value(UNIT_FIELD_FACTIONTEMPLATE,factionid);
     
     return true;
 }
+
 
 bool ChatHandler::HandleTaxiCheatCommand(const char* args)
 {
@@ -612,7 +572,7 @@ bool ChatHandler::HandleTaxiCheatCommand(const char* args)
     int flag = atoi((char*)args);
 
     Player *chr = getSelectedChar(m_session);
-    if (chr == NULL)                              
+    if (chr == NULL)                              // Ignatich: what should NOT happen but just in case...
     {
         FillSystemMessageData(&data, m_session, "No character selected.");
         m_session->SendPacket( &data );
@@ -621,7 +581,7 @@ bool ChatHandler::HandleTaxiCheatCommand(const char* args)
 
     char buf[256];
 
-    
+    // send message to user
     if (flag != 0)
     {
         sprintf((char*)buf,"%s has all taxi nodes now.", chr->GetName());
@@ -633,7 +593,7 @@ bool ChatHandler::HandleTaxiCheatCommand(const char* args)
     FillSystemMessageData(&data, m_session, buf);
     m_session->SendPacket( &data );
 
-    
+    // send message to player
     if (flag != 0)
     {
         sprintf((char*)buf,"%s has given you all taxi nodes.",
@@ -680,7 +640,7 @@ bool ChatHandler::HandleModifyASpedCommand(const char* args)
     }
 
     Player *chr = getSelectedChar(m_session);
-    if (chr == NULL)                              
+    if (chr == NULL)                              // Ignatich: what should NOT happen but just in case...
     {
         FillSystemMessageData(&data, m_session, "No character selected.");
         m_session->SendPacket( &data );
@@ -689,32 +649,29 @@ bool ChatHandler::HandleModifyASpedCommand(const char* args)
 
     char buf[256];
 
-    
+    // send message to user
     sprintf((char*)buf,"You set all speeds to %2.2f of %s.", ASpeed, chr->GetName());
     FillSystemMessageData(&data, m_session, buf);
     m_session->SendPacket( &data );
 
-    
+    // send message to player
     sprintf((char*)buf,"%s set all your speeds to %2.2f.", m_session->GetPlayer()->GetName(), ASpeed);
     FillSystemMessageData(&data, m_session, buf);
 
     chr->GetSession()->SendPacket(&data);
 
     data.Initialize( SMSG_FORCE_RUN_SPEED_CHANGE );
-	data << uint8(0xFF);
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID );
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID + 1 );
     data << (float)ASpeed;
     chr->SendMessageToSet( &data, true );
 
     data.Initialize( SMSG_FORCE_SWIM_SPEED_CHANGE );
-	data << uint8(0xFF);
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID );
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID + 1 );
     data << (float)ASpeed;
     chr->SendMessageToSet( &data, true );
     data.Initialize( SMSG_FORCE_RUN_BACK_SPEED_CHANGE );
-	data << uint8(0xFF);
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID );
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID + 1 );
     data << (float)ASpeed;
@@ -740,7 +697,7 @@ bool ChatHandler::HandleModifySpeedCommand(const char* args)
     }
 
     Player *chr = getSelectedChar(m_session);
-    if (chr == NULL)                              
+    if (chr == NULL)                              // Ignatich: what should NOT happen but just in case...
     {
         FillSystemMessageData(&data, m_session, "No character selected.");
         m_session->SendPacket( &data );
@@ -749,19 +706,18 @@ bool ChatHandler::HandleModifySpeedCommand(const char* args)
 
     char buf[256];
 
-    
+    // send message to user
     sprintf((char*)buf,"You set the speed to %2.2f of %s.", Speed, chr->GetName());
     FillSystemMessageData(&data, m_session, buf);
     m_session->SendPacket( &data );
 
-    
+    // send message to player
     sprintf((char*)buf,"%s set your speed to %2.2f.", m_session->GetPlayer()->GetName(), Speed);
     FillSystemMessageData(&data, m_session, buf);
 
     chr->GetSession()->SendPacket(&data);
 
     data.Initialize( SMSG_FORCE_RUN_SPEED_CHANGE );
-	data << uint8(0xFF);
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID );
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID + 1 );
     data << (float)Speed;
@@ -788,7 +744,7 @@ bool ChatHandler::HandleModifySwimCommand(const char* args)
     }
 
     Player *chr = getSelectedChar(m_session);
-    if (chr == NULL)                              
+    if (chr == NULL)                              // Ignatich: what should NOT happen but just in case...
     {
         FillSystemMessageData(&data, m_session, "No character selected.");
         m_session->SendPacket( &data );
@@ -797,19 +753,18 @@ bool ChatHandler::HandleModifySwimCommand(const char* args)
 
     char buf[256];
 
-    
+    // send message to user
     sprintf((char*)buf,"You set the swim speed to %2.2f of %s.", Swim, chr->GetName());
     FillSystemMessageData(&data, m_session, buf);
     m_session->SendPacket( &data );
 
-    
+    // send message to player
     sprintf((char*)buf,"%s set your swim speed to %2.2f.", m_session->GetPlayer()->GetName(), Swim);
     FillSystemMessageData(&data, m_session, buf);
 
     chr->GetSession()->SendPacket(&data);
 
     data.Initialize( SMSG_FORCE_SWIM_SPEED_CHANGE );
-	data << uint8(0xFF);
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID );
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID + 1 );
     data << (float)Swim;
@@ -836,7 +791,7 @@ bool ChatHandler::HandleModifyBWalkCommand(const char* args)
     }
 
     Player *chr = getSelectedChar(m_session);
-    if (chr == NULL)                              
+    if (chr == NULL)                              // Ignatich: what should NOT happen but just in case...
     {
         FillSystemMessageData(&data, m_session, "No character selected.");
         m_session->SendPacket( &data );
@@ -845,19 +800,18 @@ bool ChatHandler::HandleModifyBWalkCommand(const char* args)
 
     char buf[256];
 
-    
+    // send message to user
     sprintf((char*)buf,"You set the backwards run speed to %2.2f of %s.", BSpeed, chr->GetName());
     FillSystemMessageData(&data, m_session, buf);
     m_session->SendPacket( &data );
 
-    
+    // send message to player
     sprintf((char*)buf,"%s set your backwards run speed to %2.2f.", m_session->GetPlayer()->GetName(), BSpeed);
     FillSystemMessageData(&data, m_session, buf);
 
     chr->GetSession()->SendPacket(&data);
 
     data.Initialize( SMSG_FORCE_RUN_BACK_SPEED_CHANGE );
-	data << uint8(0xFF);
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID );
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID + 1 );
     data << (float)BSpeed;
@@ -883,7 +837,7 @@ bool ChatHandler::HandleModifyScaleCommand(const char* args)
     }
 
     Player *chr = getSelectedChar(m_session);
-    if (chr == NULL)                              
+    if (chr == NULL)                              // Ignatich: what should NOT happen but just in case...
     {
         FillSystemMessageData(&data, m_session, "No character selected.");
         m_session->SendPacket( &data );
@@ -892,12 +846,12 @@ bool ChatHandler::HandleModifyScaleCommand(const char* args)
 
     char buf[256];
 
-    
+    // send message to user
     sprintf((char*)buf,"You set the size %2.2f of %s.", Scale, chr->GetName());
     FillSystemMessageData(&data, m_session, buf);
     m_session->SendPacket( &data );
 
-    
+    // send message to player
     sprintf((char*)buf,"%s set your size to %2.2f.", m_session->GetPlayer()->GetName(), Scale);
     FillSystemMessageData(&data, m_session, buf);
 
@@ -923,214 +877,214 @@ bool ChatHandler::HandleModifyMountCommand(const char* args)
     num = atoi((char*)args);
     switch(num)
     {
-        case 1:                                   
-            mId=14340;                            
+        case 1:                                   //Troll
+            mId=14340;                            //Black War Raptor
             break;
         case 2:
-            mId=4806;                             
+            mId=4806;                             //Emerald Raptor
             break;
         case 3:
-            mId=6471;                             
+            mId=6471;                             //Ivory Raptor
             break;
         case 4:
-            mId=12345;                            
+            mId=12345;                            //Mottled Red Raptor
             break;
         case 5:
-            mId=6472;                             
+            mId=6472;                             //Turquoise Raptor
             break;
         case 6:
-            mId=6473;                             
+            mId=6473;                             //Violet Raptor
             break;
-        case 7:                                   
-            mId=10670;                            
+        case 7:                                   //Undead
+            mId=10670;                            //Red Skeletal Horse
             break;
         case 8:
-            mId=10719;                            
+            mId=10719;                            //Red Skeletal Warhorse
             break;
         case 9:
-            mId=10671;                            
+            mId=10671;                            //Blue Skeletal Horse
             break;
         case 10:
-            mId=10672;                            
+            mId=10672;                            //Brown Skeletal Horse
             break;
         case 11:
-            mId=10720;                            
+            mId=10720;                            //Green Skeletal Warhorse
             break;
-        case 12:                                  
-            mId=14349;                            
+        case 12:                                  //Tauren
+            mId=14349;                            //Black War Kodo
             break;
         case 13:
-            mId=11641;                            
+            mId=11641;                            //Brown Kodo
             break;
         case 14:
-            mId=12244;                            
+            mId=12244;                            //Gray Kodo
             break;
         case 15:
-            mId=12242;                            
+            mId=12242;                            //Teal Kodo
             break;
         case 16:
-            mId=14578;                            
+            mId=14578;                            //Great Brown Kodo
             break;
         case 17:
-            mId=14579;                            
+            mId=14579;                            //Great Gray Kodo
             break;
         case 18:
-            mId=14349;                            
+            mId=14349;                            //Great White Kodo
             break;
         case 19:
-            mId=12245;                            
+            mId=12245;                            //Green Kodo
             break;
         case 20:
-            mId=14335;                            
+            mId=14335;                            //Black War Wolf
             break;
         case 21:
-            mId=207;                              
+            mId=207;                              //Black Wolf
             break;
         case 22:
-            mId=2328;                             
+            mId=2328;                             //Brown Wolf
             break;
         case 23:
-            mId=2327;                             
+            mId=2327;                             //Dire Wolf
             break;
         case 24:
-            mId=2326;                             
+            mId=2326;                             //Red Wolf
             break;
         case 25:
-            mId=14573;                            
+            mId=14573;                            //Swift Brown Wolf
             break;
         case 26:
-            mId=14574;                            
+            mId=14574;                            //Swift Gray Wolf
             break;
         case 27:
-            mId=14575;                            
+            mId=14575;                            //Swift Timber Wolf
             break;
         case 28:
-            mId=604;                              
+            mId=604;                              //Timber Wolf
             break;
         case 29:
-            mId=1166;                             
+            mId=1166;                             //Winter Wolf
             break;
-        case 30:                                  
-            mId=2402;                             
+        case 30:                                  //Human
+            mId=2402;                             //Black Stallion
             break;
         case 31:
-            mId=2410;                             
+            mId=2410;                             //White Stallion
             break;
         case 32:
-            mId=2409;                             
+            mId=2409;                             //Pinto
             break;
         case 33:
-            mId=2408;                             
+            mId=2408;                             //Palomino
             break;
         case 34:
-            mId=2405;                             
+            mId=2405;                             //Chestnut Mare
             break;
         case 35:
-            mId=14337;                            
+            mId=14337;                            //Black War Steed
             break;
-        case 36:                                  
-            mId=6569;                             
+        case 36:                                  //Gnome
+            mId=6569;                             //Blue Mechanostrider
             break;
         case 37:
-            mId=10661;                            
+            mId=10661;                            //Green Mechanostrider
             break;
         case 38:
-            mId=10666;                            
+            mId=10666;                            //Icy Blue Mechanostrider Mod A
             break;
         case 39:
-            mId=9473;                             
+            mId=9473;                             //Red Mechanostrider
             break;
         case 40:
-            mId=9476;                             
+            mId=9476;                             //Unpainted Mechanostrider
             break;
         case 41:
-            mId=9474;                             
+            mId=9474;                             //White Mechanostrider Mod A
             break;
         case 42:
-            mId=14374;                            
+            mId=14374;                            //Swift Green Mechanostrider
             break;
         case 43:
-            mId=14376;                            
+            mId=14376;                            //Swift White Mechanostrider
             break;
         case 44:
-            mId=14377;                            
+            mId=14377;                            //Swift Yellow Mechanostrider
             break;
-        case 45:                                  
-            mId=2404;                             
+        case 45:                                  //Human
+            mId=2404;                             //Brown Horse
             break;
-        case 46:                                  
-            mId=2784;                             
+        case 46:                                  //Dawrf
+            mId=2784;                             //Black Ram
             break;
         case 47:
-            mId=2787;                             
+            mId=2787;                             //Frost Ram
             break;
         case 48:
-            mId=2785;                             
+            mId=2785;                             //Brown Ram
             break;
         case 49:
-            mId=2736;                             
+            mId=2736;                             //Gray Ram
             break;
         case 50:
-            mId=2786;                             
+            mId=2786;                             //White Ram
             break;
         case 51:
-            mId=14347;                            
+            mId=14347;                            //Swift Brown Ram
             break;
         case 52:
-            mId=14346;                            
+            mId=14346;                            //Swift White Ram
             break;
         case 53:
-            mId=14576;                            
+            mId=14576;                            //Swift Gray Ram
             break;
-        case 54:                                  
-            mId=9695;                             
+        case 54:                                  //Nightelf
+            mId=9695;                             //Frostsaber
             break;
         case 55:
-            mId=9991;                             
+            mId=9991;                             //Nightsaber
             break;
         case 56:
-            mId=6448;                             
+            mId=6448;                             //Striped Nightsaber
             break;
         case 57:
-            mId=6444;                             
+            mId=6444;                             //Spotted Frostsaber
             break;
         case 58:
-            mId=6080;                             
+            mId=6080;                             //Striped Frostsaber
             break;
         case 59:
-            mId=6447;                             
+            mId=6447;                             //Leopard
             break;
         case 60:
-            mId=4805;                             
+            mId=4805;                             //Primal Leopard
             break;
         case 61:
-            mId=9714;                             
+            mId=9714;                             //Tiger Mount
             break;
         case 62:
-            mId=6448;                             
+            mId=6448;                             //Spotted Panther
             break;
         case 63:
-            mId=6442;                             
+            mId=6442;                             //Spotted Nightsaber
             break;
         case 64:
-            mId=14632;                            
+            mId=14632;                            //Swift Stormsaber
             break;
         case 65:
-            mId=14332;                            
+            mId=14332;                            //Swift Mistsaber
             break;
         case 66:
-            mId=14331;                            
+            mId=14331;                            //Swift Frostsaber
             break;
-        case 67:                                  
-            mId=8469;                             
+        case 67:                                  //Paladin Mount
+            mId=8469;                             //Warhorse
             break;
-        case 68:                                  
-            mId=2830;                             
+        case 68:                                  //Warlock Mount
+            mId=2830;                             //Felsteed
             break;
         case 69:
-            mId=2346;                             
+            mId=2346;                             //Jezelles Felsteed
             break;
-        default:                                  
+        default:                                  //NO ERROR OF MOUNT ;)
 
             FillSystemMessageData(&data, m_session, "There is no such mount.");
             m_session->SendPacket( &data );
@@ -1139,7 +1093,7 @@ bool ChatHandler::HandleModifyMountCommand(const char* args)
     }
 
     Player *chr = getSelectedChar(m_session);
-    if (chr == NULL)                              
+    if (chr == NULL)                              // Ignatich: what should NOT happen but just in case...
     {
         FillSystemMessageData(&data, m_session, "No character selected.");
         m_session->SendPacket( &data );
@@ -1148,12 +1102,12 @@ bool ChatHandler::HandleModifyMountCommand(const char* args)
 
     char buf[256];
 
-    
+    // send message to user
     sprintf((char*)buf,"You give a mount to %s.", chr->GetName());
     FillSystemMessageData(&data, m_session, buf);
     m_session->SendPacket( &data );
 
-    
+    // send message to player
     sprintf((char*)buf,"%s gave you a mount.", m_session->GetPlayer()->GetName());
     FillSystemMessageData(&data, m_session, buf);
 
@@ -1164,19 +1118,17 @@ bool ChatHandler::HandleModifyMountCommand(const char* args)
     chr->SetUInt32Value( UNIT_FIELD_FLAGS , 0x003000 );
 
     data.Initialize( SMSG_FORCE_RUN_SPEED_CHANGE );
-	data << uint8(0xFF);
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID );
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID + 1 );
-    data << float(speed);
-    WPAssert(data.size() == 13);
+    data << speed;
+    WPAssert(data.size() == 12);
     chr->SendMessageToSet( &data, true );
 
     data.Initialize( SMSG_FORCE_SWIM_SPEED_CHANGE );
-	data << uint8(0xFF);
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID );
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID + 1 );
-    data << float(speed);
-    WPAssert(data.size() == 13);
+    data << speed;
+    WPAssert(data.size() == 12);
     chr->SendMessageToSet( &data, true );
 
     return true;
@@ -1193,7 +1145,7 @@ bool ChatHandler::HandleModifyGoldCommand(const char* args)
     int32 gold = atoi((char*)args);
 
     Player *chr = getSelectedChar(m_session);
-    if (chr == NULL)                              
+    if (chr == NULL)                              // Ignatich: what should NOT happen but just in case...
     {
         FillSystemMessageData(&data, m_session, "No character selected.");
         m_session->SendPacket( &data );
@@ -1207,31 +1159,31 @@ bool ChatHandler::HandleModifyGoldCommand(const char* args)
     if(gold < 0)
     {
         int32 newmoney = moneyuser + gold;
-        
-        sLog.outDetail("USER1: %i, ADD: %i, DIF: %i\n", moneyuser, gold, newmoney);
+        // INFO
+        Log::getSingleton( ).outDetail("USER1: %i, ADD: %i, DIF: %i\n", moneyuser, gold, newmoney);
         if(newmoney < 0 )
         {
-            
+            // send message to user
             sprintf((char*)buf,"You take all copper of %s.", chr->GetName());
             FillSystemMessageData(&data, m_session, buf);
             m_session->SendPacket( &data );
 
-            
+            // send message to player
             sprintf((char*)buf,"%s took you all of your copper.", m_session->GetPlayer()->GetName());
             FillSystemMessageData(&data, m_session, buf);
             chr->GetSession()->SendPacket(&data);
 
-            
+            // update value
             chr->SetUInt32Value( PLAYER_FIELD_COINAGE, 0);
         }
         else
         {
-            
+            // send message to user
             sprintf((char*)buf,"You take %i copper to %s.", abs(gold), chr->GetName());
             FillSystemMessageData(&data, m_session, buf);
             m_session->SendPacket( &data );
 
-            
+            // send message to player
             sprintf((char*)buf,"%s took %i copper from you.", m_session->GetPlayer()->GetName(), abs(gold));
             FillSystemMessageData(&data, m_session, buf);
             chr->GetSession()->SendPacket(&data);
@@ -1239,19 +1191,19 @@ bool ChatHandler::HandleModifyGoldCommand(const char* args)
     }
     else
     {
-        
+        // send message to user
         sprintf((char*)buf,"You give %i copper to %s.", gold, chr->GetName());
         FillSystemMessageData(&data, m_session, buf);
         m_session->SendPacket( &data );
 
-        
+        // send message to player
         sprintf((char*)buf,"%s gave you %i copper.", m_session->GetPlayer()->GetName(), gold);
         FillSystemMessageData(&data, m_session, buf);
         chr->GetSession()->SendPacket(&data);
     }
 
-    
-    sLog.outDetail("USER2: %i, ADD: %i, RESULT: %i\n", moneyuser, gold, moneyuser+gold);
+    // update value
+    Log::getSingleton( ).outDetail("USER2: %i, ADD: %i, RESULT: %i\n", moneyuser, gold, moneyuser+gold);
     chr->SetUInt32Value( PLAYER_FIELD_COINAGE, moneyuser+gold );
 
     return true;

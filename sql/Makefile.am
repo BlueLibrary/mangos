@@ -1,4 +1,5 @@
-# Copyright (C) 2005 MaNGOS <http://www.mangosproject.org/>
+# Copyright (C) 2004 Wow Daemon
+# Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,11 +19,107 @@
 
 # SQL files for MaNGOS database
 EXTRA_DIST = \
-	mangos.sql
+	accounts.sql \
+	areatriggers.sql \
+	auctioned_items.sql \
+	auctionhouse.sql \
+	bids.sql \
+	characters.sql \
+	char_actions.sql \
+	char_spells.sql \
+	commands.sql \
+	corpses.sql \
+	creatureloot.sql \
+	creature_names.sql \
+	creaturequestrelation.sql \
+	creatures_mov.sql \
+	creaturespells.sql \
+	creatures.sql \
+	creaturetemplate.sql \
+	firewall.sql \
+	gameobjects.sql \
+	gameobjecttemplate.sql \
+	gameobj_loot.sql \
+	graveyards.sql \
+	inventory.sql \
+	ipbantable.sql \
+	item_instances.sql \
+	items.sql \
+	mailed_items.sql \
+	mail.sql \
+	npc_gossip.sql \
+	npc_options.sql \
+	npc_text.sql \
+	playercreateinfo_actions.sql \
+	playercreateinfo_items.sql \
+	playercreateinfo_skills.sql \
+	playercreateinfo_spells.sql \
+	playercreateinfo.sql \
+	quests.sql \
+	queststatus.sql \
+	realms.sql \
+	social.sql \
+	spirithealers.sql \
+	talents.sql \
+	taxinodes.sql \
+	taxipathnodes.sql \
+	taxipath.sql \
+	teleport_cords.sql \
+	trainer.sql \
+	vendors.sql \
+	gmtickets.sql
 
 # SQL files for MaNGOS database to be installed to datadir
 pkgdata_DATA = \
-	mangos.sql
+	accounts.sql \
+	areatriggers.sql \
+	auctioned_items.sql \
+	auctionhouse.sql \
+	bids.sql \
+	characters.sql \
+	char_actions.sql \
+	char_spells.sql \
+	commands.sql \
+	corpses.sql \
+	creatureloot.sql \
+	creature_names.sql \
+	creaturequestrelation.sql \
+	creatures_mov.sql \
+	creaturespells.sql \
+	creatures.sql \
+	creaturetemplate.sql \
+	firewall.sql \
+	gameobjects.sql \
+	gameobjecttemplate.sql \
+	gameobj_loot.sql \
+	graveyards.sql \
+	inventory.sql \
+	ipbantable.sql \
+	item_instances.sql \
+	items.sql \
+	mailed_items.sql \
+	mail.sql \
+	npc_gossip.sql \
+	npc_options.sql \
+	npc_text.sql \
+	playercreateinfo_actions.sql \
+	playercreateinfo_items.sql \
+	playercreateinfo_skills.sql \
+	playercreateinfo_spells.sql \
+	playercreateinfo.sql \
+	quests.sql \
+	queststatus.sql \
+	realms.sql \
+	social.sql \
+	spirithealers.sql \
+	talents.sql \
+	taxinodes.sql \
+	taxipathnodes.sql \
+	taxipath.sql \
+	teleport_cords.sql \
+	trainer.sql \
+	vendors.sql \
+	gmtickets.sql
 
 # directory defines
 pkgdatadir = @MANGOSD_DATA@/sql

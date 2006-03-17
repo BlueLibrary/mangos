@@ -1,5 +1,7 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* Object.h
+ *
+ * Copyright (C) 2004 Wow Daemon
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,8 +24,7 @@
 #include "UpdateMask.h"
 #include "World.h"
 
-#include <set>
-
+// TODO: fix that type mess
 
 enum TYPE
 {
@@ -60,13 +61,16 @@ class WorldSession;
 class Player;
 class MapCell;
 
-
-
-
-
+//====================================================================
+//  Object
+//  Base object for every item, unit, player, corpse, container, etc
+//====================================================================
 class Object
 {
     public:
+#ifndef ENABLE_GRID_SYSTEM
+        typedef std::set<Object*> InRangeSet;
+#endif
         virtual ~Object ( );
 
         virtual void Update ( float time ) { }
@@ -75,28 +79,23 @@ class Object
         virtual void AddToWorld() { m_inWorld = true; }
         virtual void RemoveFromWorld() { m_inWorld = false; }
 
-        
+        // guid always comes first
         const uint64& GetGUID() const { return *((uint64*)m_uint32Values); }
+
+        // should be removed later
         const uint32& GetGUIDLow() const { return m_uint32Values[0]; }
         const uint32& GetGUIDHigh() const { return m_uint32Values[1]; }
-		
-		inline
-		uint32 GetEntry(){return m_uint32Values[OBJECT_FIELD_ENTRY];}
-        
-	        
+
+        const uint32 GetNameID() const { return m_nameId; }
+        void SetNameId(uint32 nameId) { m_nameId = nameId; }
+
+        // type
         const uint8& GetTypeId() const { return m_objectTypeId; }
-        bool isType(uint8 mask) const 
-		{ 
-			
-			if (mask & m_objectType)
-				return true;
+        bool isType(uint8 mask) const { return (mask & m_objectType); }
 
-			return false;
-		}
+        // void BuildUpdateMsgHeader( WorldPacket *data ) const;
 
-        
-
-        
+        //! This includes any nested objects we have, inventory for example.
         virtual void BuildCreateUpdateBlockForPlayer( UpdateData *data, Player *target ) const;
         void BuildValuesUpdateBlockForPlayer( UpdateData *data, Player *target ) const;
         void BuildOutOfRangeUpdateBlock( UpdateData *data ) const;
@@ -109,55 +108,67 @@ class Object
         bool IsBeingTeleported() { return mSemaphoreTeleport; }
         void SetSemaphoreTeleport(bool semphsetting) { mSemaphoreTeleport = semphsetting; }
 
-		void Relocate(const float &x, const float &y, const float &z, const float &orientation)
-		{
-		m_positionX = x;
-		m_positionY = y;
-		m_positionZ = z;
-		m_orientation = orientation;
-		}
+#ifndef ENABLE_GRID_SYSTEM
+        bool SetPosition( float newX, float newY, float newZ, float newOrientation, bool allowPorting = false );
+#endif
+
+    void Relocate(const float &x, const float &y, const float &z, const float &orientation)
+    {
+    m_positionX = x;
+    m_positionY = y;
+    m_positionZ = z;
+    m_orientation = orientation;
+    }
 
         const float& GetPositionX( ) const { return m_positionX; }
         const float& GetPositionY( ) const { return m_positionY; }
         const float& GetPositionZ( ) const { return m_positionZ; }
         const float& GetOrientation( ) const { return m_orientation; }
 
+#ifndef ENABLE_GRID_SYSTEM
+        //! Only for MapMgr use
+        MapCell* GetMapCell() const { return m_mapCell; }
+        //! Only for MapMgr use
+        void SetMapCell(MapCell* cell) { m_mapCell = cell; }
+#endif
+
         const uint32& GetTaximask( uint8 index ) const { return m_taximask[index]; }
         void SetTaximask( uint8 index, uint32 value ) { m_taximask[index] = value; }
 
         void SetMapId(uint32 newMap) { m_mapId = newMap; }
+        void SetZoneId(uint32 newZone) { m_zoneId = newZone; }
 
         const uint32& GetMapId( ) const { return m_mapId; }
+        const uint32& GetZoneId( ) const { return m_zoneId; }
 
-        uint32 GetZoneId( );
-		
+        //! Get uint32 property
         const uint32& GetUInt32Value( const uint16 &index ) const
         {
             ASSERT( index < m_valuesCount );
             return m_uint32Values[ index ];
         }
 
-        
+        //! Get uint64 property
         const uint64& GetUInt64Value( const uint16 &index ) const
         {
             ASSERT( index + 1 < m_valuesCount );
             return *((uint64*)&(m_uint32Values[ index ]));
         }
 
-        
+        //! Get float property
         const float& GetFloatValue( const uint16 &index ) const
         {
             ASSERT( index < m_valuesCount );
             return m_floatValues[ index ];
         }
 
-        
+        //! Set uint32 property
         void SetUInt32Value( const uint16 &index, const uint32 &value );
 
-        
+        //! Set uint64 property
         void SetUInt64Value( const uint16 &index, const uint64 &value );
 
-        
+        //! Set float property
         void SetFloatValue( const uint16 &index, const float &value );
 
         void SetFlag( const uint16 &index, uint32 newFlag );
@@ -176,7 +187,7 @@ class Object
             m_objectUpdated = false;
         }
 
-        float GetDistanceSq(const Object* obj) const
+        float GetDistanceSq(Object* obj) const
         {
             ASSERT(obj->GetMapId() == m_mapId);
 
@@ -197,38 +208,30 @@ class Object
             return (dx*dx) + (dy*dy);
         }
 
-		float GetFacing(Object* obj) const
-        {
-            if(!obj) return 0;
+#ifndef ENABLE_GRID_SYSTEM
+        // In-range object management, not sure if we need it
+        bool IsInRangeSet(Object* pObj) { return !(m_objectsInRange.find(pObj) == m_objectsInRange.end()); }
+        virtual void AddInRangeObject(Object* pObj) { m_objectsInRange.insert(pObj); }
+        virtual void RemoveInRangeObject(Object* pObj) { m_objectsInRange.erase(pObj); }
+        void ClearInRangeSet() { m_objectsInRange.clear(); }
 
-			float VictimX = obj->GetPositionX();
-			float VictimY = obj->GetPositionY();
-			float PlayerX = GetPositionX();
-			float PlayerY = GetPositionY();
-						
-			float dr1 = atan((VictimY - PlayerY) / (VictimX - PlayerX));
-			
-			if (VictimX >= PlayerX) 
-			{
-                dr1 += 1.57079633;	//rads (1/4)*2*PI
-			} 
-			else 
-			{
-				dr1 += 4.71238898; //rads (3/4)*2*PI
-			}
-            return (dr1 - GetOrientation());  //default return if in front of Victim 1.57079633 
-        }
-
+        inline InRangeSet::iterator GetInRangeSetBegin() { return m_objectsInRange.begin(); }
+        inline InRangeSet::iterator GetInRangeSetEnd() { return m_objectsInRange.end(); }
+#endif
         void SendMessageToSet(WorldPacket *data, bool self);
 
-        
+        //! Fill values with data from a space seperated string of uint32s.
         void LoadValues(const char* data);
         void LoadTaxiMask(const char* data);
 
         uint16 GetValuesCount() const { return m_valuesCount; }
 
-		void InitValues() { _InitValues(); }
-
+#ifndef ENABLE_GRID_SYSTEM
+        //! Add object to map
+        void PlaceOnMap();
+        //! Remove object from map
+        void RemoveFromMap();
+#endif
     protected:
         Object ( );
 
@@ -243,33 +246,41 @@ class Object
         }
 
         void _Create (uint32 guidlow, uint32 guidhigh);
-        void _Create (uint32 guidlow, uint32 guidhigh, uint32 mapid, float x, float y, float z, float ang, uint32 nameId);
+        void _Create (uint32 guidlow, uint32 guidhigh, uint32 mapid, float x, float y, float z, float ang);
 
-        
+        //! Mark values that need updating for specified player.
         virtual void _SetUpdateBits(UpdateMask *updateMask, Player *target) const;
-        
+        //! Mark values that player should get when he/she/it sees object for first time.
         virtual void _SetCreateBits(UpdateMask *updateMask, Player *target) const;
-        void _BuildMovementUpdate(ByteBuffer * data, uint8 flags, uint32 flags2 ) const;
+
+        void _BuildMovementUpdate( ByteBuffer *data, uint32 flags, uint32 flags2 ) const;
         void _BuildValuesUpdate( ByteBuffer *data, UpdateMask *updateMask  ) const;
 
-        
+        //! Types. Bitmasked together by subclasses.
         uint16 m_objectType;
-        
+        //! Type id.
         uint8 m_objectTypeId;
 
-     
-        
-        
-        uint32 m_mapId;
+        uint32 m_nameId;
 
-        
+        //! Zone id.
+        uint32 m_zoneId;
+        //! Continent/map id.
+        uint32 m_mapId;
+#ifndef ENABLE_GRID_SYSTEM
+        //! Map manager
+        MapMgr *m_mapMgr;
+        //! Current map cell
+        MapCell *m_mapCell;
+#endif
+        // TODO: use vectors here
         float m_positionX;
         float m_positionY;
         float m_positionZ;
         float m_orientation;
         uint32 m_taximask[8];
 
-    
+    //! It seem like these should be sent all object types.
         float m_walkSpeed;
         float m_runSpeed;
         float m_backWalkSpeed;
@@ -277,29 +288,36 @@ class Object
         float m_backSwimSpeed;
         float m_turnRate;
 
-        
+        // Semaphores - needed to forbid two operations on the same object at the same very time (may cause crashing\lack of data)
         bool mSemaphoreTeleport;
 
-        
+        //! TODO: Should be removed later.
         float m_minZ;
 
-        
+        //! Object properties.
         union
         {
             uint32 *m_uint32Values;
             float *m_floatValues;
         };
 
-        
+        //! Number of properties
         uint16 m_valuesCount;
 
-        
+        //! List of object properties that need updating.
         UpdateMask m_updateMask;
 
-        
+        //! True if object exists in world
         bool m_inWorld;
 
-        
+        //! True if object was updated
         bool m_objectUpdated;
+
+#ifndef ENABLE_GRID_SYSTEM
+        //! Set of Objects in range.
+        //! TODO: that functionality should be moved into WorldServer.
+        std::set<Object*> m_objectsInRange;
+#endif
+
 };
 #endif

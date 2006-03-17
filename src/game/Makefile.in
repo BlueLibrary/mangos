@@ -14,7 +14,8 @@
 
 @SET_MAKE@
 
-# Copyright (C) 2005 MaNGOS <http://www.mangosproject.org/>
+# Copyright (C) 2004 Wow Daemon
+# Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -66,42 +67,31 @@ CONFIG_CLEAN_FILES =
 LIBRARIES = $(noinst_LIBRARIES)
 ARFLAGS = cru
 libgame_a_AR = $(AR) $(ARFLAGS)
-libgame_a_LIBADD =
-am_libgame_a_OBJECTS = AggressorAI.$(OBJEXT) AuctionHouse.$(OBJEXT) \
-	Bag.$(OBJEXT) Base.$(OBJEXT) Channel.$(OBJEXT) \
+@NEWFRAMEWORK_TRUE@libgame_a_DEPENDENCIES = AggressorAI.cpp \
+@NEWFRAMEWORK_TRUE@	CreatureAI.cpp CreatureAISelector.cpp \
+@NEWFRAMEWORK_TRUE@	NullCreatureAI.cpp
+am_libgame_a_OBJECTS = AuctionHouse.$(OBJEXT) Channel.$(OBJEXT) \
 	ChannelHandler.$(OBJEXT) CharacterHandler.$(OBJEXT) \
 	Chat.$(OBJEXT) ChatHandler.$(OBJEXT) CombatHandler.$(OBJEXT) \
-	Container.$(OBJEXT) Corpse.$(OBJEXT) CreatureAI.$(OBJEXT) \
-	CreatureAIRegistry.$(OBJEXT) CreatureAISelector.$(OBJEXT) \
-	Creature.$(OBJEXT) debugcmds.$(OBJEXT) \
-	DestinationHolder.$(OBJEXT) DuelHandler.$(OBJEXT) \
-	DynamicObject.$(OBJEXT) EventSystem.$(OBJEXT) \
-	FlightMaster.$(OBJEXT) GameObject.$(OBJEXT) \
-	GossipDef.$(OBJEXT) GridNotifiers.$(OBJEXT) \
+	Corpse.$(OBJEXT) Creature.$(OBJEXT) debugcmds.$(OBJEXT) \
+	DuelHandler.$(OBJEXT) DynamicObject.$(OBJEXT) \
+	GameObject.$(OBJEXT) GridNotifiers.$(OBJEXT) \
 	GridStates.$(OBJEXT) Group.$(OBJEXT) GroupHandler.$(OBJEXT) \
-	GuardAI.$(OBJEXT) Guild.$(OBJEXT) GuildHandler.$(OBJEXT) \
-	IdleMovementGenerator.$(OBJEXT) Item.$(OBJEXT) \
-	ItemHandler.$(OBJEXT) Level0.$(OBJEXT) Level1.$(OBJEXT) \
-	Level2.$(OBJEXT) Level3.$(OBJEXT) LootMgr.$(OBJEXT) \
-	Mail.$(OBJEXT) Map.$(OBJEXT) MapManager.$(OBJEXT) \
-	MiscHandler.$(OBJEXT) MotionMaster.$(OBJEXT) \
-	MovementGenerator.$(OBJEXT) MovementHandler.$(OBJEXT) \
-	Mthread.$(OBJEXT) NPCHandler.$(OBJEXT) \
-	NullCreatureAI.$(OBJEXT) ObjectAccessor.$(OBJEXT) \
-	Object.$(OBJEXT) ObjectGridLoader.$(OBJEXT) \
-	ObjectMgr.$(OBJEXT) Opcodes.$(OBJEXT) PetHandler.$(OBJEXT) \
-	PetHandler.$(OBJEXT) Player.$(OBJEXT) QueryHandler.$(OBJEXT) \
-	QuestDef.$(OBJEXT) QuestHandler.$(OBJEXT) \
-	RandomMovementGenerator.$(OBJEXT) ReactorAI.$(OBJEXT) \
-	RedZoneDistrict.$(OBJEXT) ScriptCalls.$(OBJEXT) \
-	SkillHandler.$(OBJEXT) Spell.$(OBJEXT) SpellEffects.$(OBJEXT) \
-	SpellAuras.$(OBJEXT) SpellHandler.$(OBJEXT) \
-	TargetedMovementGenerator.$(OBJEXT) TaxiHandler.$(OBJEXT) \
-	TaxiMovementGenerator.$(OBJEXT) TradeHandler.$(OBJEXT) \
-	Unit.$(OBJEXT) UpdateData.$(OBJEXT) \
-	WaypointMovementGenerator.$(OBJEXT) World.$(OBJEXT) \
-	WorldLog.$(OBJEXT) WorldSession.$(OBJEXT) \
-	WorldSocket.$(OBJEXT) WorldSocketMgr.$(OBJEXT)
+	Item.$(OBJEXT) ItemHandler.$(OBJEXT) Level0.$(OBJEXT) \
+	Level1.$(OBJEXT) Level2.$(OBJEXT) Level3.$(OBJEXT) \
+	LootMgr.$(OBJEXT) Mail.$(OBJEXT) Map.$(OBJEXT) \
+	MapManager.$(OBJEXT) MapMgr.$(OBJEXT) MiscHandler.$(OBJEXT) \
+	MovementHandler.$(OBJEXT) NPCHandler.$(OBJEXT) \
+	ObjectAccessor.$(OBJEXT) Object.$(OBJEXT) \
+	ObjectGridLoader.$(OBJEXT) ObjectMgr.$(OBJEXT) \
+	Opcodes_1_7_x.$(OBJEXT) Opcodes_1_8_x.$(OBJEXT) \
+	Opcodes.$(OBJEXT) Player.$(OBJEXT) QueryHandler.$(OBJEXT) \
+	QuestHandler.$(OBJEXT) RedZoneDistrict.$(OBJEXT) \
+	SkillHandler.$(OBJEXT) Spell.$(OBJEXT) SpellHandler.$(OBJEXT) \
+	TaxiHandler.$(OBJEXT) TradeHandler.$(OBJEXT) Unit.$(OBJEXT) \
+	UpdateData_1_8_x.$(OBJEXT) UpdateData.$(OBJEXT) \
+	World.$(OBJEXT) WorldSession.$(OBJEXT) WorldSocket.$(OBJEXT) \
+	WorldSocketMgr.$(OBJEXT) ZoneMapper.$(OBJEXT)
 libgame_a_OBJECTS = $(am_libgame_a_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
@@ -173,10 +163,6 @@ LIBTOOL = @LIBTOOL@
 LINKER_OPTIONS = @LINKER_OPTIONS@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
-LTMS_AGE = @LTMS_AGE@
-LTMS_CURRENT = @LTMS_CURRENT@
-LTMS_RELEASE = @LTMS_RELEASE@
-LTMS_REVISION = @LTMS_REVISION@
 LT_AGE = @LT_AGE@
 LT_CURRENT = @LT_CURRENT@
 LT_RELEASE = @LT_RELEASE@
@@ -186,10 +172,9 @@ MAINTAINER_MODE_FALSE = @MAINTAINER_MODE_FALSE@
 MAINTAINER_MODE_TRUE = @MAINTAINER_MODE_TRUE@
 MAKEINFO = @MAKEINFO@
 MANGOSD_CONFIG = @MANGOSD_CONFIG@
-MANGOSD_CONFIGDIR = @MANGOSD_CONFIGDIR@
 MANGOSD_DATA = @MANGOSD_DATA@
-MANGOSD_ENABLE_CLI = @MANGOSD_ENABLE_CLI@
-MANGOSD_ENABLE_RA = @MANGOSD_ENABLE_RA@
+NEWFRAMEWORK_FALSE = @NEWFRAMEWORK_FALSE@
+NEWFRAMEWORK_TRUE = @NEWFRAMEWORK_TRUE@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
@@ -203,12 +188,9 @@ SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
-WITH_APIDOCS = @WITH_APIDOCS@
-WITH_APIDOCS_TARGET = @WITH_APIDOCS_TARGET@
 WITH_PYTHON_SUBDIR = @WITH_PYTHON_SUBDIR@
 WITH_PYTHON_SUBPACKAGE = @WITH_PYTHON_SUBPACKAGE@
 WITH_PYTHON_VERSION = @WITH_PYTHON_VERSION@
-__DOXYGEN = @__DOXYGEN@
 __PYTHON = @__PYTHON@
 ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
@@ -255,38 +237,23 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 noinst_LIBRARIES = libgame.a
 libgame_a_SOURCES = \
-	AggressorAI.cpp \
 	AuctionHouse.cpp \
-	Bag.cpp \
-	Base.cpp \
 	Channel.cpp \
 	ChannelHandler.cpp \
 	CharacterHandler.cpp \
 	Chat.cpp \
 	ChatHandler.cpp \
 	CombatHandler.cpp \
-	Container.cpp \
 	Corpse.cpp \
-	CreatureAI.cpp \
-	CreatureAIRegistry.cpp \
-	CreatureAISelector.cpp \
 	Creature.cpp \
 	debugcmds.cpp \
-	DestinationHolder.cpp \
 	DuelHandler.cpp \
 	DynamicObject.cpp \
-	EventSystem.cpp \
-	FlightMaster.cpp \
 	GameObject.cpp \
-	GossipDef.cpp \
 	GridNotifiers.cpp \
 	GridStates.cpp \
 	Group.cpp \
 	GroupHandler.cpp \
-	GuardAI.cpp \
-	Guild.cpp \
-	GuildHandler.cpp \
-	IdleMovementGenerator.cpp \
 	Item.cpp \
 	ItemHandler.cpp \
 	Level0.cpp \
@@ -297,115 +264,84 @@ libgame_a_SOURCES = \
 	Mail.cpp \
 	Map.cpp \
 	MapManager.cpp \
+	MapMgr.cpp \
 	MiscHandler.cpp \
-	MotionMaster.cpp \
-	MovementGenerator.cpp \
 	MovementHandler.cpp \
-	Mthread.cpp \
 	NPCHandler.cpp \
-	NullCreatureAI.cpp \
 	ObjectAccessor.cpp \
 	Object.cpp \
 	ObjectGridLoader.cpp \
 	ObjectMgr.cpp \
+	Opcodes_1_7_x.cpp \
+	Opcodes_1_8_x.cpp \
 	Opcodes.cpp \
-	PetHandler.cpp \
-	PetHandler.cpp \
 	Player.cpp \
 	QueryHandler.cpp \
-	QuestDef.cpp \
 	QuestHandler.cpp \
-	RandomMovementGenerator.cpp \
-	ReactorAI.cpp \
 	RedZoneDistrict.cpp \
-	ScriptCalls.cpp \
 	SkillHandler.cpp \
 	Spell.cpp \
-	SpellEffects.cpp \
-	SpellAuras.cpp \
 	SpellHandler.cpp \
-	TargetedMovementGenerator.cpp \
 	TaxiHandler.cpp \
-	TaxiMovementGenerator.cpp \
 	TradeHandler.cpp \
 	Unit.cpp \
+	UpdateData_1_8_x.cpp \
 	UpdateData.cpp \
-	WaypointMovementGenerator.cpp \
 	World.cpp \
-	WorldLog.cpp \
 	WorldSession.cpp \
 	WorldSocket.cpp \
 	WorldSocketMgr.cpp \
-	AggressorAI.h \
-	AnimalRandomMovementGenerator.h \
-	Bag.h \
-	Base.h \
-	Cell.h \
-	CellImpl.h \
+	ZoneMapper.cpp \
+	Affect.h \
 	Channel.h \
 	ChannelMgr.h \
 	Chat.h \
-	Container.h \
 	Corpse.h \
-	CreatureAI.h \
-	CreatureAIImpl.h \
-	CreatureAIRegistry.h \
-	CreatureAISelector.h \
 	Creature.h \
 	DynamicObject.h \
-	EventSystem.h \
-	FactionTemplateResolver.h \
 	GameObject.h \
-	GossipDef.h \
-	GridDefines.h \
 	GridNotifiers.h \
-	GridNotifiersImpl.h \
-	GridStates.h \
 	Group.h \
-	GuardAI.h \
-	Guild.h \
-	HateMatrix.h \
-	IdleMovementGenerator.h \
 	Item.h \
 	ItemPrototype.h \
 	LootMgr.h \
 	Mail.h \
+	MapCell.h \
 	Map.h \
-	MapManager.h \
-	MiscHandler.h \
-	MotionMaster.h \
-	MovementGenerator.h \
-	Mthread.h \
+	MapMgr.h \
 	NameTables.h \
 	NPCHandler.h \
-	NullCreatureAI.h \
-	ObjectAccessor.h \
 	ObjectGridLoader.h \
 	Object.h \
 	ObjectMgr.h \
+	Opcodes_1_7_x.h \
+	Opcodes_1_8_x.h \
 	Opcodes.h \
 	Path.h \
 	Player.h \
-	QuestDef.h \
-	RandomMovementGenerator.h \
-	ReactorAI.h \
-	RedZoneDistrict.h \
-	ScriptCalls.h \
-	SharedDefines.h \
+	Quest.h \
 	Spell.h \
-	SpellAuras.h \
+	SpellPrototype.h \
 	Stats.h \
-	TargetedMovementGenerator.h \
-	TaxiMovementGenerator.h \
 	Unit.h \
+	UpdateData_1_8_x.h \
 	UpdateData.h \
+	UpdateFields_1_7_x.h \
+	UpdateFields_1_8_x.h \
 	UpdateFields.h \
+	UpdateMask_1_8_x.h \
 	UpdateMask.h \
-	Utilities.h \
 	World.h \
 	WorldSession.h \
 	WorldSocket.h \
-	WorldSocketMgr.h
+	WorldSocketMgr.h \
+	ZoneMapper.h
+
+@NEWFRAMEWORK_TRUE@libgame_a_LIBADD = \
+@NEWFRAMEWORK_TRUE@	AggressorAI.cpp \
+@NEWFRAMEWORK_TRUE@	CreatureAI.cpp \
+@NEWFRAMEWORK_TRUE@	CreatureAISelector.cpp \
+@NEWFRAMEWORK_TRUE@	NullCreatureAI.cpp
 
 all: all-am
 
@@ -454,37 +390,22 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AggressorAI.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/AuctionHouse.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Bag.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Base.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Channel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ChannelHandler.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CharacterHandler.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Chat.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ChatHandler.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CombatHandler.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Container.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Corpse.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Creature.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CreatureAI.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CreatureAIRegistry.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CreatureAISelector.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DestinationHolder.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DuelHandler.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/DynamicObject.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/EventSystem.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/FlightMaster.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/GameObject.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/GossipDef.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/GridNotifiers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/GridStates.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Group.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/GroupHandler.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/GuardAI.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Guild.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/GuildHandler.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/IdleMovementGenerator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Item.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ItemHandler.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Level0.Po@am__quote@
@@ -495,44 +416,34 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Mail.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Map.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MapManager.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MapMgr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MiscHandler.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MotionMaster.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MovementGenerator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/MovementHandler.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Mthread.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/NPCHandler.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/NullCreatureAI.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Object.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ObjectAccessor.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ObjectGridLoader.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ObjectMgr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Opcodes.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/PetHandler.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Opcodes_1_7_x.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Opcodes_1_8_x.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Player.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QueryHandler.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QuestDef.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/QuestHandler.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RandomMovementGenerator.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ReactorAI.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/RedZoneDistrict.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ScriptCalls.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SkillHandler.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Spell.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SpellAuras.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SpellEffects.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/SpellHandler.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TargetedMovementGenerator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TaxiHandler.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TaxiMovementGenerator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/TradeHandler.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Unit.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/UpdateData.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/WaypointMovementGenerator.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/UpdateData_1_8_x.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/World.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/WorldLog.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/WorldSession.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/WorldSocket.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/WorldSocketMgr.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ZoneMapper.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/debugcmds.Po@am__quote@
 
 .cpp.o:

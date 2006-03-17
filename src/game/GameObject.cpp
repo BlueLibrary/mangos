@@ -1,5 +1,7 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* GameObject.cpp
+ *
+ * Copyright (C) 2004 Wow Daemon
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,9 +26,12 @@
 #include "WorldPacket.h"
 #include "WorldSession.h"
 #include "World.h"
+#include "LootMgr.h"
 #include "Database/DatabaseEnv.h"
-#include "MapManager.h"
 
+#ifdef ENABLE_GRID_SYSTEM
+#include "MapManager.h"
+#endif
 
 GameObject::GameObject() : Object()
 {
@@ -35,53 +40,48 @@ GameObject::GameObject() : Object()
 
     m_valuesCount = GAMEOBJECT_END;
     m_RespawnTimer = 0;
-	lootid=0;
 }
 
-void GameObject::Create(uint32 guidlow, uint32 name_id, uint32 mapid, float x, float y, float z, float ang, float rotation0, float rotation1, float rotation2, float rotation3)
+void GameObject::Create(uint32 guidlow, uint32 name_id, uint32 mapid, float x, float y, float z, float ang)
 {
-	GameObjectInfo*  goinfo = objmgr.GetGameObjectInfo(name_id);
-    if(!goinfo)return;
-    Object::_Create(guidlow, HIGHGUID_GAMEOBJECT);
+    const GameObjectInfo &info(*(objmgr.GetGameObjectInfo(name_id)));
+    Object::_Create(guidlow, HIGHGUID_GAMEOBJECT, mapid, x, y, z, ang);
     SetUInt32Value(GAMEOBJECT_TIMESTAMP, (uint32)time(NULL));
     SetFloatValue(GAMEOBJECT_POS_X, x);
     SetFloatValue(GAMEOBJECT_POS_Y, y);
     SetFloatValue(GAMEOBJECT_POS_Z, z);
-	SetFloatValue(GAMEOBJECT_FACING, ang); //this is not facing angle
-    SetFloatValue(OBJECT_FIELD_SCALE_X, goinfo->size);
-    
-    SetUInt32Value(GAMEOBJECT_FACTION, goinfo->faction);
-    SetUInt32Value(GAMEOBJECT_FLAGS, goinfo->flags);
-
-	SetUInt32Value (OBJECT_FIELD_ENTRY, goinfo->id);
-	
-	
-	
-	SetUInt32Value (GAMEOBJECT_DISPLAYID, goinfo->displayId);
-
-    
-	SetUInt32Value (GAMEOBJECT_STATE, 1);
-	SetUInt32Value (GAMEOBJECT_TYPE_ID, goinfo->type);
-    
-    
-	SetFloatValue (GAMEOBJECT_ROTATION, rotation0);
-	SetFloatValue (GAMEOBJECT_ROTATION+1, rotation1);
-	SetFloatValue (GAMEOBJECT_ROTATION+2, rotation2);
-	SetFloatValue (GAMEOBJECT_ROTATION+3, rotation3);
-
+    SetFloatValue(GAMEOBJECT_FACING, ang);
+    SetFloatValue(OBJECT_FIELD_SCALE_X, info.size);
+    SetUInt32Value(GAMEOBJECT_STATE, 1);
+    SetUInt32Value(GAMEOBJECT_FACTION, info.faction);
+    SetUInt32Value(GAMEOBJECT_FLAGS, info.flags);
 }
 
 
 void GameObject::Update(uint32 p_time)
 {
-  
+/*
+    if (m_nextThinkTime > time(NULL))
+        return; // Think once every 5 secs only for GameObject updates...
+
+    m_nextThinkTime = time(NULL) + 5;
+*/
+
+    WorldPacket data;
+    // Respawn Timer
     if(m_RespawnTimer > 0)
     {
         if(m_RespawnTimer > p_time)
             m_RespawnTimer -= p_time;
         else
         {
-			WorldPacket data;
+            if(!this->IsInWorld())
+            {
+#ifndef ENABLE_GRID_SYSTEM
+                PlaceOnMap();
+#endif
+            }
+
             data.Initialize(SMSG_GAMEOBJECT_SPAWN_ANIM);
             data << GetGUID();
             SendMessageToSet(&data,true);
@@ -89,47 +89,103 @@ void GameObject::Update(uint32 p_time)
             m_RespawnTimer = 0;
         }
     }
-
-	
-	
 }
 
-
-void GameObject::generateLoot()
+#ifndef ENABLE_GRID_SYSTEM
+void GameObject::Despawn(uint32 time)
 {
-	if(lootid)
-		FillLoot(&loot,lootid);
+    WorldPacket data;
+    RemoveFromMap();
+
+    data.Initialize(SMSG_GAMEOBJECT_DESPAWN_ANIM);
+    data << GetGUID();
+    SendMessageToSet(&data,true);
+
+    m_RespawnTimer = time;
+}
+#endif
+
+void GameObject::_generateLoot(Player &player, std::vector<uint32> &item_id, std::vector<uint32> &item_count, std::vector<uint32> &display_ids, uint32 &gold) const
+{
+
+    // this is not ready yet.. still need to solve the data first
+    return;
+    gold = 0;
+    
+    // Generate max value
+    const LootMgr::LootList &loot_list(LootMgr::getSingleton().getGameObjectsLootList(GetUInt32Value(OBJECT_FIELD_ENTRY)));
+    bool not_done = (loot_list.size());
+    std::vector<short> indexes(loot_list.size());
+    std::generate(indexes.begin(), indexes.end(), SequenceGen());
+    sLog.outDebug("Number of items to get %d.", loot_list.size());
+    
+    while (not_done)
+    {
+    // generate the item you need to pick
+    int idx = rand()%indexes.size();
+    const LootItem &item(loot_list[indexes[idx]]);
+    indexes.erase(indexes.begin()+idx);
+    ItemPrototype *pCurItem = objmgr.GetItemPrototype(item.itemid);
+    
+    if( pCurItem != NULL && item.chance >= (rand()%100) )
+    {
+        item_id.push_back(item.itemid);
+        item_count.push_back(1);
+        display_ids.push_back(pCurItem->DisplayInfoID);
+    }
+    
+    not_done = indexes.size();
+    }
 }
 
+bool GameObject::FillLoot(Player &player, WorldPacket *data)
+{
+    std::vector<uint32> item_id, item_count, display_ids;
+    uint32 gold;
 
+    if( GetUInt32Value(GAMEOBJECT_FACTION) == 94 )
+    {
+    _generateLoot(player, item_id, item_count, display_ids, gold);
+    *data << GUID_LOPART(this->GetGUID());
+    *data << uint8(0x01);
+    *data << uint32(gold);                  // Loot Money
+    *data << (uint8)item_id.size();        // item Count
+    
+    for(uint8 i = 0; i < item_id.size(); i++)
+    {
+        *data << uint8(i+1);  // slot, must be greater than zero
+        *data << (uint32)item_id[i];    // item id
+        *data << uint32(item_count[i]); // quantity
+        *data << uint32(display_ids[i]); // iconid
+        *data << uint32(0) << uint32(0) << uint8(0);
+    }
+    
+    return true;
+    }
+
+    return false;
+}
 
 void GameObject::SaveToDB()
 {
     std::stringstream ss;
-    sDatabase.PExecute("DELETE FROM gameobjects WHERE guid = '%u'", GetGUIDLow());
+    ss << "DELETE FROM gameobjects WHERE id=" << GetGUIDLow();
+    sDatabase.Execute(ss.str().c_str());
 
-	
-	const GameObjectInfo *goI = GetGOInfo();
-	
-	if (!goI)
-		return;
-
-    ss << "INSERT INTO gameobjects VALUES ( "
+    ss.rdbuf()->str("");
+    ss << "INSERT INTO gameobjects (id, zoneid, mapId, positionX, positionY, positionZ, orientation, data) VALUES ( "
         << GetGUIDLow() << ", "
-		<< GetUInt32Value (OBJECT_FIELD_ENTRY) << ", "
+        << GetZoneId() << ", "
         << GetMapId() << ", "
-		<< GetFloatValue(GAMEOBJECT_POS_X) << ", "
-		<< GetFloatValue(GAMEOBJECT_POS_Y) << ", "
-		<< GetFloatValue(GAMEOBJECT_POS_Z) << ", "
-		<< GetFloatValue(GAMEOBJECT_FACING) << ", "
-		<< GetFloatValue(GAMEOBJECT_ROTATION) << ", "
-		<< GetFloatValue(GAMEOBJECT_ROTATION+1) << ", "
-		<< GetFloatValue(GAMEOBJECT_ROTATION+2) << ", "
-		<< GetFloatValue(GAMEOBJECT_ROTATION+3) << ", "
-		<< lootid <<", "
-		<< m_RespawnTimer <<")";
+        << m_positionX << ", "
+        << m_positionY << ", "
+        << m_positionZ << ", "
+        << m_orientation << ", '";
 
+    for( uint16 index = 0; index < m_valuesCount; index ++ )
+        ss << GetUInt32Value(index) << " ";
 
+    ss << "' )";
 
     sDatabase.Execute( ss.str( ).c_str( ) );
 }
@@ -137,38 +193,33 @@ void GameObject::SaveToDB()
 
 void GameObject::LoadFromDB(uint32 guid)
 {
-    float rotation0, rotation1, rotation2, rotation3;
+    std::stringstream ss;
+    ss << "SELECT id,positionX,positionY,positionZ,orientation,zoneId,mapId,data,name_id FROM gameobjects WHERE id=" << guid;
 
-    QueryResult *result = sDatabase.PQuery("SELECT * FROM gameobjects WHERE guid = '%u';", guid);
+    std::auto_ptr<QueryResult> result(sDatabase.Query( ss.str().c_str() ));
 
-    if( ! result )
+    if( result.get() ==  NULL)
     return;
 
     Field *fields = result->Fetch();
-	uint32 entry = fields[1].GetUInt32();
-	uint32 map_id=fields[2].GetUInt32();
-	float x = fields[3].GetFloat();
-    float y = fields[4].GetFloat();
-    float z = fields[5].GetFloat();
-    float ang = fields[6].GetFloat();
-   
-    rotation0 = fields[7].GetFloat();
-    rotation1 = fields[8].GetFloat();
-    rotation2 = fields[9].GetFloat();
-    rotation3 = fields[10].GetFloat();
-	lootid=fields[11].GetUInt32();
-	m_RespawnTimer=fields[11].GetUInt32();
-    Create(guid,entry, map_id, x, y, z, ang, rotation0, rotation1, rotation2, rotation3);  
-	delete result;
+    uint32 id= fields[0].GetUInt32();
+    float x = fields[1].GetFloat();
+    float y = fields[2].GetFloat();
+    float z = fields[3].GetFloat();
+    float ang = fields[4].GetFloat();
+    m_zoneId = fields[5].GetUInt32();
+    uint32 map_id = fields[6].GetUInt32();
+    uint32 name_id = fields[8].GetUInt32();
+
+    LoadValues(fields[7].GetString());
+    Create(id, name_id, map_id, x, y, z, ang);       
 }
 
 
 void GameObject::DeleteFromDB()
 {
-    sDatabase.PExecute("DELETE FROM gameobjects WHERE guid = '%u'", GetGUIDLow());
-}
+    char sql[256];
 
-GameObjectInfo *GameObject::GetGOInfo()
-{ 
-	return objmgr.GetGameObjectInfo(GetUInt32Value (OBJECT_FIELD_ENTRY));
-}  
+    sprintf(sql, "DELETE FROM gameobjects WHERE id=%u", GetGUIDLow());
+    sDatabase.Execute(sql);
+}

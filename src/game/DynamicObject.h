@@ -1,5 +1,7 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* DynamicObject.h
+ *
+ * Copyright (C) 2004 Wow Daemon
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +18,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+
 #ifndef MANGOSSERVER_DYNAMICOBJECT_H
 #define MANGOSSERVER_DYNAMICOBJECT_H
 
@@ -30,22 +33,18 @@ class DynamicObject : public Object
 
         void Create( uint32 guidlow, Unit * caster, SpellEntry * spell, float x, float y, float z, uint32 duration );
         void Update(uint32 p_time);
+#ifndef ENABLE_GRID_SYSTEM
+        void DealDamage();
+#else
         void DealWithSpellDamage(Player &);
         void DealWithSpellDamage(Unit &);
-		void Delete();
-
+#endif
         void PeriodicTriggerDamage(uint32 damage, uint32 tick, float radius)
         {
             m_PeriodicDamage = damage;
             m_PeriodicDamageTick = tick;
             m_PeriodicDamageCurrentTick = tick;
             m_PeriodicDamageRadius = radius;
-			
-            m_DamageCurTimes = 0;
-			if(tick != 0 )
-			    m_DamageMaxTimes = m_aliveDuration / tick;
-			else
-			    m_DamageCurTimes = 0;
         }
 
     protected:
@@ -64,13 +63,5 @@ class DynamicObject : public Object
         uint32 m_aliveDuration;
 
         time_t m_nextThinkTime;
-        
-		std::list<Unit*> UnitList;
-		bool deleteThis;
-		uint32 m_DamageMaxTimes;
-        uint32 m_DamageCurTimes;
-
 };
-
-
 #endif

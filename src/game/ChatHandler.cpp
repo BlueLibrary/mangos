@@ -1,5 +1,7 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* ChatHandler.cpp
+ *
+ * Copyright (C) 2004 Wow Daemon
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,15 +29,17 @@
 #include "Database/DatabaseEnv.h"
 #include "ChannelMgr.h"
 #include "Group.h"
-#include "Guild.h"
+
+#ifdef ENABLE_GRID_SYSTEM
 #include "MapManager.h"
 #include "ObjectAccessor.h"
+#endif
 
 void WorldSession::HandleMessagechatOpcode( WorldPacket & recv_data )
 {
     WorldPacket data;
 
-    sLog.outDebug("CHAT: packet received");
+    Log::getSingleton().outDebug("CHAT: packet received");
 
     uint32 type;
     uint32 lang;
@@ -72,15 +76,16 @@ void WorldSession::HandleMessagechatOpcode( WorldPacket & recv_data )
             if(!player)
             {
                 data.clear();
-                msg = "Player ";
+                msg = "Player '";
                 msg += to.c_str();
-                msg += " is not online (Names are case sensitive)";
+                msg += "' is not online (Names are case sensitive)";
                 sChatHandler.FillSystemMessageData( &data, this ,msg.c_str() );
                 SendPacket(&data);
                 break;
             }
             player->GetSession()->SendPacket(&data);
-		sChatHandler.FillMessageData(&data,this,CHAT_MSG_WHISPER_INFORM,LANG_UNIVERSAL,(( char *)((uint32)player->GetGUID() )),msg.c_str() );
+            // Sent the to Users id as the channel, this should be fine as it's not used for wisper
+            sChatHandler.FillMessageData(&data, this, CHAT_MSG_WHISPER_INFORM, LANG_UNIVERSAL, ((char *)(player->GetGUID())), msg.c_str() );
             SendPacket(&data);
         } break;
         case CHAT_MSG_YELL:
@@ -110,42 +115,8 @@ void WorldSession::HandleMessagechatOpcode( WorldPacket & recv_data )
                     group->BroadcastToGroup(this, msg);
             }
         }
-        case CHAT_MSG_GUILD:
-        {
-        	  std::string msg = "";
-            recv_data >> msg;
-
-            if (sChatHandler.ParseCommands(msg.c_str(), this) > 0)
-                break;
-
-            if (GetPlayer()->GetGuildId())
-            {
-                Guild *guild = objmgr.GetGuildById(GetPlayer()->GetGuildId());
-                if (guild)
-                    guild->BroadcastToGuild(this, msg);
-            }
-        	
-        	break;
-        }
-        case CHAT_MSG_OFFICER:
-        {
-        	std::string msg = "";
-            recv_data >> msg;
-
-            if (sChatHandler.ParseCommands(msg.c_str(), this) > 0)
-                break;
-
-            if (GetPlayer()->GetGuildId())
-            {
-                Guild *guild = objmgr.GetGuildById(GetPlayer()->GetGuildId());
-                if (guild)
-                    guild->BroadcastToOfficers(this, msg);
-            }
-        	break;
-        }
-        	
         default:
-            sLog.outError("CHAT: unknown msg type %u, lang: %u", type, lang);
+            Log::getSingleton().outError("CHAT: unknown msg type %u, lang: %u", type, lang);
     }
 }
 
@@ -163,26 +134,43 @@ void WorldSession::HandleTextEmoteOpcode( WorldPacket & recv_data )
     const char *nam = 0;
     uint32 namlen = 1;
 
-    
+#ifndef ENABLE_GRID_SYSTEM
+    Creature *pCreature = objmgr.GetObject<Creature>( guid );
+    if(pCreature)
+    {
+        nam = pCreature->GetName();
+        namlen = strlen( nam ) + 1;
+    }
+    else
+    {
+        Player *pChar = objmgr.GetObject<Player>( guid );
+        if(pChar)
+        {
+            nam = pChar->GetName();
+            namlen = strlen(nam) + 1;
+        }
+    }
+#else
+    // gets the name of either a unit or a player.. same thing
     Unit* unit = ObjectAccessor::Instance().GetUnit(*_player, guid);
     Creature *pCreature = dynamic_cast<Creature *>(unit);
     if( pCreature != NULL )
     {
-        nam = pCreature->GetCreatureInfo()->Name;
+        nam = pCreature->GetName();
         namlen = strlen(nam) + 1;
     }
     {
-	Player *pChar = dynamic_cast<Player *>(unit);
-	if( pChar != NULL )
-	{
-	    nam = pChar->GetName();
-	    namlen = strlen(nam) + 1;
-	}
+    Player *pChar = dynamic_cast<Player *>(unit);
+    if( pChar != NULL )
+    {
+        nam = pChar->GetName();
+        namlen = strlen(nam) + 1;
     }
-
+    }
+#endif
 
     emoteentry *em = sEmoteStore.LookupEntry(text_emote);
-    if (em)                                       
+    if (em)                                       // server crashes with some emotes, that arent in dbc
     {
         uint32 emote_anim = em->textid;
 
@@ -195,7 +183,7 @@ void WorldSession::HandleTextEmoteOpcode( WorldPacket & recv_data )
         data.Initialize(SMSG_TEXT_EMOTE);
         data << GetPlayer()->GetGUID();
         data << (uint32)text_emote;
-        data << (uint32)0xFF;                     
+        data << (uint32)0xFF;                     // dunno whats that- send by server when using emote w/o target
         data << (uint32)namlen;
         if( namlen > 1 )
         {
@@ -210,20 +198,4 @@ void WorldSession::HandleTextEmoteOpcode( WorldPacket & recv_data )
         SendPacket( &data );
         sWorld.SendGlobalMessage(&data, this);
     }
-}
-
-void WorldSession::HandleChatIgnoredOpcode(WorldPacket& recv_data )
-{
-	WorldPacket data;
-    uint64 iguid;
-	std::string msg = "";
-	sLog.outDebug("WORLD: Received CMSG_CHAT_IGNORED");
-
-    recv_data >> iguid;	
-
-	Player *player = objmgr.GetPlayer(iguid);
-	objmgr.GetPlayerNameByGUID(GetPlayer()->GetGUID(),msg);
-	msg += " is ignoring you!";
-	sChatHandler.FillSystemMessageData( &data, player->GetSession() ,msg.c_str() );
-	player->GetSession()->SendPacket(&data);
 }

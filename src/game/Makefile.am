@@ -1,4 +1,5 @@
-# Copyright (C) 2005 MaNGOS <http://www.mangosproject.org/>
+# Copyright (C) 2004 Wow Daemon
+# Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,38 +20,23 @@ INCLUDES += -I$(srcdir) -I$(srcdir)/../../dep/include  -I$(srcdir)/../shared -I$
 noinst_LIBRARIES = libgame.a
 
 libgame_a_SOURCES = \
-	AggressorAI.cpp \
 	AuctionHouse.cpp \
-	Bag.cpp \
-	Base.cpp \
 	Channel.cpp \
 	ChannelHandler.cpp \
 	CharacterHandler.cpp \
 	Chat.cpp \
 	ChatHandler.cpp \
 	CombatHandler.cpp \
-	Container.cpp \
 	Corpse.cpp \
-	CreatureAI.cpp \
-	CreatureAIRegistry.cpp \
-	CreatureAISelector.cpp \
 	Creature.cpp \
 	debugcmds.cpp \
-	DestinationHolder.cpp \
 	DuelHandler.cpp \
 	DynamicObject.cpp \
-	EventSystem.cpp \
-	FlightMaster.cpp \
 	GameObject.cpp \
-	GossipDef.cpp \
 	GridNotifiers.cpp \
 	GridStates.cpp \
 	Group.cpp \
 	GroupHandler.cpp \
-	GuardAI.cpp \
-	Guild.cpp \
-	GuildHandler.cpp \
-	IdleMovementGenerator.cpp \
 	Item.cpp \
 	ItemHandler.cpp \
 	Level0.cpp \
@@ -61,112 +47,83 @@ libgame_a_SOURCES = \
 	Mail.cpp \
 	Map.cpp \
 	MapManager.cpp \
+	MapMgr.cpp \
 	MiscHandler.cpp \
-	MotionMaster.cpp \
-	MovementGenerator.cpp \
 	MovementHandler.cpp \
-	Mthread.cpp \
 	NPCHandler.cpp \
-	NullCreatureAI.cpp \
 	ObjectAccessor.cpp \
 	Object.cpp \
 	ObjectGridLoader.cpp \
 	ObjectMgr.cpp \
+	Opcodes_1_7_x.cpp \
+	Opcodes_1_8_x.cpp \
 	Opcodes.cpp \
-	PetHandler.cpp \
-	PetHandler.cpp \
 	Player.cpp \
 	QueryHandler.cpp \
-	QuestDef.cpp \
 	QuestHandler.cpp \
-	RandomMovementGenerator.cpp \
-	ReactorAI.cpp \
 	RedZoneDistrict.cpp \
-	ScriptCalls.cpp \
 	SkillHandler.cpp \
 	Spell.cpp \
-	SpellEffects.cpp \
-	SpellAuras.cpp \
 	SpellHandler.cpp \
-	TargetedMovementGenerator.cpp \
 	TaxiHandler.cpp \
-	TaxiMovementGenerator.cpp \
 	TradeHandler.cpp \
 	Unit.cpp \
+	UpdateData_1_8_x.cpp \
 	UpdateData.cpp \
-	WaypointMovementGenerator.cpp \
 	World.cpp \
-	WorldLog.cpp \
 	WorldSession.cpp \
 	WorldSocket.cpp \
 	WorldSocketMgr.cpp \
-	AggressorAI.h \
-	AnimalRandomMovementGenerator.h \
-	Bag.h \
-	Base.h \
-	Cell.h \
-	CellImpl.h \
+	ZoneMapper.cpp \
+	Affect.h \
 	Channel.h \
 	ChannelMgr.h \
 	Chat.h \
-	Container.h \
 	Corpse.h \
-	CreatureAI.h \
-	CreatureAIImpl.h \
-	CreatureAIRegistry.h \
-	CreatureAISelector.h \
 	Creature.h \
 	DynamicObject.h \
-	EventSystem.h \
-	FactionTemplateResolver.h \
 	GameObject.h \
-	GossipDef.h \
-	GridDefines.h \
 	GridNotifiers.h \
-	GridNotifiersImpl.h \
-	GridStates.h \
 	Group.h \
-	GuardAI.h \
-	Guild.h \
-	HateMatrix.h \
-	IdleMovementGenerator.h \
 	Item.h \
 	ItemPrototype.h \
 	LootMgr.h \
 	Mail.h \
+	MapCell.h \
 	Map.h \
-	MapManager.h \
-	MiscHandler.h \
-	MotionMaster.h \
-	MovementGenerator.h \
-	Mthread.h \
+	MapMgr.h \
 	NameTables.h \
 	NPCHandler.h \
-	NullCreatureAI.h \
-	ObjectAccessor.h \
 	ObjectGridLoader.h \
 	Object.h \
 	ObjectMgr.h \
+	Opcodes_1_7_x.h \
+	Opcodes_1_8_x.h \
 	Opcodes.h \
 	Path.h \
 	Player.h \
-	QuestDef.h \
-	RandomMovementGenerator.h \
-	ReactorAI.h \
-	RedZoneDistrict.h \
-	ScriptCalls.h \
-	SharedDefines.h \
+	Quest.h \
 	Spell.h \
-	SpellAuras.h \
+	SpellPrototype.h \
 	Stats.h \
-	TargetedMovementGenerator.h \
-	TaxiMovementGenerator.h \
 	Unit.h \
+	UpdateData_1_8_x.h \
 	UpdateData.h \
+	UpdateFields_1_7_x.h \
+	UpdateFields_1_8_x.h \
 	UpdateFields.h \
+	UpdateMask_1_8_x.h \
 	UpdateMask.h \
-	Utilities.h \
 	World.h \
 	WorldSession.h \
 	WorldSocket.h \
-	WorldSocketMgr.h
+	WorldSocketMgr.h \
+	ZoneMapper.h
+
+if NEWFRAMEWORK
+libgame_a_LIBADD = \
+	AggressorAI.cpp \
+	CreatureAI.cpp \
+	CreatureAISelector.cpp \
+	NullCreatureAI.cpp
+endif

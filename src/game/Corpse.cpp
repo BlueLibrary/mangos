@@ -1,5 +1,7 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* Corpse.cpp
+ *
+ * Copyright (C) 2004 Wow Daemon
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,7 +45,7 @@ void Corpse::Create( uint32 guidlow )
 
 void Corpse::Create( uint32 guidlow, Player *owner, uint32 mapid, float x, float y, float z, float ang )
 {
-    Object::_Create(guidlow, HIGHGUID_CORPSE, mapid, x, y, z, ang, (uint8)-1);
+    Object::_Create(guidlow, HIGHGUID_CORPSE, mapid, x, y, z, ang);
 
     SetFloatValue( OBJECT_FIELD_SCALE_X, 1 );
     SetFloatValue( CORPSE_FIELD_POS_X, x );
@@ -56,21 +58,29 @@ void Corpse::Create( uint32 guidlow, Player *owner, uint32 mapid, float x, float
 
 void Corpse::SaveToDB()
 {
-    
+    //save corpse to DB
     std::stringstream ss;
+    ss << "DELETE FROM corpses WHERE guid = " << GetGUIDLow();
+    sDatabase.Execute( ss.str( ).c_str( ) );
 
     ss.rdbuf()->str("");
-    ss << "REPLACE INTO corpses (guid, player_guid, positionX, positionY, positionZ, orientation,mapId, data) VALUES (" << GetGUIDLow() << ", " << GetUInt64Value(CORPSE_FIELD_OWNER) << ", " << GetPositionX() << ", " << GetPositionY() << ", " << GetPositionZ() << ", " << GetOrientation() << ", "  << GetMapId() << ", '";
+    ss << "INSERT INTO corpses (guid, positionX, positionY, positionZ, orientation, zoneId, mapId,  data) VALUES ("
+        << GetGUIDLow() << ", '" << GetPositionX() << "', '" << GetPositionY() << "', '" << GetPositionZ() << "', '" << GetOrientation() << "', '" << GetZoneId() << "', '" << GetMapId() << "', '";
 
     for(uint16 i = 0; i < m_valuesCount; i++ )
         ss << GetUInt32Value(i) << " ";
+
     ss << "' )";
 
-		sDatabase.Execute( ss.str().c_str() );
+    sDatabase.Execute( ss.str().c_str() );
 }
 
 
 void Corpse::DeleteFromDB()
 {
-    sDatabase.PExecute("DELETE FROM corpses WHERE guid = '%u'",GetGUIDLow());
+    //delete corpse from db when its not needed anymore
+    char sql[256];
+
+    sprintf(sql, "DELETE FROM corpses WHERE guid=%u", GetGUIDLow());
+    sDatabase.Execute(sql);
 }

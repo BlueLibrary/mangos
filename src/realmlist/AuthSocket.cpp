@@ -122,7 +122,7 @@ void AuthSocket::OnRead()
     {
         if (!ibuf.GetLength())
         {
-            DEBUG_LOG("No data");
+            sLog.outDebug("No data");
             return;
         }
 
@@ -141,7 +141,7 @@ void AuthSocket::OnRead()
                 (table[i].status == STATUS_CONNECTED ||
                 (_authed && table[i].status == STATUS_AUTHED)))
             {
-                DEBUG_LOG("[Auth] got data for cmd %u ibuf length %u", (uint32)_cmd, ibuf.GetLength());
+                sLog.outDebug("[Auth] got data for cmd %u ibuf length %u", (uint32)_cmd, ibuf.GetLength());
 
                 if(!(*this.*table[i].handler)())
                     return;
@@ -152,7 +152,7 @@ void AuthSocket::OnRead()
 
         if (table[i].handler == 0)
         {
-            DEBUG_LOG("[Auth] got unknown packet %u", (uint32)_cmd);
+            sLog.outDebug("[Auth] got unknown packet %u", (uint32)_cmd);
             _cmd = AUTH_NO_CMD;
             return;
         }
@@ -171,7 +171,7 @@ bool AuthSocket::_HandleLogonChallenge()
     // got only packet header
     ibuf.Read((char *)&buf[0], 4);
     uint16 remaining = ((sAuthLogonChallenge_C *)&buf[0])->size;
-    DEBUG_LOG("[AuthChallenge] got header, body is %#04x bytes", remaining);
+    sLog.outDetail("[AuthChallenge] got header, body is %#04x bytes", remaining);
 
     if (ibuf.GetLength() < remaining)
         return false;
@@ -182,8 +182,8 @@ bool AuthSocket::_HandleLogonChallenge()
     buf[buf.size() - 1] = 0;
     sAuthLogonChallenge_C *ch = (sAuthLogonChallenge_C*)&buf[0];
     ibuf.Read((char *)&buf[4], remaining);
-    DEBUG_LOG("[AuthChallenge] got full packet, %#04x bytes", ch->size);
-    DEBUG_LOG("    I(%d): '%s'", ch->I_len, ch->I);
+    sLog.outDebug("[AuthChallenge] got full packet, %#04x bytes", ch->size);
+    sLog.outDebug("    I(%d): '%s'", ch->I_len, ch->I);
 
     // AuthChallenge
     ByteBuffer pkt;
@@ -215,7 +215,6 @@ bool AuthSocket::_HandleLogonChallenge()
 
     if(!valid_version)
     {
-		DEBUG_LOG("[AuthChallenge] %u is not a valid client version!", ch->build);
         res = CE_WRONG_BUILDNUMBER;
         pkt << (uint8) AUTH_LOGON_CHALLENGE;
         pkt << (uint8) 0x00;
@@ -378,7 +377,7 @@ bool AuthSocket::_HandleLogonProof()
     if (ibuf.GetLength() < sizeof(sAuthLogonProof_C))
         return false;
 
-    DEBUG_LOG("[AuthLogonProof] checking...");
+    sLog.outDetail("[AuthLogonProof] checking...");
 
     sAuthLogonProof_C lp;
     ibuf.Read((char *)&lp, sizeof(sAuthLogonProof_C));

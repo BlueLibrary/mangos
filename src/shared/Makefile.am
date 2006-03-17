@@ -1,4 +1,5 @@
-# Copyright (C) 2005 MaNGOS <http://www.mangosproject.org/>
+# Copyright (C) 2004 Wow Daemon
+# Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,10 +15,10 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-INCLUDES += -I$(srcdir) -I$(srcdir)/../../dep/include -I$(srcdir)/../framework
+INCLUDES += -I$(srcdir) -I$(srcdir)/../../dep/include
 
 ## we don't want to need this here
-INCLUDES += -I$(srcdir)/../game -I$(srcdir)/../realmd 
+INCLUDES += -I$(srcdir)/../game -I$(srcdir)/../realmlist
 
 noinst_LIBRARIES = libshared.a libauth.a libconfig.a libdatabase.a libnetwork.a
 
@@ -56,12 +57,11 @@ libconfig_a_SOURCES = \
     Config/dotconfpp
 
 libdatabase_a_SOURCES = \
-    Database/DBCStores.cpp \
-    Database/dbcfile.cpp \
+    Database/DBC.cpp \
     Database/Database.cpp \
     Database/DatabaseSqlite.cpp \
     Database/QueryResultMysql.cpp \
-    Database/SQLStorage.cpp \
+    Database/DBC.h \
     Database/Database.h \
     Database/DatabaseSqlite.h \
     Database/QueryResultMysql.h \
@@ -69,13 +69,9 @@ libdatabase_a_SOURCES = \
     Database/DatabaseEnv.h \
     Database/Field.cpp \
     Database/QueryResultSqlite.cpp \
-    Database/DBCStructure.h \
-    Database/DBCStores.h \
-    Database/dbcfile.h \
     Database/DBCStores.h \
     Database/DatabaseMysql.cpp \
     Database/Field.h \
-    Database/SQLStorage.h \
     Database/QueryResultSqlite.h \
     Database/DataStore.h \
     Database/DatabaseMysql.h \
@@ -114,10 +110,3 @@ libnetwork_a_SOURCES = \
     Network/UdpSocket.h \
     Network/Utility.cpp \
     Network/Utility.h
-
-
-# use our configured sysconfdir
-sysconfdir = @MANGOSD_CONFIGDIR@
-
-CLEANFILES = \
-    SystemConfig.h

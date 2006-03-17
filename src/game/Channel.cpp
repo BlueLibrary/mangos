@@ -1,5 +1,7 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* Channel.cpp
+ *
+ * Copyright (C) 2004 Wow Daemon
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,26 +47,22 @@ void Channel::Join(Player *p, const char *pass)
         pinfo.owner = false;
         pinfo.moderator = false;
 
-        //MakeJoined(&data,p);
+        MakeJoined(&data,p);
         p->JoinedChannel(this);
-        /*if(announce)
-            SendToAll(&data);*/
+        if(announce)
+            SendToAll(&data);
 
         data.clear();
         players[p] = pinfo;
 
-        MakeYouJoined(&data,p);
+        MakeYouJoined(&data);
         SendToOne(&data,p);
 
-
-// if no owner first logged will become
-//        if(!constant && owner == NULL)
-//        {
-//            SetOwner(p);
-//            players[p].moderator = true;
-//        }
-
-
+        if(!constant && owner == NULL)
+        {
+            SetOwner(p);
+            players[p].moderator = true;
+        }
     }
 }
 
@@ -90,7 +88,7 @@ void Channel::Leave(Player *p, bool send)
         data.clear();
 
         players.erase(p);
-        /*MakeLeft(&data,p);
+        MakeLeft(&data,p);
         if(announce)
             SendToAll(&data);
 
@@ -98,7 +96,7 @@ void Channel::Leave(Player *p, bool send)
         {
             Player *newowner = players.size() > 0 ? players.begin()->second.player : NULL;
             SetOwner(newowner);
-        }*/
+        }
     }
 }
 
@@ -172,7 +170,7 @@ void Channel::UnBan(Player *good, const char *badname)
         Player *bad = objmgr.GetPlayer(badname);
         if(bad == NULL || !IsBanned(bad->GetGUID()))
         {
-            MakeNotOn(&data,badname);             
+            MakeNotOn(&data,badname);             // Change to <Not Banned> message. Not sure what it is.
             SendToOne(&data,good);
         }
         else
@@ -389,21 +387,30 @@ void Channel::Say(Player *p, const char *what)
     }
     else
     {
+        //Packet structure
+        //uint8      type;
+        //uint32     language;
+        //uint32     PVP rank
+        //uint64     guid;
+        //uint32      len_of_text;
+        //char       text[];
+        //uint8      afk_state;
+
         uint32 messageLength = strlen((char*)what) + 1;
         uint8 afk = 0;
 
         data.Initialize(SMSG_MESSAGECHAT);
-        data << (uint8)14;                        
-        data << (uint32)0;                        
+        data << (uint8)14;                        // CHAT_MESSAGE_CHANNEL
+        data << (uint32)0;                        // Universal lang
         data << name.c_str();
-        data << (uint32)0;                        
+        data << (uint32)0;                        // pvp ranks
         data << p->GetGUID();
         data << messageLength;
         data << what;
         data << (uint8)0;
 
         SendToAll(&data);
-        
+        // Send the actual talking stuff.
     }
 }
 

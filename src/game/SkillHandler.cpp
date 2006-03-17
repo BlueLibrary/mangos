@@ -1,5 +1,7 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* SkillHandler.cpp
+ *
+ * Copyright (C) 2004 Wow Daemon
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,11 +29,24 @@
 #include "ObjectMgr.h"
 #include "UpdateMask.h"
 
+//////////////////////////////////////////////////////////////
+/// This function handles CMSG_SKILL_LEVELUP
+//////////////////////////////////////////////////////////////
 
-
-
-
-
+/*void WorldSession::HandleSkillLevelUpOpcode( WorldPacket & recv_data )
+{
+    WorldPacket data;
+    uint32 slot, skill_id, amount, current_points, current_skill, points;
+    recv_data >> slot >> skill_id >> amount;
+    current_points = GetPlayer( )->GetUInt32Value( PLAYER_SKILL_INFO_1_1+slot+1 );
+    current_skill = GetPlayer( )->GetUInt32Value( PLAYER_SKILL_INFO_1_1+slot );
+    points = GetPlayer( )->GetUInt32Value( PLAYER_CHARACTER_POINTS2 );
+    GetPlayer( )->SetUInt32Value( PLAYER_SKILL_INFO_1_1+slot , ( 0x000001a1 ));
+    GetPlayer( )->SetUInt32Value( PLAYER_SKILL_INFO_1_1+slot+1 , ( (current_points & 0xffff) + (amount << 16) ) );
+    GetPlayer( )->SetUInt32Value( PLAYER_CHARACTER_POINTS2, points-amount );
+    GetPlayer( )->UpdateObject( );
+}
+*/
 
 
 void WorldSession::HandleLearnTalentOpcode( WorldPacket & recv_data )
@@ -45,40 +60,29 @@ void WorldSession::HandleLearnTalentOpcode( WorldPacket & recv_data )
     uint32 CurTalentPoints =  GetPlayer()->GetUInt32Value(PLAYER_CHARACTER_POINTS1);
     if(CurTalentPoints == 0)
     {
-        
+        // NO TALENT POINTS
     }
     else
     {
         uint32 spellid = talentInfo->RankID[requested_rank];
         if( spellid == 0 || requested_rank > 4)
         {
-            sLog.outDetail("Talent: %d Rank: %d = 0", talent_id, requested_rank);
+            Log::getSingleton( ).outDetail("Talent: %d Rank: %d = 0", talent_id, requested_rank);
         }
         else
         {
             if(!(GetPlayer( )->HasSpell(spellid)))
             {
-                
+                // Send data if all OK
                 data.Initialize(SMSG_LEARNED_SPELL);
-                sLog.outDetail("TalentID: %d Rank: %d Spell: %d\n", talent_id, requested_rank, spellid);
+                Log::getSingleton( ).outDetail("TalentID: %d Rank: %d Spell: %d\n", talent_id, requested_rank, spellid);
                 data << spellid;
                 GetPlayer( )->GetSession()->SendPacket(&data);
                 GetPlayer( )->addSpell((uint16)spellid);
-
-                if(requested_rank > 0 )
-                {
-                    uint32 respellid = talentInfo->RankID[requested_rank-1];
-                    data.Initialize(SMSG_REMOVED_SPELL);
-                    data << respellid;
-                    GetPlayer( )->GetSession()->SendPacket(&data);
-                    GetPlayer( )->removeSpell((uint16)respellid);
-                }
             }
 
-            
+            // Update Talent Points
             GetPlayer()->SetUInt32Value(PLAYER_CHARACTER_POINTS1, CurTalentPoints - 1);
         }
     }
 }
-
-    

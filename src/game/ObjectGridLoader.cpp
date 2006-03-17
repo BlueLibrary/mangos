@@ -1,5 +1,6 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* ObjectGridLoader.h
+ *
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,77 +23,46 @@
 #include "Utilities.h"
 
 
-template<>
-inline void
-ObjectAccessor::RemoveUpdateObjects(std::map<OBJECT_HANDLE, Corpse *> &m)
-{
-    if( m.size() == 0 )
-	return;
 
-    Guard guard(i_updateGuard);
-    for(std::map<OBJECT_HANDLE, Corpse *>::iterator iter=m.begin(); iter != m.end(); ++iter)
+// common method
+template<class T> void LoadHelper(const char* table, GridType &grid, uint32 map_id, std::map<OBJECT_HANDLE, T*> &m)
+{
+    std::stringstream query;
+    query << "SELECT guid from " << table << " WHERE grid_id=" << grid.GetGridId() << " and mapId=" << map_id;
+    
+    std::auto_ptr<QueryResult> result(sDatabase.Query(query.str().c_str()));
+    unsigned int count = 0;
+    if( result.get() != NULL )
     {
-	std::set<Object *>::iterator obj = i_objects.find(iter->second);
-	if( obj != i_objects.end() )
-	    i_objects.erase( obj );
-	RemoveCorpse(iter->second->GetGUID());
-    }
-}
-
-template<class T> void SetState(T *obj)
-{
-    obj->AddToWorld();
-}
-
-template<> void SetState(Creature *obj)
-{
-    if( MaNGOS::Utilities::IsSpiritHealer(obj) )
-	obj->setDeathState(DEAD);
-}
-
-
-template<class T> void LoadHelper(const char* table, const uint32 &grid_id, const uint32 map_id, const CellPair &cell, std::map<OBJECT_HANDLE, T*> &m, uint32 &count)
-{
-    uint32 cell_id = (cell.y_coord*TOTAL_NUMBER_OF_CELLS_PER_MAP) + cell.x_coord;
-
-    QueryResult *result = sDatabase.PQuery("SELECT guid from %s WHERE grid_id=%d and mapId=%d and cell_id=%d", table,grid_id,map_id,cell_id);
-
-    if( result )
-
+    do
     {
-	do
-	{
-	    Field *fields = result->Fetch();
-	    T *obj = new T;
-	    uint32 guid = fields[0].GetUInt32();
-	    obj->LoadFromDB(guid);
-	    m[obj->GetGUID()] = obj;
-	    
-	    
-	    SetState(obj);
-	    obj->AddToWorld();
-	    ++count; 
-	    
-	}while( result->NextRow() );
+        Field *fields = result->Fetch();
+        T *obj = new T;
+        uint32 guid = fields[0].GetUInt32();
+        obj->LoadFromDB(guid);
+        m[guid] = obj;
+
+        // spirit healer doesn't exist in the world ...
+        if( !MaNGOS::Utilities::IsSpiritHealer(obj) )
+        obj->AddToWorld();
+        ++count;
+
+    }while( result->NextRow() );
     }
-}
+
+    sLog.outDebug("%d objects loaded for grid %d from table %s", count, grid.GetGridId(), table);
+};
 
 void
 ObjectGridLoader::Visit(std::map<OBJECT_HANDLE, GameObject *> &m)
 {
-    uint32 x = (i_cell.GridX()*MAX_NUMBER_OF_CELLS) + i_cell.CellX();
-    uint32 y = (i_cell.GridY()*MAX_NUMBER_OF_CELLS) + i_cell.CellY();
-    CellPair cell_pair(x, y);
-    LoadHelper<GameObject>("gameobjects_grid", i_grid.GetGridId(), i_mapId, cell_pair, m, i_gameObjects);    
+    LoadHelper<GameObject>("gameobjects_grid", i_grid, i_mapId, m);
 }
 
 void
 ObjectGridLoader::Visit(std::map<OBJECT_HANDLE, Creature *> &m)
 {
-    uint32 x = (i_cell.GridX()*MAX_NUMBER_OF_CELLS) + i_cell.CellX();
-    uint32 y = (i_cell.GridY()*MAX_NUMBER_OF_CELLS) + i_cell.CellY();
-    CellPair cell_pair(x,y);
-    LoadHelper<Creature>("creatures_grid", i_grid.GetGridId(), i_mapId, cell_pair, m, i_creatures);
+    LoadHelper<Creature>("creatures_grid", i_grid,i_mapId, m);
 }
 
 
@@ -103,8 +73,8 @@ ObjectGridLoader::Load(GridType &grid)
     grid.VisitGridObjects(loader);
 }
 
-
-
+//==============================================//
+//      ObjectGridUnloader
 void 
 ObjectGridUnloader::Unload(GridType &grid)
 {
@@ -112,19 +82,20 @@ ObjectGridUnloader::Unload(GridType &grid)
     grid.VisitGridObjects(unloader);
 }
 
+
 template<class T>
 void
 ObjectGridUnloader::Visit(std::map<OBJECT_HANDLE, T *> &m)
 {
+#ifdef ENABLE_GRID_SYSTEM
     ObjectAccessor::Instance().RemoveUpdateObjects(m);
     for(typename std::map<OBJECT_HANDLE, T* >::iterator iter=m.begin(); iter != m.end(); ++iter)
     {
-	delete iter->second;
+    delete iter->second;
     }
-
+#endif
     m.clear();
 }
-
 
 template void ObjectGridUnloader::Visit(std::map<OBJECT_HANDLE, GameObject *> &m);
 template void ObjectGridUnloader::Visit(std::map<OBJECT_HANDLE, DynamicObject *> &m);

@@ -1,5 +1,7 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* DatabaseEnv.h
+ *
+ * Copyright (C) 2004 Wow Daemon
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,12 +21,12 @@
 #if !defined(DATABASEENV_H)
 #define DATABASEENV_H
 
-
+//! Other libs we depend on.
 #include "Common.h"
+#include "Singleton.h"
 #include "Log.h"
-#include "Errors.h"
 
-
+//! Our own includes.
 #include "Database/DBCStores.h"
 #include "Database/Field.h"
 #include "Database/QueryResult.h"

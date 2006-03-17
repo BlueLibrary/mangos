@@ -1,5 +1,6 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* NullCreatureAI.h
+ *
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,17 +17,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+
 #ifndef MANGOS_CREATUREAISELECTOR_H
 #define MANGOS_CREATUREAISELECTOR_H
 
 class CreatureAI;
 class Creature;
-class MovementGenerator;
 
-namespace FactorySelector
+namespace CreatureAISelector
 {
-    CreatureAI* selectAI(Creature *);
-    MovementGenerator* selectMovementGenerator(Creature *);
+    CreatureAI* select(Creature *);
 }
 
 

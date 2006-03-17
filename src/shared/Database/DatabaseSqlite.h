@@ -1,5 +1,7 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* DatabaseSqlite.h
+ *
+ * Copyright (C) 2004 Wow Daemon
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +21,7 @@
 #ifndef _DATABASESQLITE_H
 #define _DATABASESQLITE_H
 
-
+// Required for SQLite DBM
 #include <sqlite/sqlite.h>
 
 class DatabaseSqlite : public Database
@@ -28,8 +30,8 @@ class DatabaseSqlite : public Database
         DatabaseSqlite();
         ~DatabaseSqlite();
 
-        
-        
+        //! Initializes Sqlite and opens a database file.
+        /*! infoString should be formated like database.db. */
         bool Initialize(const char *infoString);
 
         QueryResult* Query(const char *sql);

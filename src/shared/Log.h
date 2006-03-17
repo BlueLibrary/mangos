@@ -1,5 +1,7 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* Log.h
+ *
+ * Copyright (C) 2004 Wow Daemon
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,11 +22,11 @@
 #define MANGOSSERVER_LOG_H
 
 #include "Common.h"
-#include "Policies/Singleton.h"
+#include "Singleton.h"
 
 extern uint8 loglevel;
 
-class Log 
+class Log : public Singleton< Log >
 {
     public:
         void outString( const char * str, ... );
@@ -36,13 +38,5 @@ class Log
 
 };
 
-#define sLog MaNGOS::Singleton<Log>::Instance()
-
-
-#ifdef MANGOS_DEBUG
-#define DEBUG_LOG MaNGOS::Singleton<Log>::Instance().outDebug
-#else
-#define DEBUG_LOG
-#endif
-
+#define sLog Log::getSingleton()
 #endif

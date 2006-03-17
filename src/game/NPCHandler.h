@@ -1,5 +1,7 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* NPCHandler.h
+ *
+ * Copyright (C) 2004 Wow Daemon
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,41 +21,44 @@
 #ifndef __NPCHANDLER_H
 #define __NPCHANDLER_H
 
-struct QEmote {
-	uint32 _Emote;
-	uint32 _Delay;
-};
-
-struct GossipTextOption
+enum GOSSIP_SPECIAL
 {
-	std::string Text_0;
-	std::string Text_1;
-	uint32 Language;
-	float Probability;
-	QEmote Emotes[3];
+    GOSSIP_NO_SPECIAL           = 0x00,
+    GOSSIP_POI                  = 0x01,
+    GOSSIP_SPIRIT_HEALER_ACTIVE = 0x02,
+    GOSSIP_VENDOR               = 0x03,
+    GOSSIP_TRAINER              = 0x04,
+    GOSSIP_TABARD_VENDOR        = 0x05,
+    GOSSIP_INNKEEPER            = 0x06,
 };
 
 struct GossipText
 {
-	uint32 Text_ID;
-	GossipTextOption Options[8];
+    uint32 ID;
+    std::string Text;
 };
 
-
-struct ItemPage
+struct GossipOptions
 {
-	uint32 Page_ID;
-	std::string PageText;
-
-	uint32 Next_Page;
+    //uint32 ID;
+    uint32 Guid;
+    uint16 Icon;
+    std::string OptionText;
+    uint32 NextTextID;
+    uint32 Special;
+    //float PoiX;
+    //float PoiY;
+    //float PoiZ;
 };
 
-
-struct AreaTriggerPoint
+struct GossipNpc
 {
-	uint32 Trigger_ID;
-	uint32 Quest_ID;
-	uint32 Creature_ID;
+    //GossipNpc(uint32 id=0, uint32 guid=0, uint32 tx_id=0, uint32 count=0) : ID(id), Guid(guid),TextID(tx_id),OptionCount(count),pOptions(NULL) {}
+    GossipNpc(uint32 guid=0, uint32 tx_id=0, uint32 count=0) : Guid(guid),TextID(tx_id),OptionCount(count), pOptions(NULL) {}
+    //uint32 ID;
+    uint32 Guid;
+    uint32 TextID;
+    uint32 OptionCount;
+    GossipOptions *pOptions;
 };
-
 #endif

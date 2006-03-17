@@ -14,7 +14,8 @@
 
 @SET_MAKE@
 
-# Copyright (C) 2005 MaNGOS <http://www.mangosproject.org/>
+# Copyright (C) 2004 Wow Daemon
+# Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -54,8 +55,8 @@ host_triplet = @host@
 DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(srcdir)/config.h.in \
 	$(top_srcdir)/configure AUTHORS COPYING ChangeLog INSTALL NEWS \
-	THANKS config.guess config.sub depcomp install-sh ltmain.sh \
-	missing mkinstalldirs
+	THANKS TODO config.guess config.sub depcomp install-sh \
+	ltmain.sh missing mkinstalldirs
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -133,10 +134,6 @@ LIBTOOL = @LIBTOOL@
 LINKER_OPTIONS = @LINKER_OPTIONS@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
-LTMS_AGE = @LTMS_AGE@
-LTMS_CURRENT = @LTMS_CURRENT@
-LTMS_RELEASE = @LTMS_RELEASE@
-LTMS_REVISION = @LTMS_REVISION@
 LT_AGE = @LT_AGE@
 LT_CURRENT = @LT_CURRENT@
 LT_RELEASE = @LT_RELEASE@
@@ -146,10 +143,9 @@ MAINTAINER_MODE_FALSE = @MAINTAINER_MODE_FALSE@
 MAINTAINER_MODE_TRUE = @MAINTAINER_MODE_TRUE@
 MAKEINFO = @MAKEINFO@
 MANGOSD_CONFIG = @MANGOSD_CONFIG@
-MANGOSD_CONFIGDIR = @MANGOSD_CONFIGDIR@
 MANGOSD_DATA = @MANGOSD_DATA@
-MANGOSD_ENABLE_CLI = @MANGOSD_ENABLE_CLI@
-MANGOSD_ENABLE_RA = @MANGOSD_ENABLE_RA@
+NEWFRAMEWORK_FALSE = @NEWFRAMEWORK_FALSE@
+NEWFRAMEWORK_TRUE = @NEWFRAMEWORK_TRUE@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
@@ -163,12 +159,9 @@ SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
-WITH_APIDOCS = @WITH_APIDOCS@
-WITH_APIDOCS_TARGET = @WITH_APIDOCS_TARGET@
 WITH_PYTHON_SUBDIR = @WITH_PYTHON_SUBDIR@
 WITH_PYTHON_SUBPACKAGE = @WITH_PYTHON_SUBPACKAGE@
 WITH_PYTHON_VERSION = @WITH_PYTHON_VERSION@
-__DOXYGEN = @__DOXYGEN@
 __PYTHON = @__PYTHON@
 ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
@@ -218,8 +211,6 @@ target_alias = @target_alias@
 
 # Win32 project workspace for Visual Studio .NET 2005
 
-# Win32 project workspace for Visual Studio .NET 2003 and Intel Compiler
-
 # MySQL headers
 
 # OpenSSL headers
@@ -238,49 +229,42 @@ target_alias = @target_alias@
 
 # SQLite shared library (Win32)
 EXTRA_DIST = reconf configure TODO win/mangosdVC71.sln \
-	win/VC71/framework.vcproj win/VC71/game.vcproj \
-	win/VC71/mangosd.vcproj win/VC71/realmd.vcproj \
-	win/VC71/shared.vcproj win/VC71/zlib.vcproj \
-	win/VC71/zthread.vcproj win/mangosdVC80.sln \
-	win/VC80/framework.vcproj win/VC80/game.vcproj \
-	win/VC80/mangosd.vcproj win/VC80/realmd.vcproj \
-	win/VC80/shared.vcproj win/VC80/zlib.vcproj \
-	win/VC80/zthread.vcproj win_intel/mangosdVC71.sln \
-	win_intel/VC71/framework.vcproj win_intel/VC71/game.icproj \
-	win_intel/VC71/game.vcproj win_intel/VC71/httpd.vcproj \
-	win_intel/VC71/mangosd.icproj win_intel/VC71/mangosd.vcproj \
-	win_intel/VC71/realmlist.icproj \
-	win_intel/VC71/realmlist.vcproj win_intel/VC71/shared.icproj \
-	win_intel/VC71/shared.vcproj win_intel/VC71/zlib.icproj \
-	win_intel/VC71/zlib.vcproj win_intel/VC71/zthread.icproj \
-	win_intel/VC71/zthread.vcproj dep/include/mysql/config-win.h \
-	dep/include/mysql/dbug.h dep/include/mysql/errmsg.h \
-	dep/include/mysql/libmysqld.def dep/include/mysql/Libmysql.def \
-	dep/include/mysql/m_ctype.h dep/include/mysql/m_string.h \
-	dep/include/mysql/my_alloc.h dep/include/mysql/my_getopt.h \
-	dep/include/mysql/my_global.h dep/include/mysql/my_list.h \
-	dep/include/mysql/my_pthread.h dep/include/mysql/mysql_com.h \
-	dep/include/mysql/mysqld_error.h dep/include/mysql/mysql.h \
-	dep/include/mysql/mysql_version.h dep/include/mysql/my_sys.h \
-	dep/include/mysql/raid.h dep/include/openssl/aes.h \
-	dep/include/openssl/asn1.h dep/include/openssl/asn1_mac.h \
-	dep/include/openssl/asn1t.h dep/include/openssl/bio.h \
-	dep/include/openssl/blowfish.h dep/include/openssl/bn.h \
-	dep/include/openssl/buffer.h dep/include/openssl/cast.h \
-	dep/include/openssl/comp.h dep/include/openssl/conf_api.h \
-	dep/include/openssl/conf.h dep/include/openssl/crypto.h \
-	dep/include/openssl/des.h dep/include/openssl/des_old.h \
-	dep/include/openssl/dh.h dep/include/openssl/dsa.h \
-	dep/include/openssl/dso.h dep/include/openssl/ebcdic.h \
-	dep/include/openssl/ec.h dep/include/openssl/engine.h \
-	dep/include/openssl/e_os2.h dep/include/openssl/err.h \
-	dep/include/openssl/evp.h dep/include/openssl/hmac.h \
-	dep/include/openssl/idea.h dep/include/openssl/krb5_asn.h \
-	dep/include/openssl/kssl.h dep/include/openssl/lhash.h \
-	dep/include/openssl/md2.h dep/include/openssl/md4.h \
-	dep/include/openssl/md5.h dep/include/openssl/mdc2.h \
-	dep/include/openssl/objects.h dep/include/openssl/obj_mac.h \
-	dep/include/openssl/ocsp.h dep/include/openssl/opensslconf.h \
+	win/VC71/game.vcproj win/VC71/httpd.vcproj \
+	win/VC71/mangosd.vcproj win/VC71/mangosd.vcproj \
+	win/VC71/realmlist.vcproj win/VC71/shared.vcproj \
+	win/VC71/zlib.vcproj win/VC71/zthread.vcproj \
+	win/mangosdVC80.sln win/VC80/game.vcproj win/VC80/httpd.vcproj \
+	win/VC80/mangosd.vcproj win/VC80/mangosd.vcproj \
+	win/VC80/realmlist.vcproj win/VC80/shared.vcproj \
+	win/VC80/zlib.vcproj win/VC80/zthread.vcproj \
+	dep/include/mysql/config-win.h dep/include/mysql/dbug.h \
+	dep/include/mysql/errmsg.h dep/include/mysql/libmysqld.def \
+	dep/include/mysql/Libmysql.def dep/include/mysql/m_ctype.h \
+	dep/include/mysql/m_string.h dep/include/mysql/my_alloc.h \
+	dep/include/mysql/my_getopt.h dep/include/mysql/my_global.h \
+	dep/include/mysql/my_list.h dep/include/mysql/my_pthread.h \
+	dep/include/mysql/mysql_com.h dep/include/mysql/mysqld_error.h \
+	dep/include/mysql/mysql.h dep/include/mysql/mysql_version.h \
+	dep/include/mysql/my_sys.h dep/include/mysql/raid.h \
+	dep/include/openssl/aes.h dep/include/openssl/asn1.h \
+	dep/include/openssl/asn1_mac.h dep/include/openssl/asn1t.h \
+	dep/include/openssl/bio.h dep/include/openssl/blowfish.h \
+	dep/include/openssl/bn.h dep/include/openssl/buffer.h \
+	dep/include/openssl/cast.h dep/include/openssl/comp.h \
+	dep/include/openssl/conf_api.h dep/include/openssl/conf.h \
+	dep/include/openssl/crypto.h dep/include/openssl/des.h \
+	dep/include/openssl/des_old.h dep/include/openssl/dh.h \
+	dep/include/openssl/dsa.h dep/include/openssl/dso.h \
+	dep/include/openssl/ebcdic.h dep/include/openssl/ec.h \
+	dep/include/openssl/engine.h dep/include/openssl/e_os2.h \
+	dep/include/openssl/err.h dep/include/openssl/evp.h \
+	dep/include/openssl/hmac.h dep/include/openssl/idea.h \
+	dep/include/openssl/krb5_asn.h dep/include/openssl/kssl.h \
+	dep/include/openssl/lhash.h dep/include/openssl/md2.h \
+	dep/include/openssl/md4.h dep/include/openssl/md5.h \
+	dep/include/openssl/mdc2.h dep/include/openssl/objects.h \
+	dep/include/openssl/obj_mac.h dep/include/openssl/ocsp.h \
+	dep/include/openssl/opensslconf.h \
 	dep/include/openssl/opensslv.h dep/include/openssl/ossl_typ.h \
 	dep/include/openssl/pem2.h dep/include/openssl/pem.h \
 	dep/include/openssl/pkcs12.h dep/include/openssl/pkcs7.h \
@@ -541,7 +525,7 @@ distclean-tags:
 distdir: $(DISTFILES)
 	$(am__remove_distdir)
 	mkdir $(distdir)
-	$(mkdir_p) $(distdir)/dep/include/mysql $(distdir)/dep/include/openssl $(distdir)/dep/include/sqlite $(distdir)/dep/include/zlib $(distdir)/dep/include/zthread $(distdir)/dep/lib $(distdir)/dep/lib/debug $(distdir)/dep/lib/release $(distdir)/doc $(distdir)/src/shared $(distdir)/win $(distdir)/win/VC71 $(distdir)/win/VC80 $(distdir)/win_intel $(distdir)/win_intel/VC71
+	$(mkdir_p) $(distdir)/dep/include/mysql $(distdir)/dep/include/openssl $(distdir)/dep/include/sqlite $(distdir)/dep/include/zlib $(distdir)/dep/include/zthread $(distdir)/dep/lib $(distdir)/dep/lib/debug $(distdir)/dep/lib/release $(distdir)/src/mangosd $(distdir)/win $(distdir)/win/VC71 $(distdir)/win/VC80
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \

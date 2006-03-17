@@ -1,5 +1,7 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* QueryHandler.cpp
+ *
+ * Copyright (C) 2004 Wow Daemon
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,13 +28,14 @@
 #include "ObjectMgr.h"
 #include "Player.h"
 #include "UpdateMask.h"
-#include "NPCHandler.h"
+
+#ifdef ENABLE_GRID_SYSTEM
 #include "ObjectAccessor.h"
+#endif
 
-
-
-
-
+//////////////////////////////////////////////////////////////
+/// This function handles CMSG_NAME_QUERY:
+//////////////////////////////////////////////////////////////
 void WorldSession::HandleNameQueryOpcode( WorldPacket & recv_data )
 {
     WorldPacket data;
@@ -43,14 +46,17 @@ void WorldSession::HandleNameQueryOpcode( WorldPacket & recv_data )
     uint32 race = 0, gender = 0, cl = 0;
     std::string name = "ERROR_NO_NAME_FOR_GUID";
 
+#ifndef ENABLE_GRID_SYSTEM
+    Player *pChar = objmgr.GetObject<Player>(guid);
+#else
     Player *pChar = ObjectAccessor::Instance().FindPlayer(guid);
-
+#endif
     if (pChar == NULL)
     {
         if (!objmgr.GetPlayerNameByGUID(guid, name))
-            sLog.outError( "No player name found for this guid" );
+            Log::getSingleton( ).outError( "No player name found for this guid" );
 
-        
+        // TODO: load race, class, sex, etc from db
     }
     else
     {
@@ -60,7 +66,7 @@ void WorldSession::HandleNameQueryOpcode( WorldPacket & recv_data )
         name = pChar->GetName();
     }
 
-    sLog.outDebug( "Received CMSG_NAME_QUERY for: %s", name.c_str() );
+    Log::getSingleton( ).outDebug( "Recieved CMSG_NAME_QUERY for: %s", name.c_str() );
 
     data.Initialize( SMSG_NAME_QUERY_RESPONSE );
 
@@ -72,26 +78,24 @@ void WorldSession::HandleNameQueryOpcode( WorldPacket & recv_data )
 }
 
 
-
-
-
+//////////////////////////////////////////////////////////////
+/// This function handles CMSG_QUERY_TIME:
+//////////////////////////////////////////////////////////////
 void WorldSession::HandleQueryTimeOpcode( WorldPacket & recv_data )
 {
     WorldPacket data;
     data.Initialize( SMSG_QUERY_TIME_RESPONSE );
 
-//    data << (uint32)time(NULL);
-    data << (uint32)getMSTime();
+    data << (uint32)time(NULL);
     SendPacket( &data );
 }
 
 
-
-
-
-
+//////////////////////////////////////////////////////////////
+/// This function handles CMSG_CREATURE_QUERY:
+//////////////////////////////////////////////////////////////
 void WorldSession::HandleCreatureQueryOpcode( WorldPacket & recv_data )
-{
+{// UQ1: Think I have this correct now.. :)
     WorldPacket data;
     uint32 entry;
     uint64 guid;
@@ -99,278 +103,39 @@ void WorldSession::HandleCreatureQueryOpcode( WorldPacket & recv_data )
 
     recv_data >> entry;
     recv_data >> guid;
-    
-    Creature *unit = ObjectAccessor::Instance().GetCreature(*_player, guid);
 
-	if (unit == NULL)
-	{
-		sLog.outDebug( "WORLD: HandleCreatureQueryOpcode - (%u) NO SUCH UNIT! (GUID: %u)", uint32(GUID_LOPART(guid)), guid );
-        data.Initialize( SMSG_CREATURE_QUERY_RESPONSE );
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;    
-        data << (uint32)0;            
-        data << (uint32)0;    
-        data << (uint32)0;          
-	    data << (uint32)0;     
-	    data << (uint32)0;  
-        data << (uint32)0;     
-        data << (uint32)0;       
-        data << (uint16)0;
-        SendPacket( &data ); 		
-		return;
-	}
-
-	ci = unit->GetCreatureInfo();
-
-	if (!ci)
-	{
-		sLog.outDebug( "WORLD: HandleCreatureQueryOpcode - (%u) NO CREATUREINFO! (GUID: %u)", uint32(GUID_LOPART(guid)), guid );
-        data.Initialize( SMSG_CREATURE_QUERY_RESPONSE );
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;
-        data << (uint32)0;    
-        data << (uint32)0;            
-        data << (uint32)0;    
-        data << (uint32)0;          
-	    data << (uint32)0;     
-	    data << (uint32)0;  
-        data << (uint32)0;     
-        data << (uint32)0;       
-        data << (uint16)0;
-        SendPacket( &data ); 		
-		return;
-	}
-
-	sLog.outDetail("WORLD: CMSG_CREATURE_QUERY '%s' - Entry: %u - GUID: %u.", ci->Name, entry, guid);
-    data.Initialize( SMSG_CREATURE_QUERY_RESPONSE );
-    data << (uint32)entry;
-    data << ci->Name;
-    data << uint8(0) << uint8(0) << uint8(0);
-    data << ci->SubName;    
-	
-	uint32 wdbFeild11=0,wdbFeild12=0;
-
-    data << ci->flag1;            //flag1          wdbFeild7=wad flags1
-    data << uint32(ci->type);    //creatureType   wdbFeild8
-    data << (uint32)ci->family;  //family         wdbFeild9         
-	data << (uint32)ci->rank;    //rank           wdbFeild10   
-	data << (uint32)wdbFeild11;  //unknow         wdbFeild11 
-    data << (uint32)wdbFeild12;  //unknow         wdbFeild12    
-    data << ci->DisplayID;       //DisplayID      wdbFeild13 
-
-    data << (uint16)ci->civilian;//wdbFeild14
-
-    SendPacket( &data ); 
-
-}
-
-void WorldSession::SendCreatureQuery( uint32 entry, uint64 guid )
-{
-    WorldPacket data;
-    CreatureInfo *ci;
-
-    
-    Creature *unit = ObjectAccessor::Instance().GetCreature(*_player, guid);
-
-	if (unit == NULL)
-	{
-		sLog.outDebug( "WORLD: HandleCreatureQueryOpcode - (%u) NO SUCH UNIT! (GUID: %u)", uint32(GUID_LOPART(guid)), guid );
-		return;
-	}
-
-	ci = unit->GetCreatureInfo();
-
-	if (!ci)
-	{
-		sLog.outDebug( "WORLD: HandleCreatureQueryOpcode - (%u) NO CREATUREINFO! (GUID: %u)", uint32(GUID_LOPART(guid)), guid );
-		return;
-	}
-
-	sLog.outDetail("WORLD: CMSG_CREATURE_QUERY '%s' - Entry: %u - GUID: %u.", ci->Name, entry, guid);
-
-
-	sLog.outDetail("WORLD: CMSG_CREATURE_QUERY '%s' - Entry: %u - GUID: %u.", ci->Name, entry, guid);
-    data.Initialize( SMSG_CREATURE_QUERY_RESPONSE );
-    data << (uint32)entry;
-    data << ci->Name;
-    data << uint8(0) << uint8(0) << uint8(0);
-    data << ci->SubName;    
-	
-	uint32 wdbFeild11=0,wdbFeild12=0;
-
-    data << ci->flag1;            //flags          wdbFeild7=wad flags1
-    data << uint32(ci->type);//creatureType   wdbFeild8
-    data << (uint32)ci->family;  //family         wdbFeild9         
-	data << (uint32)ci->rank;    //rank           wdbFeild10   
-	data << (uint32)wdbFeild11;  //unknow         wdbFeild11 
-    data << (uint32)wdbFeild12;  //unknow         wdbFeild12    
-    data << ci->DisplayID;       //DisplayID      wdbFeild13 
-
-	data << (uint16)ci->civilian;    //wdbFeild14
-
-    SendPacket( &data ); 
-/*
-	uint32 npcflags = unit->GetUInt32Value(UNIT_NPC_FLAGS);
-
-
+    ci = objmgr.GetCreatureName(entry);
+    Log::getSingleton( ).outDetail("WORLD: CMSG_CREATURE_QUERY '%s'", ci->Name.c_str());
 
     data.Initialize( SMSG_CREATURE_QUERY_RESPONSE );
     data << (uint32)entry;
     data << ci->Name.c_str();
     data << uint8(0) << uint8(0) << uint8(0);
-    data << ci->SubName.c_str();    
-    
-	data << (uint32)npcflags;        
-
-	
-    
-	if ((ci->Type & 2) > 0)
+    data << ci->SubName.c_str();    // Subname
+    //data << (uint32)0;            // unknown 1 -- Is really flags1 (below)
+    data << (uint32)ci->flags1;        // Flags1
+    if ((ci->Type & 2) > 0)
     {
         data << uint32(7);
     }
-	else
+    else
     {
+        
         data << uint32(0);
     }
-
-
-
-    data << ci->Type;            
-
-	
-	if (ci->level >= 16 && ci->level < 32)
-		data << (uint32)CREATURE_ELITE_ELITE; 
-	else if (ci->level >= 32 && ci->level < 48)
-		data << (uint32)CREATURE_ELITE_RAREELITE; 
-	else if (ci->level >= 48 && ci->level < 59)
-		data << (uint32)CREATURE_ELITE_WORLDBOSS; 
-	else if (ci->level >= 60)
-		data << (uint32)CREATURE_ELITE_RARE; 
-	else
-		data << (uint32)CREATURE_ELITE_NORMAL; 
-
-
-	data << (uint32)ci->family;    
-
-    data << (uint32)0;            
-    data << ci->DisplayID;        
-
-	
-	data << (uint32)0;
-	data << (uint32)0;
-	data << (uint32)0;
-	data << (uint32)0;
+    data << ci->Type;            // Creature Type
+    data << (uint32)ci->family;    // Family
+    data << (uint32)0;            // Elite;
+    data << (uint32)0;            // Unknown (move before or after unknowns 3 and 4) don't know where exactly
+    data << ci->DisplayID;        // DisplayID
 
     SendPacket( &data );
-*/
 }
 
-void WorldSession::SendTestCreatureQueryOpcode( uint32 entry, uint64 guid, uint32 testvalue )
-{
-    WorldPacket data;
-    CreatureInfo *ci;
-
-    
-    Creature *unit = ObjectAccessor::Instance().GetCreature(*_player, guid);
-
-	if (unit == NULL)
-	{
-		sLog.outDebug( "WORLD: HandleCreatureQueryOpcode - (%u) NO SUCH UNIT! (GUID: %u)", uint32(GUID_LOPART(guid)), guid );
-		return;
-	}
-
-	ci = unit->GetCreatureInfo();
-
-	if (!ci)
-	{
-		sLog.outDebug( "WORLD: HandleCreatureQueryOpcode - (%u) NO CREATUREINFO! (GUID: %u)", uint32(GUID_LOPART(guid)), guid );
-		return;
-	}
-
-	sLog.outDetail("WORLD: CMSG_CREATURE_QUERY '%s' - Entry: %u - GUID: %u.", ci->Name, entry, guid);
-
-
-	uint32 npcflags = unit->GetUInt32Value(UNIT_NPC_FLAGS);
-	uint8 u8unk1=0,u8unk2=0,u8unk3=0;
-//------------------------------------------------------------------------
-    data.Initialize( SMSG_CREATURE_QUERY_RESPONSE );
-    data << (uint32)entry;
-    data << ci->Name;
-    data << uint8(u8unk1) << uint8(u8unk2) << uint8(u8unk3);
-    data << ci->SubName;    
-	
-	uint32 wdbFeild11=0,wdbFeild12=0;
-
-    data << ci->flag1;           //flags          wdbFeild7=wad flags1
-    data << uint32(ci->type);//creatureType   wdbFeild8
-    data << (uint32)ci->family;  //family         wdbFeild9         
-	data << (uint32)ci->rank;    //unknow         wdbFeild10   
-	data << (uint32)wdbFeild11;  //unknow         wdbFeild11 
-    data << (uint32)wdbFeild12;  //unknow         wdbFeild12    
-    data << ci->DisplayID;       //DisplayID      wdbFeild13 
-
-	data << (uint16)ci->civilian; //wdbFeild14
-
-    SendPacket( &data );         
-//-----------------------------------------------------------------------
+//////////////////////////////////////////////////////////////
+/// This function handles CMSG_GAMEOBJECT_QUERY:
+//////////////////////////////////////////////////////////////
 /*
-    data.Initialize( SMSG_CREATURE_QUERY_RESPONSE );
-    data << (uint32)entry;
-    data << ci->Name.c_str();
-    data << uint8(0) << uint8(0) << uint8(0);
-    data << ci->SubName.c_str();    
-    
-	data << (uint32)npcflags;        
-
-	
-    
-	if ((ci->Type & 2) > 0)
-    {
-        data << uint32(7);
-    }
-	else
-    {
-        data << uint32(0);
-    }
-
-
-
-    data << ci->Type;            
-	
-	if (ci->level >= 16 && ci->level < 32)
-		data << (uint32)CREATURE_ELITE_ELITE; 
-	else if (ci->level >= 32 && ci->level < 48)
-		data << (uint32)CREATURE_ELITE_RAREELITE; 
-	else if (ci->level >= 48 && ci->level < 59)
-		data << (uint32)CREATURE_ELITE_WORLDBOSS; 
-	else if (ci->level >= 60)
-		data << (uint32)CREATURE_ELITE_RARE; 
-	else
-		data << (uint32)CREATURE_ELITE_NORMAL; 
-
-
-	data << (uint32)ci->family;    
-
-    data << (uint32)0;            
-    data << ci->DisplayID;        
-
-	
-	data << (uint32)0;
-	data << (uint32)0;
-	data << (uint32)0;
-	data << (uint32)0;
-
-    SendPacket( &data );
-*/
-}
-
-
-
-
-
 void WorldSession::HandleGameObjectQueryOpcode( WorldPacket & recv_data )
 {
 
@@ -379,44 +144,21 @@ void WorldSession::HandleGameObjectQueryOpcode( WorldPacket & recv_data )
     uint64 guid;
 
     recv_data >> entryID;
-    recv_data >> guid;
+    recv_data >> guid;    
 
-    sLog.outDetail("WORLD: CMSG_GAMEOBJECT_QUERY '%u'", guid);
-
+    Log::getSingleton( ).outDetail("WORLD: CMSG_GAMEOBJECT_QUERY '%u'", guid);
     const GameObjectInfo *info = objmgr.GetGameObjectInfo(entryID);
-    data.Initialize( SMSG_GAMEOBJECT_QUERY_RESPONSE );
-	data << entryID;
-
-	if( !info  )
+    if( info == NULL )
     {
-		sLog.outDebug( "Missing game object info for entry %d", entryID);  
-		
-		
-		data << uint64(0);
-		data << uint64(0);
-		data << uint64(0);
-		data << uint64(0);
-		data << uint64(0);
-		data << uint64(0);
-		data << uint64(0);
-		data << uint64(0);
-		data << uint64(0);
-		data << uint32(0);
-		data << uint16(0);
-		data << uint8(0);
-		SendPacket( &data );
-			return; 
+    Log::getSingleton( ).outDebug( "Missing game object info for entry %d", entryID);    
+    return; // no luck..
     }
 
-
-   
-  
+    data << (uint32)(entryID);
     data << (uint32)info->type;
     data << (uint32)info->displayId;
-    data << info->name;
-    data << uint16(0);//unknown
-    data << uint8(0);//unknown
-
+    data << info->name.c_str();
+    data << uint8(0) << uint8(0) << uint8(0);
     data << uint32(info->sound0);
     data << uint32(info->sound1);
     data << uint32(info->sound2);
@@ -427,124 +169,104 @@ void WorldSession::HandleGameObjectQueryOpcode( WorldPacket & recv_data )
     data << uint32(info->sound7);
     data << uint32(info->sound8);
     data << uint32(info->sound9);
-    
-	data << uint64(0);
-    data << uint64(0);
-    data << uint64(0);
-   
+    data << uint16(0);
+    data << uint8(0);
+    SendPacket( &data );
+}
+*/
+void WorldSession::HandleGameObjectQueryOpcode( WorldPacket & recv_data )
+{
 
-  
+    WorldPacket data;
+    data.Initialize( SMSG_GAMEOBJECT_QUERY_RESPONSE );
+    uint32 entryID;
+    uint64 guid;
+
+    recv_data >> entryID;
+    recv_data >> guid;
+
+    Log::getSingleton( ).outDetail("WORLD: CMSG_GAMEOBJECT_QUERY '%u'", guid);
+
+    const GameObjectInfo *info = objmgr.GetGameObjectInfo(entryID);
+    if( info == NULL )
+    {
+        Log::getSingleton( ).outDebug( "Missing game object info for entry %d", entryID);    
+        return; // no luck..
+    }
+
+/*
+    Converter.ToBytes(obj1.Id, this.tempBuff, ref num1);
+    Converter.ToBytes(obj1.ObjectType, this.tempBuff, ref num1);
+    Converter.ToBytes(obj1.Model, this.tempBuff, ref num1);
+    Converter.ToBytes(obj1.Name, this.tempBuff, ref num1);
+    Converter.ToBytes(0, this.tempBuff, ref num1);
+    for (int num2 = 0; num2 < obj1.Sound.Length; num2++)
+    {
+        Converter.ToBytes(obj1.Sound[num2], this.tempBuff, ref num1);
+    }
+    for (int num3 = obj1.Sound.Length; num3 < 0x10; num3++)
+    {
+        Converter.ToBytes(0, this.tempBuff, ref num1);
+    }
+*/
+   
+    data << (uint32)(entryID);
+    data << (uint32)info->type;
+    data << (uint32)info->displayId;
+    data << info->name.c_str();
+    data << uint32(0);
+    
+    data << uint32(info->sound0);
+    data << uint32(info->sound1);
+    data << uint32(info->sound2);
+    data << uint32(info->sound3);
+    data << uint32(info->sound4);
+    data << uint32(info->sound5);
+    data << uint32(info->sound6);
+    data << uint32(info->sound7);
+    data << uint32(info->sound8);
+    data << uint32(info->sound9);
+    data << uint32(0);
+    data << uint32(0);
+    data << uint32(0);
+    data << uint32(0);
+    data << uint32(0);
+    /*data << uint32(0);
+    data << uint32(0);
+    data << uint32(0);
+    data << uint32(0);*/
+
+    data << uint16(0);
+    data << uint8(0);
+
     SendPacket( &data );
 }
 
 
 
-
-
-
+//////////////////////////////////////////////////////////////
+/// This function handles MSG_CORPSE_QUERY:
+//////////////////////////////////////////////////////////////
 void WorldSession::HandleCorpseQueryOpcode(WorldPacket &recv_data)
 {
+    Log::getSingleton().outDetail("WORLD: Received MSG_CORPSE_QUERY");
+
+    Corpse *pCorpse = NULL;
     WorldPacket data;
-    
-    sLog.outDetail("WORLD: Received MSG_CORPSE_QUERY");
-
-    if(!GetPlayer()->m_pCorpse) return;
-
-    data.Initialize(MSG_CORPSE_QUERY);
-    data << uint8(0x01);
-    data << uint32(0x01);
-    data << GetPlayer()->m_pCorpse->GetPositionX();
-    data << GetPlayer()->m_pCorpse->GetPositionY();
-    data << GetPlayer()->m_pCorpse->GetPositionZ();
-    data << uint32(0x01);
-    SendPacket(&data);
-
+#ifndef ENABLE_GRID_SYSTEM
+    pCorpse = objmgr.GetCorpseByOwner(GetPlayer());
+#else
+    pCorpse = ObjectAccessor::Instance().GetCorpse(*GetPlayer(), GetPlayer()->GetGUID());
+#endif
+    if(pCorpse)
+    {
+        data.Initialize(MSG_CORPSE_QUERY);
+        data << uint8(0x01);
+        data << uint32(0x00000001);
+        data << pCorpse->GetPositionX();
+        data << pCorpse->GetPositionY();
+        data << pCorpse->GetPositionZ();
+        data << uint32(0x00000001);
+        SendPacket(&data);
+    }
 }
-
-
-
-
-void WorldSession::HandleNpcTextQueryOpcode( WorldPacket & recv_data )
-{
-    WorldPacket data;
-    uint32 textID;
-    uint32 uField0, uField1;
-    GossipText *pGossip;
-	std::string GossipStr;
-
-    recv_data >> textID;
-    sLog.outDetail("WORLD: CMSG_NPC_TEXT_QUERY ID '%u'", textID );
-
-    recv_data >> uField0 >> uField1;
-    GetPlayer()->SetUInt32Value(UNIT_FIELD_TARGET, uField0);
-    GetPlayer()->SetUInt32Value(UNIT_FIELD_TARGET + 1, uField1);
-
-	pGossip = objmgr.GetGossipText(textID);
-	
-    data.Initialize( SMSG_NPC_TEXT_UPDATE );
-    data << textID;
-
-	if (!pGossip)
-	{
-		data << uint32( 0 );
-		data << "Greetings $N";
-		data << "Greetings $N";
-	} else
-
-	for (int i=0; i<8; i++)
-	{
-		data << pGossip->Options[i].Probability;
-		data << pGossip->Options[i].Text_0;
-
-		if ( pGossip->Options[i].Text_1 == "" )
-			data << pGossip->Options[i].Text_0; else
-			data << pGossip->Options[i].Text_1;
-
-		data << pGossip->Options[i].Language;
-
-		data << pGossip->Options[i].Emotes[0]._Delay;
-		data << pGossip->Options[i].Emotes[0]._Emote;
-
-		data << pGossip->Options[i].Emotes[1]._Delay;
-		data << pGossip->Options[i].Emotes[1]._Emote;
-
-		data << pGossip->Options[i].Emotes[2]._Delay;
-		data << pGossip->Options[i].Emotes[2]._Emote;
-	}
-
-    SendPacket( &data );
-
-    sLog.outString( "WORLD: Sent SMSG_NPC_TEXT_UPDATE " );
-}
-
-
-
-
-void WorldSession::HandlePageQueryOpcode( WorldPacket & recv_data ) {
-    WorldPacket data;
-    uint32 pageID;
-
-    recv_data >> pageID;
-    sLog.outDetail("WORLD: Received CMSG_PAGE_TEXT_QUERY for pageID '%u'", pageID);
-	
-	while (pageID) {
-		ItemPage *pPage = objmgr.RetreiveItemPageText( pageID );
-		data.Initialize( SMSG_PAGE_TEXT_QUERY_RESPONSE );
-		data << pageID;
-
-		if (!pPage) {
-			data << "Item page missing.";
-			data << uint32(0);
-			pageID = 0;
-		} else {
-			data << pPage->PageText;
-			data << uint32(pPage->Next_Page);
-			pageID = pPage->Next_Page;
-		}
-		SendPacket( &data );
-
-		sLog.outString( "WORLD: Sent SMSG_PAGE_TEXT_QUERY_RESPONSE " );
-	}
-}
-
-

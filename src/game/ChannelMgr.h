@@ -1,5 +1,7 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* ChannelMgr.h
+ *
+ * Copyright (C) 2004 Wow Daemon
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,9 +19,8 @@
  */
 
 #include "Channel.h"
-#include "Policies/Singleton.h"
 
-class ChannelMgr 
+class ChannelMgr :  public Singleton < ChannelMgr >
 {
     map<string,Channel *> channels;
     void MakeNotOnPacket(WorldPacket *data, const char *name)
@@ -60,4 +61,4 @@ class ChannelMgr
         }
 };
 
-#define channelmgr MaNGOS::Singleton<ChannelMgr>::Instance()
+#define channelmgr ChannelMgr::getSingleton()

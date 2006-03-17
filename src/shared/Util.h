@@ -1,5 +1,7 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* Util.h
+ *
+ * Copyright (C) 2004 Wow Daemon
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,8 +23,8 @@
 
 #include "Common.h"
 
-
-
-
+///////////////////////////////////////////////////////////////////////////////
+// String Functions ///////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 std::vector<std::string> StrSplit(const std::string &src, const std::string &sep);
 #endif

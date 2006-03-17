@@ -1,5 +1,6 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* CreatureAI.h
+ *
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,74 +21,38 @@
 #define MANGOS_CREATUREAI_H
 
 #include "Platform/Define.h"
-#include "Policies/Singleton.h"
-#include "Dynamic/ObjectRegistry.h"
-#include "Dynamic/FactoryHolder.h"
 
-
+/** This is an API for Creatures AI
+ */
 
 class Unit;
-class Creature;
 
 class MANGOS_DLL_DECL CreatureAI 
 {
 public:
     
-    
+    // dtor
     virtual ~CreatureAI();
 
-    
+    /** Call on a creature/Player move in line of sight of creature.
+     * The line of sight of the creature depends on the distance
+     * of the target plus the angle the creature is looking.
+     */
     virtual void MoveInLineOfSight(Unit *) = 0;
 
-    
+    /// Call when a player/Creature starts to attack the creature
     virtual void AttackStart(Unit *) = 0;
 
-    
+    /// Call when the creature/Player stop attacking
     virtual void AttackStop(Unit *) = 0;
 
-    
+    /// Call to update the status of the attacker.  Only call when the victim exist
+    virtual void Update(uint32, Unit *) = 0;
+
+    /// Call when the victim of the creature heals by another creature/player
     virtual void HealBy(Unit *healer, uint32 amount_healed) = 0;
-
-    
-    virtual void DamageInflict(Unit *done_by, uint32 amount_damage) = 0;
-
-    
-    virtual bool IsVisible(Unit *) const = 0; 
-
-    
-    virtual void UpdateAI(const uint32 diff) = 0;   
 };
 
 
-struct SelectableAI : public FactoryHolder<CreatureAI>, public Permissible<Creature>
-{
-    
-    SelectableAI(const char *id) : FactoryHolder<CreatureAI>(id) {}
-};
-
-
-template<class REAL_AI>
-struct CreatureAIFactory : public SelectableAI
-{
-    CreatureAIFactory(const char *name) : SelectableAI(name) {}
-
-    
-    CreatureAI* Create(void *) const;
-
-    
-    int Permit(const Creature *c) const { return REAL_AI::Permissible(c); }
-};
-
-
-#define NO_PERMIT  -1
-#define IDLE_PERMIT_BASE 1
-#define REACTIVE_PERMIT_BASE 100
-#define PROACTIVE_PERMIT_BASE 200
-#define FACTION_SPECIFIC_PERMIT_BASE 400
-#define SPEICAL_PERMIT_BASE 800
-
-typedef FactoryHolder<CreatureAI> CreatureAICreator;
-typedef FactoryHolder<CreatureAI>::FactoryHolderRegistry CreatureAIRegistry;
-typedef FactoryHolder<CreatureAI>::FactoryHolderRepository CreatureAIRepository;
 
 #endif

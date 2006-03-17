@@ -1,5 +1,6 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* CreatureAI.cpp
+ *
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,11 +18,7 @@
  */
 
 #include "CreatureAI.h"
-#include "HateMatrix.h"
 
 CreatureAI::~CreatureAI()
 {
 }
-
-uint32 HateBinder::si_noHateValue=0;
-

@@ -1,5 +1,7 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* QueryResultSqlite.cpp
+ *
+ * Copyright (C) 2004 Wow Daemon
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +29,7 @@ QueryResult(rowCount, fieldCount), mTableData(tableData), mTableIndex(0)
     for (uint32 i = 0; i < mFieldCount; i++)
     {
         mCurrentRow[i].SetName(mTableData[i]);
-        
+        // will change this to support datatypes eventually if needed
         mCurrentRow[i].SetType(Field::DB_TYPE_UNKNOWN);
     }
 }

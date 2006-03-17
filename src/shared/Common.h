@@ -1,5 +1,7 @@
-/* 
- * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
+/* Common.h
+ *
+ * Copyright (C) 2004 Wow Daemon
+ * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,43 +23,52 @@
 
 #pragma warning(disable:4996)
 
-#ifndef __SHOW_STUPID_WARNINGS__
+// Only clients with this version will be allowed to view the realmlist.
+// Higher versions will be rejected, lower versions will be patched if possible.
 
-
-#pragma warning(disable:4244)
-
-#pragma warning(disable:4267)
-
-#pragma warning(disable:4800)
-
-#pragma warning(disable:4018)
-
-#pragma warning(disable:4311)
-
-#pragma warning(disable:4305)
-
-#pragma warning(disable:4005)
-#endif 
-
-
-
-
-// we need to stick to 1 version or half of the stuff will work for someone
-// others will not and opposite
-// like crashing on 1.8.0, reputation on 1.8.4 ...
-
-#define EXPECTED_MANGOS_CLIENT_BUILD        {4996,5059,5086,0}
-
+#define EXPECTED_MANGOS_CLIENT_BUILD        {4544,4500,4565/*1.6.x*/,4671/*1.7.0*/,4735/*1.8.0*/, 4769/*1.8.1*/, 4784/*1.8.2*/}
+// 1.6.0 > 4500,4449,4442,4375,4364,4341,4284,4279,4222,4150,4125,4115,4062,4044,3989,3988,3925,3892,3810,3807,0
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
 
-#include "Utilities/HashMap.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
 #include <errno.h>
+
+// current platform and compiler
+#define PLATFORM_WIN32 0
+#define PLATFORM_UNIX  1
+#define PLATFORM_APPLE 2
+
+#if defined( __WIN32__ ) || defined( WIN32 ) || defined( _WIN32 )
+#  define PLATFORM PLATFORM_WIN32
+#elif defined( __APPLE_CC__ )
+#  define PLATFORM PLATFORM_APPLE
+#else
+#  define PLATFORM PLATFORM_UNIX
+#endif
+
+#define COMPILER_MICROSOFT 0
+#define COMPILER_GNU       1
+#define COMPILER_BORLAND   2
+
+#ifdef _MSC_VER
+#  define COMPILER COMPILER_MICROSOFT
+#elif defined( __BORLANDC__ )
+#  define COMPILER COMPILER_BORLAND
+#elif defined( __GNUC__ )
+#  define COMPILER COMPILER_GNU
+#else
+#  pragma error "FATAL ERROR: Unknown compiler."
+#endif
+
+#if COMPILER == COMPILER_MICROSOFT
+#  pragma warning( disable : 4267 )               // conversion from 'size_t' to 'int', possible loss of data
+#  pragma warning( disable : 4786 )               // identifier was truncated to '255' characters in the debug information
+#endif
 
 #if PLATFORM == PLATFORM_WIN32
 #define STRCASECMP stricmp
@@ -72,8 +83,19 @@
 #include <queue>
 #include <sstream>
 #include <algorithm>
+//#include <iostream>
+#if COMPILER == COMPILER_GNU && __GNUC__ >= 3
+#include <ext/hash_map>
 
+#if __GNUC__ >= 4
+#define __fastcall __attribute__((__fastcall__))
+#else
+#define __fastcall
+#endif
 
+#else
+#include <hash_map>
+#endif
 
 #include <zthread/FastMutex.h>
 #include <zthread/LockedQueue.h>
@@ -93,9 +115,51 @@
 #  include <netdb.h>
 #endif
 
+#ifdef _STLPORT_VERSION
+#define HM_NAMESPACE std
+// msvc71
+#elif COMPILER == COMPILER_MICROSOFT && _MSC_VER >= 1300
+#define HM_NAMESPACE stdext
+#elif COMPILER == COMPILER_GNU && __GNUC__ >= 3
+#define HM_NAMESPACE __gnu_cxx
+
+namespace __gnu_cxx
+{
+    template<> struct hash<unsigned long long>
+    {
+        size_t operator()(const unsigned long long &__x) const { return (size_t)__x; }
+    };
+    template<typename T> struct hash<T *>
+    {
+        size_t operator()(T * const &__x) const { return (size_t)__x; }
+    };
+
+};
+
+#else
+#define HM_NAMESPACE std
+#endif
 
 #include "MemoryLeaks.h"
 
+#if COMPILER == COMPILER_MICROSOFT
+typedef __int64   int64;
+#else
+typedef long long int64;
+#endif
+typedef long        int32;
+typedef short       int16;
+typedef char        int8;
+
+#if COMPILER == COMPILER_MICROSOFT
+typedef unsigned __int64   uint64;
+#else
+typedef unsigned long long  uint64;
+typedef unsigned long      DWORD;
+#endif
+typedef unsigned long        uint32;
+typedef unsigned short       uint16;
+typedef unsigned char        uint8;
 
 #if COMPILER == COMPILER_MICROSOFT
 
@@ -114,18 +178,16 @@
 #define SI64FMTD "%lld"
 #endif
 
-#define GUID_HIPART(x)   (*(((uint32*)&(x))+1))
-#define GUID_LOPART(x)   (*((uint32*)&(x)))
-#define MAKE_GUID(l, h)  uint64((uint32(l)) | ((uint64(uint32(h))) << 32))
+#define GUID_HIPART(x) (*(((uint32*)&(x))+1))
+#define GUID_LOPART(x) (*((uint32*)&(x)))
 
 #define atol(a) strtoul( a, NULL, 10)
 
 #define STRINGIZE(a) #a
 
-
+// fix buggy MSVC's for variable scoping to be reliable =S
 #define for if(true) for
 
-
-#define LOGOUTDELAY   60  
+#define LOGOUTDELAY 600 // ~ 1 min
 
 #endif
