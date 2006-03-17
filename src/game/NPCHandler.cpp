@@ -25,127 +25,281 @@
 #include "World.h"
 #include "ObjectMgr.h"
 #include "Player.h"
-#include "SpellAuras.h"
+#include "Affect.h"
 #include "UpdateMask.h"
 #include "ScriptCalls.h"
 #include "ObjectAccessor.h"
-#include "Creature.h"
+
+
+
+
 
 void WorldSession::HandleTabardVendorActivateOpcode( WorldPacket & recv_data )
 {
+    WorldPacket data;
     uint64 guid;
     recv_data >> guid;
-    SendTabardVendorActivate(guid);
+    data.Initialize( MSG_TABARDVENDOR_ACTIVATE );
+    data << guid;
+    SendPacket( &data );
 }
 
-void WorldSession::SendTabardVendorActivate( uint64 guid )
-{
-	WorldPacket data;
-	data.Initialize( MSG_TABARDVENDOR_ACTIVATE );
-	data << guid;
-	SendPacket( &data );
-}
+
+
+
 
 void WorldSession::HandleBankerActivateOpcode( WorldPacket & recv_data )
 {
+    WorldPacket data;
     uint64 guid;
+    recv_data >> guid;
 
-	sLog.outString( "WORLD: Received CMSG_BANKER_ACTIVATE" );
-
-	recv_data >> guid;
-
-	SendShowBank(guid);
+    data.Initialize( SMSG_SHOW_BANK );
+    data << guid;
+    SendPacket( &data );
 }
 
-void WorldSession::SendShowBank( uint64 guid )
-{
-	WorldPacket data;
-	data.Initialize( SMSG_SHOW_BANK );
-	data << guid;
-	SendPacket( &data );
-}
 
+
+
+
+
+
+
+extern uint32 default_trainer_guids[12];
 
 void WorldSession::HandleTrainerListOpcode( WorldPacket & recv_data )
 {
     WorldPacket data;
     uint64 guid;
+    uint32 cnt;
 
     recv_data >> guid;
-    SendTrainerList( guid );
+    Creature *unit = ObjectAccessor::Instance().GetCreature(*_player, guid);        
+    Trainerspell *strainer = objmgr.GetTrainerspell(unit->GetNameID());
+
+	CreatureInfo *ci = objmgr.GetCreatureName(unit->GetNameID());
+
+	if ((ci->flags1 & UNIT_NPC_FLAG_TRAINER) && !strainer)
+	{
+		strainer = objmgr.GetTrainerspell(default_trainer_guids[ci->classNum]);
+	}
+
+
+
+    cnt = 0;
+    if(strainer)
+    {
+
+        for (unsigned int t = 0;t < sSkillStore.GetNumRows();t++)
+        {
+            skilllinespell *skill = sSkillStore.LookupEntry(t);
+            if ((skill->skilline == strainer->skilline1) || (skill->skilline == strainer->skilline2) || (skill->skilline == strainer->skilline3)
+                || (skill->skilline == strainer->skilline4) || (skill->skilline == strainer->skilline5) || (skill->skilline == strainer->skilline6)
+                || (skill->skilline == strainer->skilline7) || (skill->skilline == strainer->skilline8) || (skill->skilline == strainer->skilline9)
+                || (skill->skilline == strainer->skilline10) || (skill->skilline == strainer->skilline11) || (skill->skilline == strainer->skilline12)
+                || (skill->skilline == strainer->skilline13) || (skill->skilline == strainer->skilline14) || (skill->skilline == strainer->skilline15)
+                || (skill->skilline == strainer->skilline16) || (skill->skilline == strainer->skilline17) || (skill->skilline == strainer->skilline18)
+                || (skill->skilline == strainer->skilline19) || (skill->skilline == strainer->skilline20))
+            {
+                Log::getSingleton().outString("skill %u with skillline %u matches",skill->spell,skill->skilline);
+                SpellEntry *proto = sSpellStore.LookupEntry(skill->spell);
+                if ((proto) )
+                {
+                    
+                    
+
+                    cnt++;
+                }
+            }
+        }
+
+        data.Initialize( SMSG_TRAINER_LIST );     
+        data << guid;
+        data << uint32(0) << uint32(cnt);
+
+        uint32 num_added = 0;
+
+        
+        for (unsigned int t = 0;t < sSkillStore.GetNumRows();t++)
+        {
+            skilllinespell *skill = sSkillStore.LookupEntry(t);
+            if ((skill->skilline == strainer->skilline1) || (skill->skilline == strainer->skilline2) || (skill->skilline == strainer->skilline3)
+                || (skill->skilline == strainer->skilline4) || (skill->skilline == strainer->skilline5) || (skill->skilline == strainer->skilline6)
+                || (skill->skilline == strainer->skilline7) || (skill->skilline == strainer->skilline8) || (skill->skilline == strainer->skilline9)
+                || (skill->skilline == strainer->skilline10) || (skill->skilline == strainer->skilline11) || (skill->skilline == strainer->skilline12)
+                || (skill->skilline == strainer->skilline13) || (skill->skilline == strainer->skilline14) || (skill->skilline == strainer->skilline15)
+                || (skill->skilline == strainer->skilline16) || (skill->skilline == strainer->skilline17) || (skill->skilline == strainer->skilline18)
+                || (skill->skilline == strainer->skilline19) || (skill->skilline == strainer->skilline20))
+            {
+                SpellEntry *proto = sSpellStore.LookupEntry(skill->spell);
+                if ((proto))
+                {
+                    
+                    
+
+                    
+                    data << uint32(skill->spell);
+                    
+
+                    if (GetPlayer()->HasSpell(skill->spell))
+                    {
+                        data << uint8(2);
+                    }
+                    else
+                    {
+                        if (((GetPlayer()->GetUInt32Value( UNIT_FIELD_LEVEL )) < (proto->spellLevel)) 
+                            || (GetPlayer()->GetUInt32Value( PLAYER_FIELD_COINAGE ) < sWorld.mPrices[proto->spellLevel]))
+                        {
+                            data << uint8(1);
+                        }
+                        else
+                        {
+                            data << uint8(0);
+                        }
+                    }
+
+                    data << uint32(sWorld.mPrices[proto->spellLevel]) << uint32(0);
+                    data << uint32(0) << uint8(proto->spellLevel);
+                    data << uint32(0);            
+                    data << uint32(0);            
+                    data << uint32(0);
+                    data << uint32(0) << uint32(0);
+                    
+                    num_added++;
+                    
+                }
+            }
+        }
+
+        
+
+        data << "Hello! Ready for some training?";
+        SendPacket( &data );
+    }
 }
 
 void WorldSession::SendTrainerList( uint64 guid )
 {
-	std::string str = "Hello! Ready for some training?";
-	SendTrainerList( guid, str );
-}
+    WorldPacket data;
+    uint32 cnt;
+	uint64 useGuid = guid;
 
-void WorldSession::SendTrainerList( uint64 guid,std::string strTitle )
-{
-	WorldPacket data;
-
-	sLog.outDebug( "WORLD: SendTrainerList" );
-
-	Creature *unit = ObjectAccessor::Instance().GetCreature(*_player, guid);        
+    Creature *unit = ObjectAccessor::Instance().GetCreature(*_player, guid);        
     
-	if (!unit)
+
+	if (unit == NULL)
 	{
-		sLog.outDebug( "WORLD: SendTrainerList - (%u) NO SUCH UNIT! (GUID: %u)", uint32(GUID_LOPART(guid)), guid );
+		Log::getSingleton( ).outDebug( "WORLD: SendTrainerList - (%u) NO SUCH UNIT! (GUID: %u)", uint32(GUID_LOPART(guid)), guid );
 		return;
 	}
 
-	CreatureInfo *ci = unit->GetCreatureInfo();
+	CreatureInfo *ci = objmgr.GetCreatureName(unit->GetNameID());
 
 	if (!ci)
 	{
-		sLog.outDebug( "WORLD: SendTrainerList - (%u) NO CREATUREINFO! (GUID: %u)", uint32(GUID_LOPART(guid)), guid );
+		Log::getSingleton( ).outDebug( "WORLD: SendTrainerList - (%u) NO CREATUREINFO! (GUID: %u)", uint32(GUID_LOPART(guid)), guid );
 		return;
 	}
-		
-	std::list<TrainerSpell*> Tspells;
-	std::list<TrainerSpell*>::iterator itr;
-		
-	for (itr = unit->GetTspellsBegin(); itr != unit->GetTspellsEnd();itr++)
-	{		
-		if(!(*itr)->spell  || _player->HasSpell((*itr)->spell->Id)) 
-			continue;
-		else if(!((*itr)->reqspell) || _player->HasSpell((*itr)->reqspell))
-			Tspells.push_back(*itr);
-	}
+
+	Trainerspell *strainer = objmgr.GetTrainerspell(unit->GetNameID());
 	
-  data.Initialize( SMSG_TRAINER_LIST );     
-  data << guid;
-  data << uint32(0) << uint32(Tspells.size());
-  
-  SpellEntry *spellInfo;
-   
-	for (itr = Tspells.begin(); itr != Tspells.end();itr++)
-	{	
-		spellInfo = sSpellStore.LookupEntry((*itr)->spell->EffectTriggerSpell[0]);
-		if(!spellInfo) continue;
-		
-		data << uint32((*itr)->spell->Id);
-		
-    if(_player->getLevel() < spellInfo->spellLevel )
-      	data << uint8(1);
-    else
-    	data << uint8(0);
-
-    data << uint32((*itr)->spellcost);
-    data << uint32(0) << uint32(0);
-    
-    data << uint8(spellInfo->spellLevel);
-    data << uint32(0) << uint32(0);            
-    data << uint32(0) << uint32(0); 
-    data << uint32(0);              
+	if ((ci->flags1 & UNIT_NPC_FLAG_TRAINER) && !strainer)
+	{
+		strainer = objmgr.GetTrainerspell(default_trainer_guids[ci->classNum]);
+		useGuid = default_trainer_guids[ci->classNum];
 	}
 
-	data << strTitle;
-  SendPacket( &data );
-  
-  Tspells.clear();
-  
+    cnt = 0;
+    if(strainer)
+    {
+
+        for (unsigned int t = 0;t < sSkillStore.GetNumRows();t++)
+        {
+            skilllinespell *skill = sSkillStore.LookupEntry(t);
+            if ((skill->skilline == strainer->skilline1) || (skill->skilline == strainer->skilline2) || (skill->skilline == strainer->skilline3)
+                || (skill->skilline == strainer->skilline4) || (skill->skilline == strainer->skilline5) || (skill->skilline == strainer->skilline6)
+                || (skill->skilline == strainer->skilline7) || (skill->skilline == strainer->skilline8) || (skill->skilline == strainer->skilline9)
+                || (skill->skilline == strainer->skilline10) || (skill->skilline == strainer->skilline11) || (skill->skilline == strainer->skilline12)
+                || (skill->skilline == strainer->skilline13) || (skill->skilline == strainer->skilline14) || (skill->skilline == strainer->skilline15)
+                || (skill->skilline == strainer->skilline16) || (skill->skilline == strainer->skilline17) || (skill->skilline == strainer->skilline18)
+                || (skill->skilline == strainer->skilline19) || (skill->skilline == strainer->skilline20))
+            {
+                Log::getSingleton().outString("skill %u with skillline %u matches",skill->spell,skill->skilline);
+                SpellEntry *proto = sSpellStore.LookupEntry(skill->spell);
+                if ((proto) )
+                {
+                    
+                    
+
+                    cnt++;
+                }
+            }
+        }
+
+        data.Initialize( SMSG_TRAINER_LIST );     
+        data << guid;
+        data << uint32(0) << uint32(cnt);
+
+        uint32 num_added = 0;
+
+        
+        for (unsigned int t = 0;t < sSkillStore.GetNumRows();t++)
+        {
+            skilllinespell *skill = sSkillStore.LookupEntry(t);
+            if ((skill->skilline == strainer->skilline1) || (skill->skilline == strainer->skilline2) || (skill->skilline == strainer->skilline3)
+                || (skill->skilline == strainer->skilline4) || (skill->skilline == strainer->skilline5) || (skill->skilline == strainer->skilline6)
+                || (skill->skilline == strainer->skilline7) || (skill->skilline == strainer->skilline8) || (skill->skilline == strainer->skilline9)
+                || (skill->skilline == strainer->skilline10) || (skill->skilline == strainer->skilline11) || (skill->skilline == strainer->skilline12)
+                || (skill->skilline == strainer->skilline13) || (skill->skilline == strainer->skilline14) || (skill->skilline == strainer->skilline15)
+                || (skill->skilline == strainer->skilline16) || (skill->skilline == strainer->skilline17) || (skill->skilline == strainer->skilline18)
+                || (skill->skilline == strainer->skilline19) || (skill->skilline == strainer->skilline20))
+            {
+                SpellEntry *proto = sSpellStore.LookupEntry(skill->spell);
+                if ((proto))
+                {
+                    
+                    
+
+                    
+                    data << uint32(skill->spell);
+                    
+
+                    if (GetPlayer()->HasSpell(skill->spell))
+                    {
+                        data << uint8(2);
+                    }
+                    else
+                    {
+                        if (((GetPlayer()->GetUInt32Value( UNIT_FIELD_LEVEL )) < (proto->spellLevel)) 
+                            || (GetPlayer()->GetUInt32Value( PLAYER_FIELD_COINAGE ) < sWorld.mPrices[proto->spellLevel]))
+                        {
+                            data << uint8(1);
+                        }
+                        else
+                        {
+                            data << uint8(0);
+                        }
+                    }
+
+                    data << uint32(sWorld.mPrices[proto->spellLevel]) << uint32(0);
+                    data << uint32(0) << uint8(proto->spellLevel);
+                    data << uint32(0);            
+                    data << uint32(0);            
+                    data << uint32(0);
+                    data << uint32(0) << uint32(0);
+                    
+                    num_added++;
+                    
+                }
+            }
+        }
+
+        
+
+        data << "Hello! Ready for some training?";
+        SendPacket( &data );
+    }
 }
 
 
@@ -155,50 +309,65 @@ void WorldSession::HandleTrainerBuySpellOpcode( WorldPacket & recv_data )
 {
     WorldPacket data;
     uint64 guid;
-    uint32 spellId=0, playerGold=0;
-		TrainerSpell *proto=NULL;
-		
+    uint32 spellId, playerGold, price;
+
+    uint64 trainer = GetPlayer()->GetSelection();
     recv_data >> guid >> spellId;
-    
-    Creature *unit = ObjectAccessor::Instance().GetCreature(*_player, guid);
-    
-    if(!unit) return;
-    
     playerGold = GetPlayer( )->GetUInt32Value( PLAYER_FIELD_COINAGE );
 
-		std::list<TrainerSpell*>::iterator titr;
-						
-		for (titr = unit->GetTspellsBegin(); titr != unit->GetTspellsEnd();titr++)
-		{		
-			if((*titr)->spell->Id == spellId) 
-			{
-        proto = *titr;
-				break;
-			}
-		}
+    data.Initialize( SMSG_TRAINER_BUY_SUCCEEDED );
+    data << guid << spellId;
+    SendPacket( &data );
+    SpellEntry *proto = sSpellStore.LookupEntry(spellId);
+    price = sWorld.mPrices[proto->spellLevel];
 
-    if( playerGold >= proto->spellcost )
+    if( playerGold >= price 
+        && ((GetPlayer()->GetUInt32Value( UNIT_FIELD_LEVEL )) >= (proto->spellLevel)))
     {
-    	SpellEntry *spellInfo = sSpellStore.LookupEntry(proto->spell->EffectTriggerSpell[0]);
-			if(!spellInfo) return;
-			
-    	if(GetPlayer()->GetUInt32Value( UNIT_FIELD_LEVEL ) < spellInfo->spellLevel)
-    		return; 
-      
-      data.Initialize( SMSG_TRAINER_BUY_SUCCEEDED );
-      data << guid << spellId;
-      SendPacket( &data );
+        GetPlayer( )->SetUInt32Value( PLAYER_FIELD_COINAGE, playerGold - price );
+
         
-      GetPlayer( )->SetUInt32Value( PLAYER_FIELD_COINAGE, playerGold - proto->spellcost );      
 
-      Spell *spell = new Spell(unit, proto->spell, false, NULL);
+        data.Initialize( SMSG_SPELL_START );
+        data << guid;
+        data << guid;
+        data << spellId;
+        data << uint16(0);
+        data << uint32(0);
+        data << uint16(2);
+        data << GetPlayer()->GetGUID();
+        WPAssert(data.size() == 36);
+        SendPacket( &data );
 
-      SpellCastTargets targets;
-      targets.m_unitTarget = GetPlayer();
+        data.Initialize( SMSG_LEARNED_SPELL );
+        data << spellId;
+        SendPacket( &data );
+        GetPlayer()->addSpell((uint16)spellId);
 
-      spell->prepare(&targets);
-        
-      SendTrainerList( guid );
+        data.Initialize( SMSG_SPELL_GO );
+        data << guid;
+        data << guid;
+        data << spellId;
+        data << uint8(0) << uint8(1) << uint8(1);
+        data << GetPlayer()->GetGUID();
+        data << uint8(0);
+        data << uint16(2);
+        data << GetPlayer()->GetGUID();
+        WPAssert(data.size() == 42);
+        SendPacket( &data );
+
+        data.Initialize( SMSG_SPELLLOGEXECUTE );
+        data << guid;
+        data << spellId;
+        data << uint32(1);
+        data << uint32(0x24);
+        data << uint32(1);
+        data << GetPlayer()->GetGUID();
+        WPAssert(data.size() == 32);
+        SendPacket( &data );
+
+		
+		SendTrainerList( guid );
     }
 }
 
@@ -227,15 +396,11 @@ void WorldSession::HandlePetitionShowListOpcode( WorldPacket & recv_data )
 
 void WorldSession::HandleAuctionHelloOpcode( WorldPacket & recv_data )
 {
+    WorldPacket data;
     uint64 guid;
 
     recv_data >> guid;
-		SendAuctionHello(guid);
-}
 
-void WorldSession::SendAuctionHello( uint64 guid )
-{
-    WorldPacket data;
     data.Initialize( MSG_AUCTION_HELLO );
     data << guid;
     data << uint32(0);
@@ -243,9 +408,13 @@ void WorldSession::SendAuctionHello( uint64 guid )
     SendPacket( &data );
 }
 
+
+
+
+
 void WorldSession::HandleGossipHelloOpcode( WorldPacket & recv_data )
 {
-	sLog.outString( "WORLD: Received CMSG_GOSSIP_HELLO" );
+	Log::getSingleton( ).outString( "WORLD: Recieved CMSG_GOSSIP_HELLO" );
 
     WorldPacket data;
     uint64 guid;
@@ -254,13 +423,15 @@ void WorldSession::HandleGossipHelloOpcode( WorldPacket & recv_data )
 
     Creature *unit = ObjectAccessor::Instance().GetCreature(*_player, guid);
 
-	if (!unit)
+	if (unit == NULL)
 	{
-		sLog.outDebug( "WORLD: CMSG_GOSSIP_HELLO - (%u) NO SUCH UNIT! (GUID: %u)", uint32(GUID_LOPART(guid)), guid );
+		Log::getSingleton( ).outDebug( "WORLD: CMSG_GOSSIP_HELLO - (%u) NO SUCH UNIT! (GUID: %u)", uint32(GUID_LOPART(guid)), guid );
 		return;
 	}
 
-	Script->GossipHello( GetPlayer(), unit );
+	GetPlayer()->PlayerTalkClass->ClearMenus();
+
+	scriptCallGossipHello( GetPlayer(), unit );
 }
 
 
@@ -269,36 +440,35 @@ void WorldSession::HandleGossipHelloOpcode( WorldPacket & recv_data )
 
 void WorldSession::HandleGossipSelectOptionOpcode( WorldPacket & recv_data )
 {
-    sLog.outDetail("WORLD: CMSG_GOSSIP_SELECT_OPTION");
+    Log::getSingleton( ).outDetail("WORLD: CMSG_GOSSIP_SELECT_OPTION");
     WorldPacket data;
     uint32 option;
     uint64 guid;
     
     recv_data >> guid >> option;
-    Creature *unit = ObjectAccessor::Instance().GetCreature(*_player, guid);
-    if (!unit)
+    Creature *unit = ObjectAccessor::Instance().GetCreature(*_player, GUID_LOPART(guid));
+    if (unit == NULL)
     {
-	sLog.outDebug( "WORLD: CMSG_GOSSIP_SELECT_OPTION - (%u) NO SUCH UNIT! (GUID: %u)", uint32(GUID_LOPART(guid)), guid );
+	Log::getSingleton( ).outDebug( "WORLD: CMSG_GOSSIP_SELECT_OPTION - (%u) NO SUCH UNIT! (GUID: %u)", uint32(GUID_LOPART(guid)), guid );
 	return;
     }
     
-    Script->GossipSelect( GetPlayer(), unit, GetPlayer()->PlayerTalkClass->GossipOptionSender( option ), GetPlayer()->PlayerTalkClass->GossipOptionAction( option ) );
+    scriptCallGossipSelect( GetPlayer(), unit, option, GetPlayer()->PlayerTalkClass->GossipOption( option ) );
 }
+
+
+
+
 
 void WorldSession::HandleSpiritHealerActivateOpcode( WorldPacket & recv_data )
 {
-	SendSpiritRessurect();   
-}
+    Affect *aff;
 
-void WorldSession::SendSpiritRessurect()
-{
-		
-
-    SpellEntry *spellInfo = sSpellStore.LookupEntry( 15007 );
+    SpellEntry *spellInfo = sSpellStore.LookupEntry( 2146 );
     if(spellInfo)
     {
-        Aura *Aur = new Aura(spellInfo,600000,GetPlayer(),GetPlayer());
-        GetPlayer( )->AddAura(Aur);
+        aff = new Affect(spellInfo,600000,GetPlayer()->GetGUID());
+        GetPlayer( )->AddAffect(aff);
     }
 
     GetPlayer( )->DeathDurabilityLoss(0.25);
@@ -318,83 +488,14 @@ void WorldSession::SendSpiritRessurect()
     GetPlayer( )->SpawnCorpseBones();
 }
 
+
 void WorldSession::HandleBinderActivateOpcode( WorldPacket & recv_data )
 {
-	WorldPacket data;
-	
-	// binding
-	data.Initialize( SMSG_BINDPOINTUPDATE );
-	data << float(GetPlayer( )->GetPositionX());
-	data << float(GetPlayer( )->GetPositionY());
-	data << float(GetPlayer( )->GetPositionZ());
-	data << uint32(GetPlayer( )->GetMapId());
-	data << uint32(GetPlayer( )->GetZoneId());
-	SendPacket( &data );
-
-	DEBUG_LOG("New Home Position X is %f",GetPlayer( )->GetPositionX());
-	DEBUG_LOG("New Home Position Y is %f",GetPlayer( )->GetPositionY());
-	DEBUG_LOG("New Home Position Z is %f",GetPlayer( )->GetPositionZ());
-	DEBUG_LOG("New Home MapId is %d",GetPlayer( )->GetMapId());
-	DEBUG_LOG("New Home ZoneId is %d",GetPlayer( )->GetZoneId());
-
-	// zone update
-	data.Initialize( SMSG_PLAYERBOUND );
-	data << uint64(GetPlayer( )->GetGUID());
-	data << uint32(GetPlayer( )->GetZoneId());
-	SendPacket( &data );	
-
-	// update sql homebind
-	sDatabase.PExecute("UPDATE `homebind` SET mapID = '%d', zoneID = '%d', positionX = '%f', positionY = '%f', positionZ = '%f' WHERE guid = '%lu';", GetPlayer( )->GetMapId(), GetPlayer( )->GetZoneId(), GetPlayer( )->GetPositionX(), GetPlayer( )->GetPositionY(), GetPlayer( )->GetPositionZ(), (unsigned long)GetPlayer( )->GetGUID());
-
-	// send spell for bind 3286 bind magic
-	data.Initialize(SMSG_SPELL_START );
-	data << uint8(0xFF) << GetPlayer()->GetGUID() << uint8(0xFF) << GetPlayer()->GetGUID() << uint16(3286);
-	data << uint16(0x00) << uint16(0x0F) << uint32(0x00)<< uint16(0x00);
-	SendPacket( &data );
-
-	data.Initialize(SMSG_SPELL_GO);
-	data << uint8(0xFF) << GetPlayer()->GetGUID() << uint8(0xFF) << GetPlayer()->GetGUID() << uint16(3286);
-	data << uint16(0x00) << uint8(0x0D) <<  uint8(0x01)<< uint8(0x01) << GetPlayer()->GetGUID();
-	data << uint32(0x00) << uint16(0x0200) << uint16(0x00);
-	SendPacket( &data );
-}
-
-void WorldSession::HandleRepairItemOpcode( WorldPacket & recv_data ) {
-	sLog.outDebug("WORLD: CMSG_REPAIR_ITEM");
-	WorldPacket data;
-	Item* pItem;
-	uint64 npcGUID, itemGUID;
-
-	recv_data >> npcGUID >> itemGUID;
-
-	if (itemGUID) {
-		sLog.outDetail("ITEM: Repair item, itemGUID = %d, npcGUID = %d", GUID_LOPART(itemGUID), GUID_LOPART(npcGUID));
-
-		pItem = GetPlayer()->GetItemByGUID(itemGUID);
-
-		if (!pItem) {
-			sLog.outDetail("PLAYER: Invalid item, GUID = %d", GUID_LOPART(itemGUID));
-			return;
-		}
-		uint32 durability = pItem->GetUInt32Value(ITEM_FIELD_MAXDURABILITY);
-		if (durability != 0) {
-			pItem->SetUInt32Value(ITEM_FIELD_DURABILITY, durability);
-			// TODO extract money formula or dbc
-		}
-	} else {
-		sLog.outDetail("ITEM: Repair all items, npcGUID = %d", GUID_LOPART(npcGUID));
-
-		for (int i = 0; i < EQUIPMENT_SLOT_END; i++) {
-			pItem = GetPlayer()->GetItemBySlot(i);
-			if (pItem) {
-				uint32 durability = pItem->GetUInt32Value(ITEM_FIELD_MAXDURABILITY);
-				if (durability != 0) {
-					pItem->SetUInt32Value(ITEM_FIELD_DURABILITY, durability);
-//					GetPlayer()->_ApplyItemMods(srcitem,i, false);
-//					DEBUG_LOG("Item is: %d, maxdurability is: %d", srcitem, durability);
-					// TODO extract money formula or dbc
-				}
-			}
-		}
-	}
+    GetPlayer( )->SetUInt32Value( UNIT_FIELD_FLAGS, (0xffffffff - 65536) & GetPlayer( )->GetUInt32Value( UNIT_FIELD_FLAGS ) );
+    GetPlayer( )->SetUInt32Value( UNIT_FIELD_AURA +32, 0 );
+    GetPlayer( )->SetUInt32Value( UNIT_FIELD_AURAFLAGS +4, 0 );
+    GetPlayer( )->SetUInt32Value( UNIT_FIELD_AURASTATE, 0 );
+    GetPlayer( )->SetUInt32Value( PLAYER_BYTES_2, (0xffffffff - 0x10) & GetPlayer( )->GetUInt32Value( PLAYER_BYTES_2 ) );
+    
+    GetPlayer()->setDeathState(ALIVE);
 }

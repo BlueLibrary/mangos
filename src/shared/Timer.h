@@ -19,16 +19,10 @@
 #ifndef MANGOS_TIMER_H
 #define MANGOS_TIMER_H
 
-#include "Platform/CompilerDefs.h"
-
 #if PLATFORM == PLATFORM_WIN32
 #   include <windows.h>
 #   include <mmsystem.h>
-#   include <time.h>
 #else
-# ifdef __FreeBSD__
-#   include <time.h>
-# endif
 #   include <sys/timeb.h>
 #endif
 

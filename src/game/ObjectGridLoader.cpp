@@ -54,11 +54,10 @@ template<> void SetState(Creature *obj)
 template<class T> void LoadHelper(const char* table, const uint32 &grid_id, const uint32 map_id, const CellPair &cell, std::map<OBJECT_HANDLE, T*> &m, uint32 &count)
 {
     uint32 cell_id = (cell.y_coord*TOTAL_NUMBER_OF_CELLS_PER_MAP) + cell.x_coord;
-
-    QueryResult *result = sDatabase.PQuery("SELECT guid from %s WHERE grid_id=%d and mapId=%d and cell_id=%d", table,grid_id,map_id,cell_id);
-
-    if( result )
-
+    std::stringstream query;
+    query << "SELECT guid from " << table << " WHERE grid_id=" << grid_id << " and mapId=" << map_id << " and cell_id=" << cell_id;
+    std::auto_ptr<QueryResult> result(sDatabase.Query(query.str().c_str()));
+    if( result.get() != NULL )
     {
 	do
 	{

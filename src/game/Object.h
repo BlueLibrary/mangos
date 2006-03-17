@@ -25,6 +25,7 @@
 #include <set>
 
 
+
 enum TYPE
 {
     TYPE_OBJECT         = 1,
@@ -77,13 +78,15 @@ class Object
 
         
         const uint64& GetGUID() const { return *((uint64*)m_uint32Values); }
+
+        
         const uint32& GetGUIDLow() const { return m_uint32Values[0]; }
         const uint32& GetGUIDHigh() const { return m_uint32Values[1]; }
-		
-		inline
-		uint32 GetEntry(){return m_uint32Values[OBJECT_FIELD_ENTRY];}
+
+        const uint32 GetNameID() const { return m_nameId; }
+        void SetNameId(uint32 nameId) { m_nameId = nameId; }
+
         
-	        
         const uint8& GetTypeId() const { return m_objectTypeId; }
         bool isType(uint8 mask) const 
 		{ 
@@ -109,13 +112,13 @@ class Object
         bool IsBeingTeleported() { return mSemaphoreTeleport; }
         void SetSemaphoreTeleport(bool semphsetting) { mSemaphoreTeleport = semphsetting; }
 
-		void Relocate(const float &x, const float &y, const float &z, const float &orientation)
-		{
-		m_positionX = x;
-		m_positionY = y;
-		m_positionZ = z;
-		m_orientation = orientation;
-		}
+    void Relocate(const float &x, const float &y, const float &z, const float &orientation)
+    {
+    m_positionX = x;
+    m_positionY = y;
+    m_positionZ = z;
+    m_orientation = orientation;
+    }
 
         const float& GetPositionX( ) const { return m_positionX; }
         const float& GetPositionY( ) const { return m_positionY; }
@@ -126,11 +129,12 @@ class Object
         void SetTaximask( uint8 index, uint32 value ) { m_taximask[index] = value; }
 
         void SetMapId(uint32 newMap) { m_mapId = newMap; }
+        void SetZoneId(uint32 newZone) { m_zoneId = newZone; }
 
         const uint32& GetMapId( ) const { return m_mapId; }
+        const uint32& GetZoneId( ) const { return m_zoneId; }
 
-        uint32 GetZoneId( );
-		
+        
         const uint32& GetUInt32Value( const uint16 &index ) const
         {
             ASSERT( index < m_valuesCount );
@@ -197,28 +201,6 @@ class Object
             return (dx*dx) + (dy*dy);
         }
 
-		float GetFacing(Object* obj) const
-        {
-            if(!obj) return 0;
-
-			float VictimX = obj->GetPositionX();
-			float VictimY = obj->GetPositionY();
-			float PlayerX = GetPositionX();
-			float PlayerY = GetPositionY();
-						
-			float dr1 = atan((VictimY - PlayerY) / (VictimX - PlayerX));
-			
-			if (VictimX >= PlayerX) 
-			{
-                dr1 += 1.57079633;	//rads (1/4)*2*PI
-			} 
-			else 
-			{
-				dr1 += 4.71238898; //rads (3/4)*2*PI
-			}
-            return (dr1 - GetOrientation());  //default return if in front of Victim 1.57079633 
-        }
-
         void SendMessageToSet(WorldPacket *data, bool self);
 
         
@@ -226,8 +208,6 @@ class Object
         void LoadTaxiMask(const char* data);
 
         uint16 GetValuesCount() const { return m_valuesCount; }
-
-		void InitValues() { _InitValues(); }
 
     protected:
         Object ( );
@@ -249,7 +229,8 @@ class Object
         virtual void _SetUpdateBits(UpdateMask *updateMask, Player *target) const;
         
         virtual void _SetCreateBits(UpdateMask *updateMask, Player *target) const;
-        void _BuildMovementUpdate(ByteBuffer * data, uint8 flags, uint32 flags2 ) const;
+
+        void _BuildMovementUpdate( ByteBuffer *data, uint32 flags, uint32 flags2 ) const;
         void _BuildValuesUpdate( ByteBuffer *data, UpdateMask *updateMask  ) const;
 
         
@@ -257,8 +238,10 @@ class Object
         
         uint8 m_objectTypeId;
 
-     
+        uint32 m_nameId;
+
         
+        uint32 m_zoneId;
         
         uint32 m_mapId;
 

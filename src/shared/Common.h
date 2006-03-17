@@ -42,11 +42,7 @@
 
 
 
-// we need to stick to 1 version or half of the stuff will work for someone
-// others will not and opposite
-// like crashing on 1.8.0, reputation on 1.8.4 ...
-
-#define EXPECTED_MANGOS_CLIENT_BUILD        {4996,5059,5086,0}
+#define EXPECTED_MANGOS_CLIENT_BUILD        {4544,4500,4565,4671,4735, 4769, 4784, 4807}
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -114,9 +110,8 @@
 #define SI64FMTD "%lld"
 #endif
 
-#define GUID_HIPART(x)   (*(((uint32*)&(x))+1))
-#define GUID_LOPART(x)   (*((uint32*)&(x)))
-#define MAKE_GUID(l, h)  uint64((uint32(l)) | ((uint64(uint32(h))) << 32))
+#define GUID_HIPART(x) (*(((uint32*)&(x))+1))
+#define GUID_LOPART(x) (*((uint32*)&(x)))
 
 #define atol(a) strtoul( a, NULL, 10)
 

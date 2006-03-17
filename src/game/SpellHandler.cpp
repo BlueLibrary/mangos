@@ -25,118 +25,92 @@
 #include "Opcodes.h"
 #include "Spell.h"
 
-void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket) {
-	sLog.outDetail("WORLD: got use Item packet, data length = %i",recvPacket.size());
+void WorldSession::HandleUseItemOpcode(WorldPacket& recvPacket)
+{
 
-	Player* pUser = GetPlayer();
-	uint8 bagIndex, slot, tmp3;
-	uint32 spellId;
 
-	recvPacket >> bagIndex >> slot >> tmp3;
+	Player* p_User = GetPlayer();
+    Log::getSingleton( ).outDetail("WORLD: got use Item packet, data length = %i\n",recvPacket.size());
+    uint8 tmp1,slot,tmp3;
+    uint32 spellId;
 
-	Item *pItem = pUser->GetItemBySlot(bagIndex, slot);
-	ItemPrototype *proto = pItem->GetProto();
-	spellId = proto->Spells[0].SpellId;
+    recvPacket >> tmp1 >> slot >> tmp3;
+
+    Item* tmpItem = new Item;
+    tmpItem = p_User->GetItemBySlot(slot);
+    ItemPrototype *itemProto = tmpItem->GetProto();
+    spellId = itemProto->SpellId[0];
+
     
-	SpellEntry *spellInfo = sSpellStore.LookupEntry(spellId);
-	if(!spellInfo) {
-		sLog.outError("WORLD: unknown spell id %i", spellId);
-		return;
-	}
+    SpellEntry *spellInfo = sSpellStore.LookupEntry( spellId );
+    if(!spellInfo)
+    {
+        Log::getSingleton( ).outError("WORLD: unknown spell id %i\n", spellId);
+        return;
+    }
 	
-	if (!pUser->CanUseItem(proto)) return;
+	
 
-	if (pUser->inCombat) {
-		if (proto->Class == ITEM_CLASS_CONSUMABLE || proto->Class == ITEM_CLASS_TRADE_GOODS || 
-			proto->Class == ITEM_CLASS_KEY || proto->Class == ITEM_CLASS_JUNK) {
+
+
+	
+
+	
+	if (!p_User->CanUseItem(itemProto)) return;
+	
+
+	
+	if (p_User->inCombat) {
+		
+		if (itemProto->Class == ITEM_CLASS_CONSUMABLE	|| 
+			itemProto->Class == ITEM_CLASS_TRADE_GOODS	||
+			
+			itemProto->Class == ITEM_CLASS_KEY			||
+			itemProto->Class == ITEM_CLASS_JUNK			){
 
 			WorldPacket data;
+
 			data.Initialize (SMSG_INVENTORY_CHANGE_FAILURE);
-			data << uint8(EQUIP_ERR_CANT_DO_IN_COMBAT);
-			data << (pItem ? pItem->GetGUID() : uint64(0));
-//			data << (pItem ? pItem->GetGUID() : uint64(0));
-			data << uint64(0);
+
+			data << uint32(EQUIP_ERR_CANT_DO_IN_COMBAT);
+			data << (tmpItem ? tmpItem->GetGUID() : uint64(0));
+			data << (tmpItem ? tmpItem->GetGUID() : uint64(0));
 			data << uint8(0);
-			SendPacket(&data);
+
+			SendPacket( &data );
 			return;
 		}
 	}
 	
-	Spell *spell = new Spell(pUser, spellInfo, false, 0);
-	WPAssert(spell);
+
+	
+    Spell *spell = new Spell(GetPlayer(), spellInfo,false, 0);
+    WPAssert(spell);
 
 	SpellCastTargets targets;
-	targets.read(&recvPacket, pUser);
-	spell->m_CastItem = pItem;
-	spell->prepare(&targets);
+    targets.read(&recvPacket,GetPlayer()->GetGUID());
+    spell->m_CastItem = tmpItem;
+    spell->prepare(&targets);
+	
 
-	uint32 ItemCount = pItem->GetCount();
-	uint32 ItemClass = proto->Class;
-	uint32 ItemId = proto->ItemId;
+	
+	uint32 ItemCount = tmpItem->GetCount();
+	uint32 ItemClass = itemProto->Class;
+	uint32 ItemId    = itemProto->ItemId;
 
 	if (ItemClass == ITEM_CLASS_CONSUMABLE) {
 		if (ItemCount > 1) {
-			pItem->SetCount(ItemCount-1);
-		} else {
-			pUser->RemoveItemFromSlot(bagIndex , slot);
-			pItem->DeleteFromDB();
-			delete pItem;
+			tmpItem->SetCount(ItemCount-1);
+		}
+		else {
+			p_User->RemoveItemFromSlot(slot);
+			
+			
+			
+			
 		}
 	}
-}
-
-#define OPEN_CHEST 11437
-#define OPEN_SAFE 11535
-#define OPEN_CAGE 11792
-#define OPEN_BOOTY_CHEST 5107
-#define OPEN_STRONGBOX 8517
-
-void WorldSession::HandleGameObjectUseOpcode( WorldPacket & recv_data )
-{
-    WorldPacket data;
-    uint64 guid;
-	uint32 spellId = OPEN_CHEST;
-	const GameObjectInfo *info;
-
-    recv_data >> guid;
-
-    sLog.outDebug( "WORLD: Recvd CMSG_GAMEOBJ_USE Message [guid=%d]", guid);   
-    GameObject *obj = ObjectAccessor::Instance().GetGameObject(*_player, guid);
-
-	if(!obj) return;
-	uint32 t=obj->GetUInt32Value(GAMEOBJECT_TYPE_ID);
-	obj->SetUInt32Value(GAMEOBJECT_FLAGS,2);
-	obj->SetUInt32Value(GAMEOBJECT_FLAGS,2);
-	switch(obj->GetUInt32Value(GAMEOBJECT_TYPE_ID))
-	{
-	  case 22:
-		 info = obj->GetGOInfo();
-		 if(info)
-		 {
-		     spellId = info->sound0;
-		     guid=GetPlayer()->GetGUID();
-		 }
-	  break;
-	  default:
-         sLog.outDebug( "Unkonw Object Type %d\n", obj->GetUInt32Value(GAMEOBJECT_TYPE_ID));  
-	   break;
-    }
-
-    SpellEntry *spellInfo = sSpellStore.LookupEntry( spellId );
-
-    if(!spellInfo)
-    {
-        sLog.outError("WORLD: unknown spell id %i\n", spellId);
-        return;
-    }
-
-    Spell *spell = new Spell(GetPlayer(), spellInfo, false, 0);
-    WPAssert(spell);
-
-    SpellCastTargets targets;
-    targets.m_unitTarget = GetPlayer();
-    targets.m_GOTarget = obj;
-    spell->prepare(&targets);
+	
 
 }
 
@@ -146,7 +120,30 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
 
     recvPacket >> spellId;
 
-    sLog.outDetail("WORLD: got cast spell packet, spellId - %i, data length = %i",
+#ifdef __REVIVE_CHEAT__ 
+    if (GetPlayer()->isDead())
+    {
+        GetPlayer()->SetMovement(MOVE_LAND_WALK);
+        GetPlayer()->SetMovement(MOVE_UNROOT);
+        GetPlayer()->SetPlayerSpeed(RUN, (float)7.5, true);
+        GetPlayer()->SetPlayerSpeed(SWIM, (float)4.9, true);
+
+        GetPlayer()->SetUInt32Value(CONTAINER_FIELD_SLOT_1+29, 0);
+        GetPlayer()->SetUInt32Value(UNIT_FIELD_AURA+32, 0);
+        GetPlayer()->SetUInt32Value(UNIT_FIELD_AURALEVELS+8, 0xeeeeeeee);
+        GetPlayer()->SetUInt32Value(UNIT_FIELD_AURAAPPLICATIONS+8, 0xeeeeeeee);
+        GetPlayer()->SetUInt32Value(UNIT_FIELD_AURAFLAGS+4, 0);
+        GetPlayer()->SetUInt32Value(UNIT_FIELD_AURASTATE, 0);
+
+        GetPlayer()->ResurrectPlayer();
+        GetPlayer()->SetUInt32Value(UNIT_FIELD_HEALTH, (uint32)(GetPlayer()->GetUInt32Value(UNIT_FIELD_MAXHEALTH)*0.50) );
+        GetPlayer()->SpawnCorpseBones();
+        
+    }
+#endif 
+
+
+    Log::getSingleton( ).outDetail("WORLD: got cast spell packet, spellId - %i, data length = %i",
         spellId, recvPacket.size());
 
     
@@ -154,7 +151,7 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
 
     if(!spellInfo)
     {
-        sLog.outError("WORLD: unknown spell id %i\n", spellId);
+        Log::getSingleton( ).outError("WORLD: unknown spell id %i\n", spellId);
         return;
     }
 
@@ -162,7 +159,7 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
         WPAssert(spell);
 
         SpellCastTargets targets;
-        targets.read(&recvPacket,GetPlayer());
+        targets.read(&recvPacket,GetPlayer()->GetGUID());
 
         spell->prepare(&targets);
 
@@ -171,6 +168,9 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
 
 void WorldSession::HandleCancelCastOpcode(WorldPacket& recvPacket)
 {
+    uint32 spellId;
+    recvPacket >> spellId;
+
     if(GetPlayer()->m_currentSpell)
         GetPlayer()->m_currentSpell->cancel();
 }
@@ -180,11 +180,5 @@ void WorldSession::HandleCancelAuraOpcode( WorldPacket& recvPacket)
 {
     uint32 spellId;
     recvPacket >> spellId;
-    GetPlayer()->RemoveAura(spellId);
-}
-
-void WorldSession::HandleCancelAutoRepeatSpellOpcode( WorldPacket& recvPacket)
-{
-    if(GetPlayer()->m_currentSpell)
-        GetPlayer()->m_currentSpell->cancel();
+    GetPlayer()->RemoveAffectById(spellId);
 }

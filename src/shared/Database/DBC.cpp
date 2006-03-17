@@ -1,7 +1,5 @@
-/* DBC.cpp
- *
- * Copyright (C) 2004 Wow Daemon
- * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
+/* 
+ * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -116,7 +114,7 @@ void DBC::RowToStruct(void* out, int row)
 
 void DBC::FormatCSV(const char* filename, bool info)
 {
-    // if(weird2 != cols*4) filename = strcat(filename,"-NOT.csv"); - Cause its a const.
+    
     FILE *f = fopen(filename, "wb");
     FILE *out = info ? f : stdout;
     fprintf(out,"Rows:%u\x0d\x0a",rows);
@@ -133,13 +131,8 @@ void DBC::FormatCSV(const char* filename, bool info)
     {
         for(int j=0; j < cols; j++)
         {
-/*
-            char* str = new char[512];
-            LookupFormat(str,i,j);
-            fprintf(f,"%s,",str);
-            delete [] str;
-*/
-            // Old code -> too slow. keeping it for reference
+
+            
             fst = tbl[i*cols+j];
             if(format[j] == F_STRING)
                 fprintf(f,"\"%s\"",(char*)(db+fst));

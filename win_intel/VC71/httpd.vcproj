@@ -232,7 +232,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="3"
-				GlobalOptimizations="TRUE"
+				GlobalOptimizations="FALSE"
 				EnableIntrinsicFunctions="TRUE"
 				FavorSizeOrSpeed="1"
 				EnableFiberSafeOptimizations="TRUE"
@@ -240,7 +240,7 @@
 				OptimizeForWindowsApplication="TRUE"
 				AdditionalIncludeDirectories="..\..\dep\include,..\..\src\framework,..\..\src\realmlist,..\..\src\redirect,..\..\src\game,..\..\src\shared,..\..\src\mangosd"
 				PreprocessorDefinitions="WIN32;NDEBUG,ENABLE_GRID_SYSTEM"
-				MinimalRebuild="FALSE"
+				MinimalRebuild="TRUE"
 				RuntimeLibrary="0"
 				WarningLevel="3"
 				DebugInformationFormat="0"/>

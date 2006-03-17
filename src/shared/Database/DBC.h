@@ -1,7 +1,5 @@
-/* DBC.h
- *
- * Copyright (C) 2004 Wow Daemon
- * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
+/* 
+ * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -47,7 +45,7 @@ enum DBCFmat
 
 class DBC
 {
-    int rows, cols, dblength,weird2;              // Weird2 = most probably line length
+    int rows, cols, dblength,weird2;              
     unsigned int* tbl;
     char* db,name[MAX_PATH];
     bool loaded;

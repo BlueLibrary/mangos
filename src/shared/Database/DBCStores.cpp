@@ -17,72 +17,58 @@
  */
 
 #include "DBCStores.h"
-//#include "DataStore.h"
-#include "Policies/SingletonImp.h"
-
-#include "DBCfmt.cpp"
+#include "DataStore.h"
 
 
 
 
-DBCStorage <AreaTableEntry> sAreaStore(AreaTableEntryfmt);
+implementIndexedDBCStore(SpellStore,SpellEntry)
+implementIndexedDBCStore(DurationStore,SpellDuration)
+implementIndexedDBCStore(RangeStore,SpellRange)
+implementIndexedDBCStore(EmoteStore,emoteentry)
+implementIndexedDBCStore(RadiusStore,SpellRadius)
+implementIndexedDBCStore(CastTimeStore,SpellCastTime)
+implementIndexedDBCStore(TalentStore,TalentEntry)
 
-DBCStorage <TalentEntry> sTalentStore(TalentEntryfmt);
-DBCStorage <SpellRadius> sSpellRadius(SpellRadiusfmt); 
 
-DBCStorage <FactionTemplateEntry> sFactionTemplateStore(FactionTemplateEntryfmt);
+implementIndexedDBCStore(AreaTableStore,AreaTableEntry)
+implementIndexedDBCStore(WorldMapAreaStore,WorldMapAreaEntry)
+implementDBCStore(WorldMapOverlayStore,WorldMapOverlayEntry)
 
-DBCStorage <SpellRange> sSpellRange(SpellRangefmt);
-DBCStorage <emoteentry> sEmoteStore(emoteentryfmt);
+implementIndexedDBCStore(FactionStore,FactionEntry)
+implementIndexedDBCStore(FactionTemplateStore,FactionTemplateEntry)
 
-DBCStorage <SpellEntry> sSpellStore(SpellEntryfmt);
-DBCStorage <SpellCastTime> sCastTime(SpellCastTimefmt);
-DBCStorage <SpellDuration> sSpellDuration(SpellDurationfmt);
-DBCStorage <FactionEntry> sFactionStore(FactionEntryfmt);
 
-DBCStorage <ItemSetEntry> sItemSetStore(ItemSetEntryfmt);
-DBCStorage <ItemDisplayTemplateEntry> sItemDisplayTemplateStore(ItemDisplayTemplateEntryfmt);
+implementDBCStore(ItemDisplayTemplateStore,ItemDisplayTemplateEntry)
+
+implementDBCStore(SkillStore,skilllinespell)
+
 
 float GetRadius(SpellRadius *radius)
 {
-	if(radius)
-        return radius->Radius;
-	else
-        return 0;
+    return radius->Radius;
 }
 
 
 uint32 GetCastTime(SpellCastTime *time)
 {
-	if(time)
-        return time->CastTime;
-	else
-		return 0;
+    return time->CastTime;
 }
 
 
 float GetMaxRange(SpellRange *range)
 {
-	if(range)
-        return range->maxRange;
-	else
-		return 0;
+    return range->maxRange;
 }
 
 
 float GetMinRange(SpellRange *range)
 {
-	if(range)
-        return range->minRange;
-	else
-		return 0;
+    return range->minRange;
 }
 
 
 uint32 GetDuration(SpellDuration *dur)
 {
-	if(dur)
-        return dur->Duration1;
-	else
-		return 0;
+    return dur->Duration1;
 }

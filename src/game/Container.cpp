@@ -16,7 +16,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
 #include "Common.h"
 #include "ObjectMgr.h"
 #include "Database/DatabaseEnv.h"
@@ -35,19 +34,18 @@ void Container::Create( uint32 guidlow, uint32 itemid, Player *owner )
 {
     Object::_Create( guidlow, HIGHGUID_CONTAINER );
 
-    ItemPrototype *m_itemProto = objmgr.GetItemPrototype( itemid );
+    m_itemProto = objmgr.GetItemPrototype( itemid );
     ASSERT(m_itemProto);
-	uint32 ContainerSlots =m_itemProto->ContainerSlots;
 
     SetUInt32Value( OBJECT_FIELD_ENTRY, itemid );
     SetFloatValue( OBJECT_FIELD_SCALE_X, 1.0f );
     SetUInt64Value( ITEM_FIELD_OWNER, owner->GetGUID() );
     SetUInt64Value( ITEM_FIELD_CONTAINED, owner->GetGUID() );
     SetUInt32Value( ITEM_FIELD_STACK_COUNT, 1 );
-    SetUInt32Value( CONTAINER_FIELD_NUM_SLOTS,ContainerSlots);
+    SetUInt32Value( CONTAINER_FIELD_NUM_SLOTS, m_itemProto->ContainerSlots);
 
-    m_Slot = new Item*[ContainerSlots];
-    memset(m_Slot, 0, sizeof(Item*)*ContainerSlots);
+    m_Slot = new Item*[m_itemProto->ContainerSlots];
+    memset(m_Slot, 0, sizeof(Item*)*(m_itemProto->ContainerSlots));
 
     m_owner = owner;
 }
@@ -66,7 +64,7 @@ uint8 Container::FindFreeSlot()
         {
         }
     }
-    return (uint8)-1;
+    return -1;
 }
 
 
@@ -76,9 +74,4 @@ void Container::AddItem(uint8 slot, Item *item)
 
     m_Slot[slot] = item;
     SetUInt64Value( (uint16)(CONTAINER_FIELD_SLOT_1  + (slot*2)), item->GetGUID() );
-}
-
-ItemPrototype* Container:: GetProto() 
-{ 
-	return  objmgr.GetItemPrototype(GetUInt32Value( OBJECT_FIELD_ENTRY ));
 }

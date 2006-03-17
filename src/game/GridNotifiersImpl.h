@@ -29,41 +29,44 @@ template<>
 inline void
 MaNGOS::NotVisibleNotifier::Visit(std::map<OBJECT_HANDLE, Creature *> &m)
 {
-	if( i_player.isAlive() )
-	{
-		for(std::map<OBJECT_HANDLE, Creature *>::iterator iter=m.begin(); iter != m.end(); ++iter)
+    
+    if( i_player.isAlive() )
+    {
+	for(std::map<OBJECT_HANDLE, Creature *>::iterator iter=m.begin(); iter != m.end(); ++iter)
 	    if( iter->second->isAlive() )
-				iter->second->BuildOutOfRangeUpdateBlock(&i_data);
-	}
-	else
-	{
-		for(std::map<OBJECT_HANDLE, Creature *>::iterator iter=m.begin(); iter != m.end(); ++iter)
+		iter->second->BuildOutOfRangeUpdateBlock(&i_data);
+    }
+    else
+    {
+	for(std::map<OBJECT_HANDLE, Creature *>::iterator iter=m.begin(); iter != m.end(); ++iter)
 	    if( iter->second->isDead() )
-				iter->second->BuildOutOfRangeUpdateBlock(&i_data);
-	}
+		iter->second->BuildOutOfRangeUpdateBlock(&i_data);
+    }
 }
 
 template<>
 inline void
 MaNGOS::NotVisibleNotifier::Visit(std::map<OBJECT_HANDLE, Player *> &m)
 {
-	Player *player = &i_player;
-	for(std::map<OBJECT_HANDLE, Player *>::iterator iter=m.begin(); iter != m.end(); ++iter)
-	{
-		if( iter->second == player )
+    Player *player = &i_player;
+    for(std::map<OBJECT_HANDLE, Player *>::iterator iter=m.begin(); iter != m.end(); ++iter)
+    {
+	if( iter->second == player )
 	    continue;
-		if( (i_player.isAlive() && iter->second->isAlive()) ||
-	    	(!i_player.isAlive() && !iter->second->isAlive()) )
-		{
+	if( (i_player.isAlive() && iter->second->isAlive()) ||
+	    (!i_player.isAlive() && !iter->second->isAlive()) )
+	{
+	    
 	    iter->second->BuildOutOfRangeUpdateBlock(&i_data);
 	    
+
 	    UpdateData his_data;
-			WorldPacket his_pk;
-			i_player.BuildOutOfRangeUpdateBlock(&his_data);
-			his_data.BuildPacket(&his_pk);
-			iter->second->GetSession()->SendPacket(&his_pk);
-		}
-  }
+	    WorldPacket his_pk;
+	    i_player.BuildOutOfRangeUpdateBlock(&his_data);
+	    his_data.BuildPacket(&his_pk);
+	    iter->second->GetSession()->SendPacket(&his_pk);
+	}
+    }
 }
 
  
@@ -72,25 +75,28 @@ inline void
 MaNGOS::VisibleNotifier::Visit(std::map<OBJECT_HANDLE, Creature *> &m)
 {
     
-	if( i_player.isAlive() )
+    if( i_player.isAlive() )
+    {
+	for(std::map<OBJECT_HANDLE, Creature *>::iterator iter=m.begin(); iter != m.end(); ++iter)
 	{
-		for(std::map<OBJECT_HANDLE, Creature *>::iterator iter=m.begin(); iter != m.end(); ++iter)
-	    if( iter->second->isAlive() && iter->second->GetUInt32Value(OBJECT_FIELD_ENTRY) != 6491)
-				iter->second->BuildCreateUpdateBlockForPlayer(&i_data, &i_player);
+	    if( iter->second->isAlive() )
+	    {
+		iter->second->BuildCreateUpdateBlockForPlayer(&i_data, &i_player);
+	    }
 	}
-  else
-  {
-		for(std::map<OBJECT_HANDLE, Creature *>::iterator iter=m.begin(); iter != m.end(); ++iter)
-	    if( iter->second->isDead() || iter->second->GetUInt32Value(OBJECT_FIELD_ENTRY) == 6491)
-				iter->second->BuildCreateUpdateBlockForPlayer(&i_data, &i_player);
-  }
+    }
+    else
+    {
+	for(std::map<OBJECT_HANDLE, Creature *>::iterator iter=m.begin(); iter != m.end(); ++iter)
+	    if( iter->second->isDead() )
+		iter->second->BuildCreateUpdateBlockForPlayer(&i_data, &i_player);
+    }
 }
 
 template<>
 inline void
 MaNGOS::VisibleNotifier::Visit(std::map<OBJECT_HANDLE, Player *> &m)
 {
-/*
     Player *player = &i_player;
     for(std::map<OBJECT_HANDLE, Player *>::iterator iter=m.begin(); iter != m.end(); ++iter)
     {
@@ -115,7 +121,6 @@ MaNGOS::VisibleNotifier::Visit(std::map<OBJECT_HANDLE, Player *> &m)
 	    iter->second->GetSession()->SendPacket(&his_pk);
 	}
     }
-*/
 }
 
 template<>
@@ -132,7 +137,7 @@ inline void
 MaNGOS::PlayerConfrontationNotifier::Visit(std::map<OBJECT_HANDLE, Creature *> &m)
 {
     for(std::map<OBJECT_HANDLE, Creature *>::iterator iter=m.begin(); iter != m.end(); ++iter)
-	if( iter->second->isAlive() && !iter->second->testStateFlag(PLAYER_IN_FLIGHT) && iter->second->AI().IsVisible(&i_player) )
+	if( iter->second->isAlive() && iter->second->AI().IsVisible(&i_player) )
 	    iter->second->AI().MoveInLineOfSight(&i_player);
 }
 

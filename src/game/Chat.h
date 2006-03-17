@@ -19,8 +19,6 @@
 #ifndef MANGOSSERVER_CHAT_H
 #define MANGOSSERVER_CHAT_H
 
-#include "Policies/Singleton.h"
-
 class ChatHandler;
 class WorldSession;
 class Player;
@@ -68,7 +66,7 @@ class ChatCommand
         ChatCommand *      ChildCommands;
 };
 
-class ChatHandler 
+class ChatHandler : public Singleton<ChatHandler>
 {
     public:
         ChatHandler();
@@ -84,7 +82,9 @@ class ChatHandler
 
     protected:
         void SpawnCreature(WorldSession *session, const char* pName, uint32 displayId, uint32 npcFlags, uint32 factionId, uint32 level);
-        
+        void smsg_NewWorld(WorldSession *session, uint32 mapid, float x, float y, float z);
+        void MovePlayer(WorldSession *session, float x, float y, float z);
+
         bool hasStringAbbr(const char* s1, const char* s2);
         void SendMultilineMessage(const char *str);
 
@@ -100,13 +100,14 @@ class ChatHandler
         bool HandleAcctCommand(const char* args);
         bool HandleStartCommand(const char* args);
         bool HandleInfoCommand(const char* args);
+        bool HandleMountCommand(const char* args);
         bool HandleDismountCommand(const char* args);
         bool HandleSaveCommand(const char* args);
         bool HandleGMListCommand(const char* args);
 
         
-        bool HandleNamegoCommand(const char* args);
-        bool HandleGonameCommand(const char* args);
+        bool HandleSummonCommand(const char* args);
+        bool HandleAppearCommand(const char* args);
         bool HandleRecallCommand(const char* args);
         bool HandleAnnounceCommand(const char* args);
         bool HandleGMOnCommand(const char* args);
@@ -129,7 +130,7 @@ class ChatHandler
         bool HandleModifyBitCommand(const char* args);
         bool HandleModifyFactionCommand(const char* args);
         bool HandleModifySpellCommand(const char* args);
-		bool HandleReloadCommand(const char* args);
+
         
         bool HandleDebugInArcCommand(const char* args);
 
@@ -159,11 +160,9 @@ class ChatHandler
         bool HandleAddWeaponCommand(const char* args);
         bool HandleAllowMovementCommand(const char* args);
         bool HandleAddSpiritCommand(const char* args);
-        bool HandleGoCommand(const char* args);
+        bool HandleMoveCommand(const char* args);
         bool HandleLearnCommand(const char* args);
         bool HandleUnLearnCommand(const char* args); 
-	bool HandleLearnSkillCommand(const char* args);
-	bool HandleUnLearnSkillCommand(const char* args);
         bool HandleObjectCommand(const char* args);
         bool HandleCreatureDistanceCommand(const char* args);
         bool HandleGameObjectCommand(const char* args);
@@ -186,24 +185,15 @@ class ChatHandler
         bool HandleHideAreaCommand(const char* args);
         bool HandleAddItemCommand(const char* args); 
 		bool HandleCreateGuildCommand(const char* args);
-		bool HandleShowHonor(const char* args);
-		bool HandleUpdate(const char* args);
-		bool HandleBankCommand(const char* args);
-		bool HandleChangeWeather(const char* args);
-		
-		
-		//! Development Commands
-		bool HandleSet32Value(const char* args);
-		bool HandleSet32Bit(const char* args);
-		bool HandleMod32Value(const char* args);
-		
-		Player* getSelectedChar(WorldSession *client);
+
+        Player* getSelectedChar(WorldSession *client);
 
         WorldSession *m_session;
 };
 
-#define sChatHandler MaNGOS::Singleton<ChatHandler>::Instance()
+#define sChatHandler ChatHandler::getSingleton()
 #endif
+
 
 char *fmtstring( char *format, ... );
 

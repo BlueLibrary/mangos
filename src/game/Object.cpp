@@ -44,6 +44,7 @@ Object::Object( )
     m_orientation = 0.0f;
 
     m_mapId = 0;
+    m_zoneId = 0;
 
     m_uint32Values = 0;
 
@@ -90,7 +91,13 @@ void Object::_Create( uint32 guidlow, uint32 guidhigh, uint32 mapid, float x, fl
     SetUInt32Value( OBJECT_FIELD_GUID, guidlow );
     SetUInt32Value( OBJECT_FIELD_GUID+1, guidhigh );
     SetUInt32Value( OBJECT_FIELD_TYPE, m_objectType );
-	SetUInt32Value(	OBJECT_FIELD_ENTRY,nameId);
+
+	
+	
+
+	
+
+
     m_mapId = mapid;
     m_positionX = x;
     m_positionY = y;
@@ -114,65 +121,253 @@ void Object::BuildMovementUpdateBlock(UpdateData * data, uint32 flags ) const
 
 void Object::BuildCreateUpdateBlockForPlayer(UpdateData *data, Player *target) const
 {
-	if(!target) return;
+    
+    const Creature *creat = dynamic_cast<const Creature *>(this);
 
-	ByteBuffer buf(500);
-	buf << uint8( UPDATETYPE_CREATE_OBJECT );
-	buf << uint8( 0xFF );
-	buf << GetGUID() ;                    
-	buf << m_objectTypeId; 
+    if(target->isAlive())
+    {
+        
+        if (creat && creat->GetUInt32Value(UNIT_FIELD_DISPLAYID) == 5233)
+        {
+            return;
+        }
+        if (creat)                                
+        {
+            ByteBuffer buf(500);
 
-	switch(m_objectTypeId)
-	{
-		case TYPEID_OBJECT: //do nothing
-			break;
-		case TYPEID_ITEM:
-		case TYPEID_CONTAINER: 
-			_BuildMovementUpdate( &buf, 0x10, 0x0 ); 
-			break;
-		case TYPEID_UNIT:
-			_BuildMovementUpdate( &buf, 0x70, 0x800000 );
-			break;
-		case TYPEID_PLAYER:
-		{
-			if( target == this ) //build for self
-			{
-				buf.clear();
-				buf << uint8( UPDATETYPE_CREATE_OBJECT2 );
-				buf << uint8( 0xFF );
-				buf << GetGUID() ;                    
-				buf << m_objectTypeId; 
-				_BuildMovementUpdate( &buf, 0x71, 0x2000 );
-			}
-			//build for other player
-			else
-			{ 
-				_BuildMovementUpdate( &buf, 0x70, 0x0 );
-			} 
-		}break;
-		case TYPEID_CORPSE:
-		case TYPEID_GAMEOBJECT:
-		case TYPEID_DYNAMICOBJECT:
-		{
-			if(GUID_HIPART(GetGUID())==HIGHGUID_PLAYER_CORPSE) 
-				_BuildMovementUpdate( &buf, 0x52, 0x0 );
-			else
-				_BuildMovementUpdate( &buf, 0x50, 0x0 );
-		}break;
-		//case TYPEID_AIGROUP:
-		//case TYPEID_AREATRIGGER:
-		//break;
-		default://know type
-			sLog.outDetail("Unknow Object Type %d Create Update Block.\n", m_objectTypeId);
-			break;
-	}
+            
+            buf << uint8( UPDATETYPE_CREATE_OBJECT );
+            buf << GetGUID() ;                    
+            buf << GetTypeId();                   
 
-	UpdateMask updateMask;
-	updateMask.SetCount( m_valuesCount );
-	_SetCreateBits( &updateMask, target );
-	_BuildValuesUpdate( &buf, &updateMask );
-	data->AddUpdateBlock(buf);
+            
+            _BuildMovementUpdate( &buf, 0x00000000, 0x00000000 );
 
+            
+            buf << uint32( target == this ? 1 : 0 );
+            buf << uint32( 0 );                   
+            buf << uint32( 0 );                   
+            buf << uint64( 0 );                   
+
+            UpdateMask updateMask;
+            updateMask.SetCount( m_valuesCount );
+             _SetCreateBits( &updateMask, target );
+            _BuildValuesUpdate( &buf, &updateMask );
+
+            data->AddUpdateBlock(buf);
+        }
+        else if(!creat)                           
+        {
+	    Player *plyr = ObjectAccessor::Instance().FindPlayer(GetGUID());
+	
+            
+            if(plyr && plyr!=target && plyr->IsInGroup() && target->IsInGroup() && plyr->isDead())
+            {
+                if(plyr->IsGroupMember(target))   
+                {
+                    ByteBuffer buf(500);
+
+                    
+                    buf << uint8( UPDATETYPE_CREATE_OBJECT );
+                    buf << GetGUID() ;            
+                    buf << GetTypeId();           
+
+                    
+                    _BuildMovementUpdate( &buf, 0x00000000, 0x00000000 );
+
+                    
+                    buf << uint32( target == this ? 1 : 0 );
+                    buf << uint32( 0 );           
+                    buf << uint32( 0 );           
+                    buf << uint64( 0 );           
+
+                    UpdateMask updateMask;
+                    updateMask.SetCount( m_valuesCount );
+                    _SetCreateBits( &updateMask, target );
+                    _BuildValuesUpdate( &buf, &updateMask );
+
+                    data->AddUpdateBlock(buf);
+                }
+                else                              
+                {
+                    return;
+                }
+            }
+            else if(plyr && plyr->isDead())       
+            {
+                return;
+            }
+            
+            else                                  
+            {
+                ByteBuffer buf(500);
+
+                
+                buf << uint8( UPDATETYPE_CREATE_OBJECT );
+                buf << GetGUID() ;                
+                buf << GetTypeId();               
+
+                
+                _BuildMovementUpdate( &buf, 0x00000000, 0x00000000 );
+
+                
+                buf << uint32( target == this ? 1 : 0 );
+                buf << uint32( 0 );               
+                buf << uint32( 0 );               
+                buf << uint64( 0 );               
+
+                UpdateMask updateMask;
+                updateMask.SetCount( m_valuesCount );
+                _SetCreateBits( &updateMask, target );
+                _BuildValuesUpdate( &buf, &updateMask );
+
+                data->AddUpdateBlock(buf);
+            }
+        }
+
+        else                                      
+        {
+            ByteBuffer buf(500);
+
+            buf << uint8( UPDATETYPE_CREATE_OBJECT );
+            buf << GetGUID() ;                       
+            buf << GetTypeId();                      
+
+            
+            _BuildMovementUpdate( &buf, 0x00000000, 0x00000000 );
+
+            buf << uint32( target == this ? 1 : 0 ); 
+            buf << uint32( 0 );                      
+            buf << uint32( 0 );                      
+            buf << uint64( 0 );                      
+
+            UpdateMask updateMask;
+            updateMask.SetCount( m_valuesCount );
+            _SetCreateBits( &updateMask, target );
+            _BuildValuesUpdate( &buf, &updateMask );
+
+            data->AddUpdateBlock(buf);
+        }
+
+    }
+    if(target->isDead())
+    {
+        if(!creat)
+        {
+	    Player *plyr = ObjectAccessor::Instance().FindPlayer(GetGUID());
+
+            
+            if(plyr && plyr->IsGroupMember(target))
+            {
+                ByteBuffer buf(500);
+
+                
+                buf << uint8( UPDATETYPE_CREATE_OBJECT );
+                buf << GetGUID() ;                
+                buf << GetTypeId();               
+
+                
+                _BuildMovementUpdate( &buf, 0x00000000, 0x00000000 );
+
+                
+                buf << uint32( target == this ? 1 : 0 );
+                buf << uint32( 0 );               
+                buf << uint32( 0 );               
+                buf << uint64( 0 );               
+
+                UpdateMask updateMask;
+                updateMask.SetCount( m_valuesCount );
+                _SetCreateBits( &updateMask, target );
+                _BuildValuesUpdate( &buf, &updateMask );
+
+                data->AddUpdateBlock(buf);
+            }
+            else if(plyr && plyr->isAlive())      
+            {
+                return;
+            }
+            else                                  
+            {
+                ByteBuffer buf(500);
+
+                
+                buf << uint8( UPDATETYPE_CREATE_OBJECT );
+                buf << GetGUID() ;                
+                buf << GetTypeId();               
+
+                
+                _BuildMovementUpdate( &buf, 0x00000000, 0x00000000 );
+
+                
+                buf << uint32( target == this ? 1 : 0 );
+                buf << uint32( 0 );               
+                buf << uint32( 0 );               
+                buf << uint64( 0 );               
+
+                UpdateMask updateMask;
+                updateMask.SetCount( m_valuesCount );
+                _SetCreateBits( &updateMask, target );
+                _BuildValuesUpdate( &buf, &updateMask );
+
+                data->AddUpdateBlock(buf);
+            }
+        }
+        
+        else if(creat && creat->GetUInt32Value(UNIT_FIELD_DISPLAYID) == 5233)
+        {
+            ByteBuffer buf(500);
+
+            
+            buf << uint8( UPDATETYPE_CREATE_OBJECT );
+            buf << GetGUID() ;                    
+            buf << GetTypeId();                   
+
+            
+            _BuildMovementUpdate( &buf, 0x00000000, 0x00000000 );
+
+            
+            buf << uint32( target == this ? 1 : 0 );
+            buf << uint32( 0 );                   
+            buf << uint32( 0 );                   
+            buf << uint64( 0 );                   
+
+            UpdateMask updateMask;
+            updateMask.SetCount( m_valuesCount );
+            _SetCreateBits( &updateMask, target );
+            _BuildValuesUpdate( &buf, &updateMask );
+
+            data->AddUpdateBlock(buf);
+        }
+        else if(creat)                            
+        {
+            return;
+        }
+        else                                      
+        {
+            ByteBuffer buf(500);
+
+            
+            buf << uint8( UPDATETYPE_CREATE_OBJECT );
+            buf << GetGUID() ;                    
+            buf << GetTypeId();                   
+
+            
+            _BuildMovementUpdate( &buf, 0x00000000, 0x00000000 );
+
+            
+            buf << uint32( target == this ? 1 : 0 );
+            buf << uint32( 0 );                   
+            buf << uint32( 0 );                   
+            buf << uint64( 0 );                   
+
+            UpdateMask updateMask;
+            updateMask.SetCount( m_valuesCount );
+            _SetCreateBits( &updateMask, target );
+            _BuildValuesUpdate( &buf, &updateMask );
+
+            data->AddUpdateBlock(buf);
+        }
+    }
 }
 
 
@@ -180,9 +375,8 @@ void Object::BuildValuesUpdateBlockForPlayer(UpdateData *data, Player *target) c
 {
     ByteBuffer buf(500);
 
-    buf << (uint8) UPDATETYPE_VALUES; 
-	buf << (uint8) 0xFF;
-    buf << GetGUID();                            
+    buf << (uint8) UPDATETYPE_VALUES;             
+    buf << GetGUID() ;                            
 
     UpdateMask updateMask;
     updateMask.SetCount( m_valuesCount );
@@ -194,9 +388,10 @@ void Object::BuildValuesUpdateBlockForPlayer(UpdateData *data, Player *target) c
 
 
 void Object::BuildOutOfRangeUpdateBlock(UpdateData * data) const
-{ 
+{
     data->AddOutOfRangeGUID(GetGUID());
 }
+
 
 void Object::DestroyForPlayer(Player *target) const
 {
@@ -213,76 +408,91 @@ void Object::DestroyForPlayer(Player *target) const
 
 
 
-void Object::_BuildMovementUpdate(ByteBuffer * data, uint8 flags, uint32 flags2 ) const
-{
-	*data << (uint8)flags;
-	if( m_objectTypeId==TYPEID_PLAYER )
-	{
-		*data << (uint32)flags2;
-		*data << (uint32)0xB74D85D1;
-		*data << (float)m_positionX;
-		*data << (float)m_positionY;
-		*data << (float)m_positionZ;
-		*data << (float)m_orientation;
-		*data << (float)0;
-		if(flags2 == 0x2000) //update self
-		{
-			*data << (float)0;
-			*data << (float)1.0;
-			*data << (float)0;
-			*data << (float)0;
-		}
-		*data << m_walkSpeed;                        
-		*data << m_runSpeed;                
-		*data << m_backSwimSpeed;        
-		*data << m_swimSpeed;          
-		*data << m_backWalkSpeed;                      
-		*data << m_turnRate;  
-	}
-	if( m_objectTypeId==TYPEID_UNIT )
-	{
-		*data << (uint32)flags2;
-		*data << (uint32)0xB5771D7F;
-		*data << (float)m_positionX;
-		*data << (float)m_positionY;
-		*data << (float)m_positionZ;
-		*data << (float)m_orientation;
-		*data << (float)0;
-		*data << m_walkSpeed;                        
-		*data << m_runSpeed;                
-		*data << m_backSwimSpeed;        
-		*data << m_swimSpeed;          
-		*data << m_backWalkSpeed;                      
-		*data << m_turnRate;  
-		uint8 PosCount=0;
-		if(flags2 & 0x400000)
-		{
-			*data << (uint32)0x0;
-			*data << (uint32)0x659;
-			*data << (uint32)0xB7B;
-			*data << (uint32)0xFDA0B4;
-			*data << (uint32)PosCount;
-			for(int i=0;i<PosCount+1;i++)
-			{
-				*data << (float)0; //x
-				*data << (float)0; //y
-				*data << (float)0; //z
-			}
-		}
-	}
-	if( (m_objectTypeId==TYPEID_CORPSE) || (m_objectTypeId==TYPEID_GAMEOBJECT) || (m_objectTypeId==TYPEID_DYNAMICOBJECT))
-	{
-		*data << (float)m_positionX;
-		*data << (float)m_positionY;
-		*data << (float)m_positionZ;
-		*data << (float)m_orientation;
-	}
-	
-	*data << (uint32)0x6297848C;          
 
-	if(  GUID_HIPART(GetGUID()) == HIGHGUID_PLAYER_CORPSE)
-		*data << (uint32)0xBD38BA14;//fix me
+void Object::_BuildMovementUpdate(ByteBuffer * data, uint32 flags, uint32 flags2 ) const
+{
+    int spline_count = 0;
+
+    *data << (uint32)flags;
+    *data << (uint32)0;
+
+    *data << (float)m_positionX;
+    *data << (float)m_positionY;
+    *data << (float)m_positionZ;
+    *data << (float)m_orientation;
+    *data << (float)0;
+
+    if (flags & 0x20000000)
+    {
+        *data << (uint32)0;                       
+        *data << (uint32)0;
+        *data << (float)0;                        
+        *data << (float)0;                        
+        *data << (float)0;                        
+        *data << (float)0;                        
+    }
+
+    if (flags & 0x1000000)
+    {
+        *data << (float)0;                        
+    }
+
+    if (flags & 0x4000)
+    {
+        *data << (uint16)0;                       
+        *data << (float)0;                        
+        *data << (float)0;                        
+        *data << (float)0;                        
+        *data << (float)0;                        
+    }
+
+    *data << m_walkSpeed;                         
+    *data << m_runSpeed;                          
+    *data << m_backWalkSpeed;                     
+    *data << m_swimSpeed;                         
+    *data << m_backSwimSpeed;                     
+    *data << m_turnRate;                          
+
+    if ((flags & 0x00200000) != 0)
+    {
+        *data << (uint32)flags2;
+
+        if (flags2 & 0x10000)
+        {
+            *data << (float)0;                    
+        }
+
+        if (flags2 & 0x20000)
+        {
+            *data << (uint32)0;                   
+            *data << (uint32)0;
+        }
+
+        if (flags2 & 0x40000)
+        {
+            *data << (float)0;                    
+        }
+
+        *data << (uint16)0;                       
+        *data << (uint32)0;                       
+
+        *data << (uint16)spline_count;            
+
+        if (spline_count > 0)
+        {
+            for (int i = 0; i < spline_count; i++)
+            {
+                
+                *data << uint32(0);               
+                *data << uint32(0);
+            }
+        }
+    }                                             
 }
+
+
+
+
 
 
 void Object::_BuildValuesUpdate(ByteBuffer * data, UpdateMask *updateMask) const
@@ -319,17 +529,20 @@ void Object::BuildHeartBeatMsg(WorldPacket *data) const
 
 void Object::BuildTeleportAckMsg(WorldPacket *data, float x, float y, float z, float ang) const
 {
-	data->Initialize(MSG_MOVE_TELEPORT_ACK);
-	*data << uint8(0xFF);
-	*data << GetGUID();
-	*data << uint32(0x800000); 
-	*data << uint16(0x67EE);
-	*data << uint16(0xD1EB);
-	*data<< x;
-	*data<< y;
-	*data<< z; 
-	*data<< ang;
-	*data<< uint32(0x0);
+    
+    
+    data->Initialize(MSG_MOVE_TELEPORT_ACK);
+
+    *data << GetGUID();
+
+    
+    *data << uint32(0);                           
+    *data << uint32(0);                           
+
+    *data << x;
+    *data << y;
+    *data << z;
+    *data << ang;
 }
 
 
@@ -337,6 +550,11 @@ void Object::SendMessageToSet(WorldPacket *data, bool bToSelf)
 {
     MapManager::Instance().GetMap(m_mapId)->MessageBoardcast(this, data);
 }
+
+
+
+
+
 
 void Object::LoadValues(const char* data)
 {
@@ -478,8 +696,4 @@ void Object::RemoveFlag( const uint16 &index, uint32 oldFlag )
             m_objectUpdated = true;
         }
     }
-}
-uint32 Object::GetZoneId( )
-{
-	return sAreaStore.LookupEntry(MapManager::Instance().GetMap(m_mapId)->GetAreaFlag(m_positionX,m_positionY))->zone;
 }

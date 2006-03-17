@@ -31,18 +31,18 @@ barGoLink::barGoLink( int row_count )
   num_rec   = row_count;
   empty     = " ";
 #ifdef _WIN32 
-  full      = "\x3D";
+  full      = "\xDB";
 #else 
   full      = "*";
 #endif 
 #ifdef _WIN32
-  printf( "\x3D" );
+  printf( "\xB3" );
 #else 
   printf( "[" );
 #endif 
   for ( int i = 0; i < indic_len; i++ ) printf( empty );
 #ifdef _WIN32
-  printf( "\x3D 0%%\r\x3D" );
+  printf( "\xB3 0%%\r\xB3" );
 #else 
   printf( "] 0%%\r[" );
 #endif 
@@ -58,7 +58,7 @@ void barGoLink::step( void )
   if ( n != rec_pos )
   {
 #ifdef _WIN32
-    printf( "\r\x3D" );
+    printf( "\r\xB3" );
 #else 
     printf( "\r[" );
 #endif 
@@ -66,7 +66,7 @@ void barGoLink::step( void )
     for ( ; i < indic_len; i++ ) printf( empty );
 	float percent = (((float)n/(float)indic_len)*100);
 #ifdef _WIN32
-    printf( "\x3D %i%%  \r\x3D", (int)percent);
+    printf( "\xB3 %i%%  \r\xB3", (int)percent);
 #else 
 	printf( "] %i%%  \r[", (int)percent);
 #endif 

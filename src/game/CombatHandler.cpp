@@ -26,27 +26,76 @@
 #include "CreatureAI.h"
 #include "ObjectDefines.h"
 
+#if defined( _VERSION_1_7_0_ ) || defined( _VERSION_1_8_0_ )
+
 void WorldSession::HandleAttackSwingOpcode( WorldPacket & recv_data )
 {
-   
-	uint64 guid;
-	recv_data >> guid;
+    
+    uint64 guid;
+    recv_data >> guid;
 
     
-	DEBUG_LOG( "WORLD: Recvd CMSG_ATTACKSWING Message guidlow:%u guidhigh:%u", GUID_LOPART(guid), GUID_HIPART(guid) );
+    DEBUG_LOG( "WORLD: Recvd CMSG_ATTACKSWING Message guidlow:%u guidhigh:%u", GUID_LOPART(guid), GUID_HIPART(guid) );
     
-	Unit *pEnemy = ObjectAccessor::Instance().GetUnit(*_player, guid);
-	if(pEnemy)
+    if( IS_CREATURE_GUID(guid) )
+    {
+	Creature *pEnemy = ObjectAccessor::Instance().GetCreature(*_player, guid);
+	if( pEnemy != NULL )
 	{
+	    assert( pEnemy != NULL );
 	    _player->addStateFlag(UF_ATTACKING);
 	    _player->smsg_AttackStart(pEnemy);
+	    pEnemy->AI().AttackStart(_player);
 	    _player->inCombat = true;
 	    _player->logoutDelay = LOGOUTDELAY;
 	    return;
 	}
+    }
+    else if( IS_PLAYER_GUID(guid) )
+    {
+	Player *pPVPEnemy = ObjectAccessor::Instance().GetPlayer(*_player, guid);
+	if( pPVPEnemy != NULL )
+	{
+	    _player->addStateFlag(UF_ATTACKING);
+	    _player->smsg_AttackStart(pPVPEnemy);
+	    _player->inCombat = true;
+	    _player->logoutDelay = LOGOUTDELAY;
+	    return;
+	}
+    }
 
-	sLog.outError( "WORLD: Enemy %u %.8X is not a player or a creature",GUID_LOPART(guid), GUID_HIPART(guid));	
+    Log::getSingleton( ).outError( "WORLD: Enemy %u %.8X is not a player or a creature",
+				   GUID_LOPART(guid), GUID_HIPART(guid));	
 }
+
+#else 
+
+void WorldSession::HandleAttackSwingOpcode( WorldPacket & recv_data )
+{
+    WorldPacket data;
+    uint64 guid;
+    recv_data >> guid;
+
+    
+    Log::getSingleton( ).outDebug( "WORLD: Recvd CMSG_ATTACKSWING Message guidlow:%u guidhigh:%u", GUID_LOPART(guid), GUID_HIPART(guid) );
+    Creature *pEnemy = ObjectAccessor::Instance().GetCreature(*_player, guid);
+
+    if(!pEnemy)
+    {
+        Log::getSingleton( ).outError( "WORLD: %u %.8X is not a creature",
+            GUID_LOPART(guid), GUID_HIPART(guid));
+        return;                                     
+    }
+
+    Player *pThis = GetPlayer();
+    pThis->addStateFlag(UF_ATTACKING);
+    pThis->smsg_AttackStart(pEnemy, pThis);
+
+    pThis->inCombat = true;
+    pThis->logoutDelay = LOGOUTDELAY;
+}
+
+#endif 
 
 void WorldSession::HandleAttackStopOpcode( WorldPacket & recv_data )
 {
@@ -65,8 +114,8 @@ void WorldSession::HandleSetSheathedOpcode( WorldPacket & recv_data )
     recv_data >> sheathed;
 
 	
-	sLog.outDebug( "WORLD: Recvd CMSG_SETSHEATHED Message guidlow:%u guidhigh:%u value1:%u", GUID_LOPART(guid), GUID_HIPART(guid), sheathed );
+	Log::getSingleton( ).outDebug( "WORLD: Recvd CMSG_SETSHEATHED Message guidlow:%u guidhigh:%u value1:%u", GUID_LOPART(guid), GUID_HIPART(guid), sheathed );
 
-	GetPlayer()->SetSheath(~sheathed);
+	GetPlayer()->SetSheath(sheathed);
 }
 

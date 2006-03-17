@@ -1,7 +1,5 @@
-/* Opcodes.h
- *
- * Copyright (C) 2004 Wow Daemon
- * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
+/* 
+ * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,8 +21,8 @@
 #ifndef _OPCODES_1_7_x_H
 #define _OPCODES_1_7_x_H
 
-// NOTE: All SERVER opcodes are now uint16's, as of patch 4 (3807/0.9.0)
-//       Client opcodes are still uint32 as far as we know.
+
+
 
 enum OpCodes
 {
@@ -134,9 +132,9 @@ enum OpCodes
     SMSG_FRIEND_LIST = 103,
     SMSG_FRIEND_STATUS = 104,
     
-    //UQ1: Unknown for 1.7.x
+    
     CMSG_MOVE_TIME_SKIPPED = 0x2ce,
-    //UQ1: End unknown for 1.7.x
+    
 
     CMSG_ADD_FRIEND = 105,
     CMSG_DEL_FRIEND = 106,
@@ -265,9 +263,9 @@ enum OpCodes
     CMSG_FORCE_RUN_BACK_SPEED_CHANGE_ACK = 229,
     SMSG_FORCE_SWIM_SPEED_CHANGE = 230,
     CMSG_FORCE_SWIM_SPEED_CHANGE_ACK = 231,
-    SMSG_FORCE_MOVE_ROOT = 232,                // Block player movement - logout or entangling roots spell
+    SMSG_FORCE_MOVE_ROOT = 232,                
     CMSG_FORCE_MOVE_ROOT_ACK = 233,
-    SMSG_FORCE_MOVE_UNROOT = 234,            // Free player - cancel logout or end roots spell
+    SMSG_FORCE_MOVE_UNROOT = 234,            
     CMSG_FORCE_MOVE_UNROOT_ACK = 235,
     MSG_MOVE_ROOT = 236,
     MSG_MOVE_UNROOT = 237,
@@ -419,33 +417,33 @@ enum OpCodes
     CMSG_NPC_TEXT_QUERY = 383,
     SMSG_NPC_TEXT_UPDATE = 384,
     SMSG_NPC_WONT_TALK = 385,
-    CMSG_QUESTGIVER_STATUS_QUERY = 386,     // done
-    SMSG_QUESTGIVER_STATUS = 387,           // used
-    CMSG_QUESTGIVER_HELLO = 388,            // done
+    CMSG_QUESTGIVER_STATUS_QUERY = 386,     
+    SMSG_QUESTGIVER_STATUS = 387,           
+    CMSG_QUESTGIVER_HELLO = 388,            
     SMSG_QUESTGIVER_QUEST_LIST = 389,
-    CMSG_QUESTGIVER_QUERY_QUEST = 390,      // done
-    CMSG_QUESTGIVER_QUEST_AUTOLAUNCH = 391, // done
-    SMSG_QUESTGIVER_QUEST_DETAILS = 392,    // used
-    CMSG_QUESTGIVER_ACCEPT_QUEST = 393,     // done
-    CMSG_QUESTGIVER_COMPLETE_QUEST = 394,   // done
-    SMSG_QUESTGIVER_REQUEST_ITEMS = 395,    // used
-    CMSG_QUESTGIVER_REQUEST_REWARD = 396,   // done
-    SMSG_QUESTGIVER_OFFER_REWARD = 397,     // used
-    CMSG_QUESTGIVER_CHOOSE_REWARD = 398,    // done
-    SMSG_QUESTGIVER_QUEST_INVALID = 399,    // used
-    CMSG_QUESTGIVER_CANCEL = 400,           // done
-    SMSG_QUESTGIVER_QUEST_COMPLETE = 401,   // used
-    SMSG_QUESTGIVER_QUEST_FAILED = 402,     // used
-    CMSG_QUESTLOG_SWAP_QUEST = 403,         // done
-    CMSG_QUESTLOG_REMOVE_QUEST = 404,       // done
-    SMSG_QUESTLOG_FULL = 405,               // used
-    SMSG_QUESTUPDATE_FAILED = 406,          // used
-    SMSG_QUESTUPDATE_FAILEDTIMER = 407,     // used
-    SMSG_QUESTUPDATE_COMPLETE = 408,        // used
-    SMSG_QUESTUPDATE_ADD_KILL = 409,        // used
-    SMSG_QUESTUPDATE_ADD_ITEM = 410,        // used
-    CMSG_QUEST_CONFIRM_ACCEPT = 411,        // done
-    SMSG_QUEST_CONFIRM_ACCEPT = 412,        // used
+    CMSG_QUESTGIVER_QUERY_QUEST = 390,      
+    CMSG_QUESTGIVER_QUEST_AUTOLAUNCH = 391, 
+    SMSG_QUESTGIVER_QUEST_DETAILS = 392,    
+    CMSG_QUESTGIVER_ACCEPT_QUEST = 393,     
+    CMSG_QUESTGIVER_COMPLETE_QUEST = 394,   
+    SMSG_QUESTGIVER_REQUEST_ITEMS = 395,    
+    CMSG_QUESTGIVER_REQUEST_REWARD = 396,   
+    SMSG_QUESTGIVER_OFFER_REWARD = 397,     
+    CMSG_QUESTGIVER_CHOOSE_REWARD = 398,    
+    SMSG_QUESTGIVER_QUEST_INVALID = 399,    
+    CMSG_QUESTGIVER_CANCEL = 400,           
+    SMSG_QUESTGIVER_QUEST_COMPLETE = 401,   
+    SMSG_QUESTGIVER_QUEST_FAILED = 402,     
+    CMSG_QUESTLOG_SWAP_QUEST = 403,         
+    CMSG_QUESTLOG_REMOVE_QUEST = 404,       
+    SMSG_QUESTLOG_FULL = 405,               
+    SMSG_QUESTUPDATE_FAILED = 406,          
+    SMSG_QUESTUPDATE_FAILEDTIMER = 407,     
+    SMSG_QUESTUPDATE_COMPLETE = 408,        
+    SMSG_QUESTUPDATE_ADD_KILL = 409,        
+    SMSG_QUESTUPDATE_ADD_ITEM = 410,        
+    CMSG_QUEST_CONFIRM_ACCEPT = 411,        
+    SMSG_QUEST_CONFIRM_ACCEPT = 412,        
     CMSG_PUSHQUESTTOPARTY = 413,
     CMSG_LIST_INVENTORY = 414,
     SMSG_LIST_INVENTORY = 415,
@@ -771,46 +769,30 @@ enum FriendsResult {
 };
 
 
-/*
-0 = Universal
-1 = ?Orcish?
-2 = Darnassian
-3 = Taurahe
-4 = ?
-5 = ?
-6 = Dwarvish
-7 = Common
-8 = Demonic
-9 = Titan
-10 = Thelassian
-11 = Draconic
-12 = Kalimag
-13 = Gnomish
-14 = Troll
-*/
+
 
 
 enum NPCFlags {
-    UNIT_NPC_FLAG_NONE              = 0,    // None
-    UNIT_NPC_FLAG_GOSSIP            = 1,    // Gossip/Talk (CMSG_GOSSIP_HELLO, ?)
-    UNIT_NPC_FLAG_QUESTGIVER        = 2,    // Questgiver
-    UNIT_NPC_FLAG_VENDOR            = 4,    // Vendor (CMSG_LIST_INVENTORY, SMSG_LIST_INVENTORY)
-    UNIT_NPC_FLAG_TAXIVENDOR        = 8,    // Taxi Vendor (CMSG_TAXIQUERYAVAILABLENODES, SMSG_SHOWTAXINODES)
-    UNIT_NPC_FLAG_TRAINER           = 16,   // Trainer (CMSG_TRAINER_LIST, SMSG_TRAINER_LIST)
-    UNIT_NPC_FLAG_SPIRITHEALER      = 32,   // Spirithealer (CMSG_BINDER_ACTIVATE, ?)
-    UNIT_NPC_FLAG_INNKEEPER         = 64,   // Innkeeper
-    UNIT_NPC_FLAG_BANKER            = 128,  // Banker (CMSG_BANKER_ACTIVATE, SMSG_SHOW_BANK)
-    UNIT_NPC_FLAG_PETITIONER        = 256,  // Petitioner/?Guild Charter? (CMSG_PETITION_SHOWLIST, SMSG_PETITION_SHOWLIST)
-    UNIT_NPC_FLAG_TABARDVENDOR      = 512,  // Tabard Vendor (MSG_TABARDVENDOR_ACTIVATE)
-    UNIT_NPC_FLAG_BATTLEFIELDPERSON = 1024, // Battlefield Person (CMSG_BATTLEFIELD_LIST, SMSG_BATTLEFIELD_LIST)
-    UNIT_NPC_FLAG_AUCTIONEER        = 2048, // Auctioneer (MSG_AUCTION_HELLO)
-    UNIT_NPC_FLAG_ARMORER           = 8192, // ARMORER ...
+    UNIT_NPC_FLAG_NONE              = 0,    
+    UNIT_NPC_FLAG_GOSSIP            = 1,    
+    UNIT_NPC_FLAG_QUESTGIVER        = 2,    
+    UNIT_NPC_FLAG_VENDOR            = 4,    
+    UNIT_NPC_FLAG_TAXIVENDOR        = 8,    
+    UNIT_NPC_FLAG_TRAINER           = 16,   
+    UNIT_NPC_FLAG_SPIRITHEALER      = 32,   
+    UNIT_NPC_FLAG_INNKEEPER         = 64,   
+    UNIT_NPC_FLAG_BANKER            = 128,  
+    UNIT_NPC_FLAG_PETITIONER        = 256,  
+    UNIT_NPC_FLAG_TABARDVENDOR      = 512,  
+    UNIT_NPC_FLAG_BATTLEFIELDPERSON = 1024, 
+    UNIT_NPC_FLAG_AUCTIONEER        = 2048, 
+    UNIT_NPC_FLAG_ARMORER           = 8192, 
 };
 
-//enum FieldFlags {
-//    0x00000008 == can't climb slopes too steep
-//    0x40000000 == sheathed
-//};
+
+
+
+
 
 typedef struct {
     uint64 PlayerGUID;
@@ -823,4 +805,4 @@ typedef struct {
 
 #endif
 
-#endif //_VERSION_1_7_0_
+#endif 

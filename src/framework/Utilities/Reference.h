@@ -58,11 +58,8 @@ public:
     /// Referencee accessor
     T* referencee(void) { return (i_holder == NULL ? NULL : i_holder->i_referencee); }
     const T* referencee(void) const { return (i_holder == NULL ? NULL : i_holder->i_referencee); }
-
-    //T& referencee(void){ return _referencee(); }
-    //const T& referencee(void) const { return const_cast<Referencer *>(this)->_referencee(); }
-    operator T&(void) { return _referencee(); }
-    operator const T&(void) const { return *const_cast<Referencer *>(this)->_referencee(); }
+	T& referencee(void){ return _referencee(); }
+    const T& referencee(void) const { return const_cast<Referencer *>(this)->_referencee(); }
     
     /// cast operators
     T* operator*() { return (i_holder == NULL ? NULL : i_holder->i_referencee); }

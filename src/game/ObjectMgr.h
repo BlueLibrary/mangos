@@ -22,7 +22,6 @@
 #include "Log.h"
 #include "Object.h"
 #include "Item.h"
-#include "Bag.h"
 #include "Creature.h"
 #include "Player.h"
 #include "DynamicObject.h"
@@ -38,8 +37,9 @@
 #include "Spell.h"
 #include "ObjectAccessor.h"
 #include "ObjectDefines.h"
-#include "Policies/Singleton.h"
 
+extern int num_item_prototypes;
+extern uint32 item_proto_ids[64550];
 
 class Group;
 class Path;
@@ -47,7 +47,7 @@ class Guild;
 
 
 
-class ObjectMgr 
+class ObjectMgr : public Singleton < ObjectMgr >
 {
     public:
         ObjectMgr();
@@ -55,14 +55,17 @@ class ObjectMgr
 
         
         typedef HM_NAMESPACE::hash_map<uint32, Item*> ItemMap;
-   
+        typedef HM_NAMESPACE::hash_map<uint32, CreatureInfo*> CreatureNameMap;
+        typedef HM_NAMESPACE::hash_map<uint32, GameObjectInfo *> GameObjectInfoMap;
         typedef HM_NAMESPACE::hash_map<uint32, Player*> PlayerMap;
 
         
         typedef std::set< Group * > GroupSet;
         typedef std::set< Guild * > GuildSet;
 
+        typedef HM_NAMESPACE::hash_map<uint32, ItemPrototype*> ItemPrototypeMap;
         typedef HM_NAMESPACE::hash_map<uint32, AuctionEntry*> AuctionEntryMap;
+        typedef HM_NAMESPACE::hash_map<uint32, Trainerspell*> TrainerspellMap;
         
         
         
@@ -104,12 +107,32 @@ class ObjectMgr
             return true;
         }
 
-        Player* GetPlayer(const char* name){ return ObjectAccessor::Instance().FindPlayerByName(name);}
-        Player* GetPlayer(uint64 guid){ return ObjectAccessor::Instance().FindPlayer(guid); }
+        Player* GetPlayer(const char* name)
+        {
+	    return ObjectAccessor::Instance().FindPlayerByName(name);
+        }
 
-		GameObjectInfo *GetGameObjectInfo(uint32 id);
-		void LoadGameobjectInfo();
-		void AddGameobjectInfo(GameObjectInfo *goinfo);
+
+        Player* GetPlayer(uint64 guid)
+        {
+	    return ObjectAccessor::Instance().FindPlayer(guid);
+        }
+
+
+    
+    const char* GetGameObjectName(uint32 id) const
+    {
+    return (GetGameObjectInfo(id))->name.c_str();
+    }
+
+    const GameObjectInfo *GetGameObjectInfo(uint32 id) const
+    {
+    GameObjectInfoMap::const_iterator iter = mGameObjectInfo.find(id);
+    return (iter == mGameObjectInfo.end() ? &si_UnknownGameObjectInfo : iter->second);
+    }
+
+	void LoadGameobjectInfo();
+	void AddGameobjectInfo(GameObjectInfo *goinfo);
 
         
         Group * GetGroupByLeader(const uint64 &guid) const;
@@ -140,7 +163,7 @@ class ObjectMgr
             ASSERT( ah );
             ASSERT( mAuctions.find(ah->Id) == mAuctions.end() );
             mAuctions[ah->Id] = ah;
-            sLog.outString("adding auction entry with id %u",ah->Id);
+            Log::getSingleton().outString("adding auction entry with id %u",ah->Id);
         }
         AuctionEntry* GetAuction(uint32 id) const
         {
@@ -160,11 +183,30 @@ class ObjectMgr
             return true;
         }
         
-        CreatureInfo *GetCreatureTemplate( uint32 id );
-              
-        ItemPrototype* GetItemPrototype(uint32 id) ;
-   
-       
+        uint32 AddCreatureName(const char* name);
+        uint32 AddCreatureName(const char* name, uint32 displayid);
+        void AddCreatureName(uint32 id, const char* name);
+        void AddCreatureName(uint32 id, const char* name, uint32 displayid);
+        void AddCreatureName(CreatureInfo *cinfo);
+        CreatureInfo *GetCreatureName( uint32 id );
+
+        
+        uint32 AddCreatureSubName(const char* name, const char* subname, uint32 displayid);
+
+        
+        ItemPrototype* GetItemPrototype(uint32 id) const
+        {
+            ItemPrototypeMap::const_iterator itr = mItemPrototypes.find( id );
+            if( itr != mItemPrototypes.end( ) )
+                return itr->second;
+            return NULL;
+        }
+        void AddItemPrototype(ItemPrototype *itemProto)
+        {
+            ASSERT( itemProto );
+            ASSERT( mItemPrototypes.find(itemProto->ItemId) == mItemPrototypes.end() );
+            mItemPrototypes[itemProto->ItemId] = itemProto;
+        }
         Item* GetMItem(uint32 id)
         {
             ItemMap::const_iterator itr = mMitems.find(id);
@@ -217,18 +259,46 @@ class ObjectMgr
         }
         AuctionEntryMap::iterator GetAuctionsBegin() {return mAuctions.begin();}
         AuctionEntryMap::iterator GetAuctionsEnd() {return mAuctions.end();}
-               
+        
+        Trainerspell* GetTrainerspell(uint32 id) const
+        {
+            TrainerspellMap::const_iterator itr = mTrainerspells.find( id );
+            if( itr != mTrainerspells.end( ) )
+                return itr->second;
+            return NULL;
+        }
+		bool HasTrainerspells(uint32 id) const
+        {
+			TrainerspellMap::const_iterator itr = mTrainerspells.find( id );
+
+			if( itr != mTrainerspells.end( ) )
+				if (itr->second)
+					return true;
+
+			return false;
+		}
+        void AddTrainerspell(Trainerspell *trainspell)
+        {
+            ASSERT( trainspell );
+            ASSERT( mTrainerspells.find(trainspell->Id) == mTrainerspells.end() );
+            mTrainerspells[trainspell->Id] = trainspell;
+
+
+        }
+        
         PlayerCreateInfo* GetPlayerCreateInfo(uint32 race, uint32 class_); 
 
         
         uint64 GetPlayerGUIDByName(const char *name) const;
         bool GetPlayerNameByGUID(const uint64 &guid, std::string &name) const;
 
+        
+       
         bool GetGlobalTaxiNodeMask( uint32 curloc, uint32 *Mask );
         uint32 GetNearestTaxiNode( float x, float y, float z, uint32 mapid );
         void GetTaxiPath( uint32 source, uint32 destination, uint32 &path, uint32 &cost);
         uint16 GetTaxiMount( uint32 id );
-        void GetTaxiPathNodes( uint32 path, Path &pathnodes );
+        void GetTaxiPathNodes( uint32 path, Path *pathnodes );
 
         void AddAreaTriggerPoint(AreaTriggerPoint *pArea);
         AreaTriggerPoint *GetAreaTriggerQuestPoint(uint32 Trigger_ID);
@@ -260,13 +330,24 @@ class ObjectMgr
         }
 
         
-        AreaTrigger * GetAreaTrigger(uint32 trigger);
+        AreaTrigger *ObjectMgr::GetAreaTrigger(uint32 trigger);
 
         
         void LoadGuilds();
         void LoadQuests();
-        void LoadCreatureTemplates();
+        void LoadCreatureNames();
+        void SaveCreatureNames();
         void LoadItemPrototypes();
+
+		
+		
+		
+        void LoadTrainerSpells();
+       
+       
+       
+
+        
 
         void LoadGossipText();
         void LoadAreaTriggerPoints();
@@ -290,11 +371,13 @@ class ObjectMgr
         uint32 m_hiItemGuid;
         uint32 m_hiGoGuid;
         uint32 m_hiDoGuid;
-		uint32 m_hiCorpseGuid;
-       
+        uint32 m_hiNameGuid;
 
         template<class T> HM_NAMESPACE::hash_map<uint32,T*>& _GetContainer();
         template<class T> TYPEID _GetTypeId() const;
+
+        
+        
 
         typedef HM_NAMESPACE::hash_map<uint32, Quest*> QuestMap;
         typedef HM_NAMESPACE::hash_map<uint32, GossipText*> GossipTextMap;
@@ -302,24 +385,57 @@ class ObjectMgr
 
         
         GroupSet            mGroupSet;
+    
+        
         GuildSet            mGuildSet;
 
+        
         ItemMap             mItems;
+
+        
         ItemMap             mAitems;
+
+        
         ItemMap             mMitems;
- 
+
+        
+        ItemPrototypeMap    mItemPrototypes;
+
+        
+        TrainerspellMap     mTrainerspells;
+
+        
         AuctionEntryMap     mAuctions;
 
+        
+        CreatureNameMap     mCreatureNames;
+
+        
+        GameObjectInfoMap   mGameObjectInfo;
+
+        
         QuestMap            mQuests;
         AreaTriggerMap	    mAreaTriggerMap;
+
+        
         GossipTextMap       mGossipText;
+
+        
+        
+       
+       
+
+        
+       
+
+        
         TeleportMap         mTeleports;
 
 private:
-  
+    static GameObjectInfo si_UnknownGameObjectInfo;
 };
 
 
-#define objmgr MaNGOS::Singleton<ObjectMgr>::Instance()
+#define objmgr ObjectMgr::getSingleton()
 
 #endif

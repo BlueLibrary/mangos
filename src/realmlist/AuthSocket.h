@@ -1,7 +1,5 @@
-/* AuthSocket.h
- *
- * Copyright (C) 2004 Wow Daemon
- * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
+/* 
+ * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -49,11 +47,11 @@ class AuthSocket: public TcpSocket
             AUTH_RECONNECT_CHALLENGE    = 0x02,
             AUTH_RECONNECT_PROOF        = 0x03,
             REALM_LIST                  = 0x10,
-            XFER_INITIATE               = 0x30,   // from server
-            XFER_DATA                   = 0x31,   // from server
-            XFER_UNK1                   = 0x32,   // from client, thanks to wad for those
-            XFER_UNK2                   = 0x33,   // from client
-            XFER_UNK3                   = 0x34    // from client
+            XFER_INITIATE               = 0x30,   
+            XFER_DATA                   = 0x31,   
+            XFER_UNK1                   = 0x32,   
+            XFER_UNK2                   = 0x33,   
+            XFER_UNK3                   = 0x34    
         };
 
         enum eStatus
@@ -81,9 +79,9 @@ class AuthSocket: public TcpSocket
         BigNumber b, B;
         BigNumber rs;
 
-        // mighty session key.
-        // one should keep this in some other place,
-        // we will use it from other AuthSocket object (upon reconnect)
+        
+        
+        
         BigNumber K;
 
         eAuthCmd _cmd;

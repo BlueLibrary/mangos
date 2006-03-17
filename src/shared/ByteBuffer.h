@@ -20,7 +20,6 @@
 #define _BYTEBUFFER_H
 
 #include "Common.h"
-#include "Errors.h"
 
 class ByteBuffer
 {
@@ -266,56 +265,6 @@ class ByteBuffer
             for(uint8 i = 0; i < size(); i++)
                 printf("%u - ", read<uint8>(i) );
         }
-
-		void hexlike()
-		{
-			uint32 j = 1, k = 1;
-			printf("STORAGE_SIZE: %u\n", size() );
-			for(uint32 i = 0; i < size(); i++)
-			{
-				if ((i == (j*8)) && ((i != (k*16))))
-				{
-					if (read<uint8>(i) < 0x0F)
-					{
-						printf("| 0%X ", read<uint8>(i) );
-					}
-					else
-					{
-						printf("| %X ", read<uint8>(i) );
-					}
-
-					j++;
-				}
-				else if (i == (k*16))
-				{
-					if (read<uint8>(i) < 0x0F)
-					{
-						printf("\n0%X ", read<uint8>(i) );
-					}
-					else
-					{
-						printf("\n%X ", read<uint8>(i) );
-					}
-
-					k++;
-					j++;
-				}
-				else
-				{
-					if (read<uint8>(i) < 0x0F)
-					{
-						printf("0%X ", read<uint8>(i) );
-					}
-					else
-					{
-						printf("%X ", read<uint8>(i) );
-					}
-				}
-			}
-			printf("\n");
-
-		}
-
 
 
         

@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="realmlist"
 	ProjectGUID="{6C1B0218-3C91-4BC6-BD53-3D247F9163DD}"
+	RootNamespace="realmlist"
 	>
 	<Platforms>
 		<Platform
@@ -576,12 +577,16 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="0"
+				Optimization="3"
+				FavorSizeOrSpeed="1"
+				EnableFiberSafeOptimizations="true"
 				AdditionalIncludeDirectories="..\..\dep\include,..\..\src\framework,..\..\src\shared,..\..\src\game"
 				PreprocessorDefinitions="WIN32,_DEBUG,_LIB"
-				BasicRuntimeChecks="3"
+				BasicRuntimeChecks="0"
 				RuntimeLibrary="1"
+				EnableEnhancedInstructionSet="2"
 				RuntimeTypeInfo="true"
+				OpenMP="true"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=".\realmlist___Win32_Debug/realmlist.pch"
 				AssemblerListingLocation=".\realmlist___Win32_Debug/"

@@ -120,7 +120,6 @@ class Guild
 		const uint64& GetLeader(){ return leaderGuid; }
 		std::string GetName(){ return name; }
 		std::string GetMOTD(){ return MOTD; }
-	  std::string GetGINFO(){ return GINFO; }
 			
 		uint32 GetCreatedYear(){ return CreatedYear; }
 		uint32 GetCreatedMonth(){ return CreatedMonth; }
@@ -137,7 +136,6 @@ class Guild
 		void DelMember(uint64 guid);
 		
 		void SetMOTD(std::string motd) { MOTD = motd; }
-		void SetGINFO(std::string ginfo){ GINFO = ginfo; }
 		void SetPNOTE(uint64 guid,std::string pnote);
 		void SetOFFNOTE(uint64 guid,std::string offnote);
 	  
@@ -193,7 +191,6 @@ class Guild
 		std::string name;
 		uint64 leaderGuid;
 		std::string MOTD;
-		std::string GINFO;
 		uint32 CreatedYear;
 		uint32 CreatedMonth;
 		uint32 CreatedDay;

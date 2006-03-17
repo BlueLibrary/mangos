@@ -33,8 +33,7 @@ ReactorAI::Permissible(const Creature *creature)
     FactionTemplateEntry *fact = sFactionTemplateStore.LookupEntry(creature->GetUInt32Value(UNIT_FIELD_FACTIONTEMPLATE));
     FactionTemplateResolver fact_source(fact);
     if( fact_source.IsNeutralToAll() )
-	return REACTIVE_PERMIT_BASE;
-
+    return REACTIVE_PERMIT_BASE;
     return NO_PERMIT;
 }
 
@@ -106,7 +105,7 @@ ReactorAI::UpdateAI(const uint32 time_diff)
 bool
 ReactorAI::needToStop() const
 {
-    if( !i_pVictim->isAlive() || !i_creature.isAlive()  || i_pVictim->m_stealth)
+    if( !i_pVictim->isAlive() || !i_creature.isAlive() )
 	return true;
 
     float length_square = i_creature.GetDistanceSq(i_pVictim);
@@ -128,12 +127,6 @@ ReactorAI::stopAttack()
 	    DEBUG_LOG("Creature stoped attacking cuz his dead [guid=%d]", i_creature.GetGUIDLow());
 	    i_creature->Idle();
 	}
-	else if( i_pVictim->m_stealth )
-  {
-	DEBUG_LOG("Creature stopped attacking cuz his victim is stealth [guid=%d]", i_creature.GetGUIDLow());
-	i_pVictim = NULL;
-	static_cast<TargetedMovementGenerator *>(i_creature->top())->TargetedHome(i_creature); 
-  }
 	else 
 	{
 	    DEBUG_LOG("Creature stopped attacking due to target %s [guid=%d]", i_pVictim->isAlive() ? "out run him" : "is dead", i_creature.GetGUIDLow());

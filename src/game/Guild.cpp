@@ -19,7 +19,6 @@
 #include "Database/DatabaseEnv.h"
 #include "WorldPacket.h"
 #include "WorldSession.h"
-#include "MapManager.h"
 #include "Player.h"
 #include "Opcodes.h"
 #include "ObjectMgr.h"
@@ -31,7 +30,7 @@ Guild::Guild()
 	Id = 0;
 	name = "";
 	leaderGuid = 0;
-	GINFO = MOTD = "";	
+	MOTD = "";	
 	EmblemStyle = 0;
 	EmblemColor = 0;
 	BorderStyle = 0;
@@ -76,10 +75,10 @@ void Guild::create(uint64 lGuid, std::string gname)
 	rname = "Initiate";
 	CreateRank(rname,GR_RIGHT_GCHATLISTEN | GR_RIGHT_GCHATSPEAK);
 
-	sLog.outDebug("GUILD: creating guild %s to leader:%d", gname.c_str(), leaderGuid);
+	Log::getSingleton().outDebug("GUILD: creating guild %s to leader:%d", gname.c_str(), leaderGuid);
 
 	
-	QueryResult *result = sDatabase.PQuery( "SELECT MAX(guildId) FROM guilds;" );
+	QueryResult *result = sDatabase.Query( "SELECT MAX(guildId) FROM guilds" );
 	if( result )
 	{
   		Id = (*result)[0].GetUInt32()+1;
@@ -87,10 +86,11 @@ void Guild::create(uint64 lGuid, std::string gname)
 	}
 	else Id = 1;	
 	
-
-	pl->SetInGuild(Id);
-	pl->SetRank( GR_GUILDMASTER	);
-
+	if(pl) 
+	{
+		pl->SetInGuild(Id);
+		pl->SetRank( GR_GUILDMASTER	);
+	}
 	
 	newmember = new MemberSlot;
 	newmember->guid = leaderGuid;
@@ -105,7 +105,10 @@ void Guild::create(uint64 lGuid, std::string gname)
 void Guild::LoadGuildFromDB(uint32 GuildId)
 {
 
-	QueryResult *result = sDatabase.PQuery("SELECT * FROM `guilds` where guildId = '%u';", GuildId);
+	std::stringstream query, ss;
+
+	query << "SELECT * FROM `guilds` where guildId= " << GuildId;
+	QueryResult *result = sDatabase.Query( query.str().c_str() );
 
 	if(!result)
 		return;
@@ -124,35 +127,42 @@ void Guild::LoadGuildFromDB(uint32 GuildId)
 	
 	delete result;
 
-	QueryResult *result1 = sDatabase.PQuery("SELECT DATE_FORMAT(createdate,\"%d\") FROM guilds WHERE guildId = '%u';", GuildId);
-	if(!result1) return;
-	fields = result1->Fetch();
+	ss << "SELECT DATE_FORMAT(createdate,\"%d\") FROM guilds where guildId= " << GuildId;
+	result = sDatabase.Query( ss.str().c_str() );
+	if(!result) return;
+	fields = result->Fetch();
 	CreatedDay = fields[0].GetUInt32();
-
-	delete result1;
 	
-	QueryResult *result2 = sDatabase.PQuery("SELECT DATE_FORMAT(createdate,\"%m\") FROM guilds WHERE guildId = '%u';", GuildId);
-	if(!result2) return;
-	fields = result2->Fetch();
+	delete result;
+	
+	ss.rdbuf()->str("");
+	ss << "SELECT DATE_FORMAT(createdate,\"%M\") FROM guilds where guildId= " << GuildId;
+	result = sDatabase.Query( ss.str().c_str() );
+	if(!result) return;
+	fields = result->Fetch();
 	CreatedMonth = fields[0].GetUInt32();
 	
-	delete result2;
+	delete result;
 	
-	QueryResult *result3 = sDatabase.PQuery("SELECT DATE_FORMAT(createdate,\"%Y\") FROM guilds WHERE guildId = '%u';", GuildId);
-	if(!result3) return;
-	fields = result3->Fetch();
+	ss.rdbuf()->str("");
+	ss << "SELECT DATE_FORMAT(createdate,\"%Y\") FROM guilds where guildId= " << GuildId;
+	result = sDatabase.Query( ss.str().c_str() );
+	if(!result) return;
+	fields = result->Fetch();
 	CreatedYear = fields[0].GetUInt32();
 	
-	delete result3;
-		
+	delete result;
+	
 	LoadRanksFromDB(GuildId);
 	LoadMembersFromDB(GuildId);
 }
 
 void Guild::LoadRanksFromDB(uint32 GuildId)
 {
+	std::stringstream query, ss;
 	Field *fields;
-	QueryResult *result = sDatabase.PQuery("SELECT * FROM `guilds_ranks` where guildId = '%u';", GuildId);
+	query << "SELECT * FROM `guilds_ranks` where guildId= " << GuildId;
+	QueryResult *result = sDatabase.Query( query.str().c_str() );
 
 	if(!result) return;
 
@@ -162,16 +172,16 @@ void Guild::LoadRanksFromDB(uint32 GuildId)
 		CreateRank(fields[1].GetString(),fields[2].GetUInt32());
 
 	}while( result->NextRow() );
-	delete result;
 }
 
 void Guild::LoadMembersFromDB(uint32 GuildId)
 {
+	std::stringstream query;
 	Field *fields;
 	Player *pl;
 	MemberSlot *newmember;
-
-	QueryResult *result = sDatabase.PQuery("SELECT * FROM `guilds_members` where guildId = '%u';", GuildId);
+	query << "SELECT * FROM `guilds_members` where guildId= " << GuildId;
+	QueryResult *result = sDatabase.Query( query.str().c_str() );
 
 	if(!result)
 		return;
@@ -189,14 +199,14 @@ void Guild::LoadMembersFromDB(uint32 GuildId)
 		AddMember(newmember);
 		
 	}while( result->NextRow() );
-	delete result;
 }
 
 void Guild::Loadplayerstats(MemberSlot *memslot)
 {
 	Field *fields;
-
-	QueryResult *result = sDatabase.PQuery("SELECT (name,level,class,zoneId) FROM characters WHERE guid = '%lu';", (unsigned long)memslot->guid);
+	std::stringstream ss;
+    ss << "SELECT (name,level,class,zoneId) FROM characters WHERE guid=" << memslot->guid;
+	QueryResult *result = sDatabase.Query( ss.str().c_str() );
 		
 	if(!result) return;
 		
@@ -206,26 +216,32 @@ void Guild::Loadplayerstats(MemberSlot *memslot)
 	memslot->level = fields[1].GetUInt8();
 	memslot->Class = fields[2].GetUInt8();
 	memslot->zoneId = fields[3].GetUInt32();
-	delete result;
 }
 
 void Guild::Loadplayerstatsbyguid(uint64 guid)
 {
+	Field *fields;
 	Player *pl;
-
+	std::stringstream ss;
+	ss << "SELECT (name,class,zoneId) FROM characters WHERE guid=" << guid;
+	QueryResult *result = sDatabase.Query( ss.str().c_str() );
+	
+	if(!result) return;
+	
+	fields = result->Fetch();
+	
 	std::list<MemberSlot*>::iterator itr;
 	for (itr = members.begin(); itr != members.end();itr++)
 	{
 	    if ((*itr)->guid == guid)
 	    {
 	    	pl = ObjectAccessor::Instance().FindPlayer((*itr)->guid);
-	    	if(!pl)break;
-	      (*itr)->name  = pl->GetName();
-				(*itr)->level = pl->getLevel();
-				(*itr)->Class = pl->getClass();
-			}  
+         	(*itr)->name  = fields[0].GetString();
+			(*itr)->level = pl->getLevel();
+			(*itr)->Class = fields[1].GetUInt8();
+			(*itr)->zoneId = fields[2].GetUInt32();
+		}  
 	}
-
 }
 
 void Guild::DelMember(uint64 guid)
@@ -269,24 +285,50 @@ void Guild::SetOFFNOTE(uint64 guid,std::string offnote)
 
 void Guild::SaveGuildToDB()
 {
-	sDatabase.PExecute("DELETE FROM guilds WHERE guildId = '%u'",Id);
-	sDatabase.PExecute("INSERT INTO guilds VALUES('%u','%s','%u', '%u', '%u', '%u', '%u', '%u', '%s', 'NOW()');", Id, name.c_str(), leaderGuid, EmblemStyle, EmblemColor, BorderStyle, BorderColor, BackgroundColor, MOTD.c_str());
+	std::stringstream ss,sdel;
+		
+	sdel << "DELETE FROM guilds WHERE guildId=" << Id;
+	sDatabase.Execute( sdel.str( ).c_str( ) );	
+		
+	ss << "INSERT INTO guilds VALUES ("; 
+	ss << Id << ", '";
+	ss << name << "', "; 
+	ss << leaderGuid << ", "; 
+	ss << EmblemStyle << ", ";
+	ss << EmblemColor << ", ";
+	ss << BorderStyle << ", ";
+	ss << BorderColor << ", ";
+	ss << BackgroundColor << ", '";
+	ss << MOTD << "', "; 
+	ss << "NOW() )";
+
+	sDatabase.Execute( ss.str( ).c_str( ) );
+
 	SaveRanksToDB();
 	SaveGuildMembersToDB();
+
 }
 
 void Guild::SaveRanksToDB()
 {
-	std::stringstream ss;
+	std::stringstream ss,sdel;
 		
-	sDatabase.PExecute("DELETE FROM guilds_ranks WHERE guildId = '%u';",Id);
+	sdel << "DELETE FROM guilds_ranks WHERE guildId=" << Id;
+	sDatabase.Execute( sdel.str( ).c_str( ) );	
 		
 	std::list<RankInfo*>::iterator itr;
 	
 	for (itr = ranks.begin(); itr != ranks.end();itr++)
 	{
-		sDatabase.PExecute("INSERT INTO guilds_ranks VALUES ('%u', '%s', '%u');", Id, (*itr)->name.c_str(), (*itr)->rights);
-		sLog.outDebug( "query rank: %s", ss.str( ).c_str( ) );
+		ss.rdbuf()->str("");
+		ss << "INSERT INTO guilds_ranks VALUES ( ";
+
+		ss << Id << ", '";
+		ss << (*itr)->name << "', ";
+		ss << (*itr)->rights << " )";
+
+		sDatabase.Execute( ss.str( ).c_str( ) );
+		Log::getSingleton( ).outDebug( "query rank: %s", ss.str( ).c_str( ) );
 	}
 }
 
@@ -302,16 +344,34 @@ void Guild::SaveGuildMembersToDB()
 
 void Guild::SaveMemberToDB(MemberSlot *memslot)
 {
-	if(!memslot) return;
-	
-	sDatabase.PExecute("DELETE FROM guilds_members WHERE memguid = '%u';",memslot->guid);
-	sDatabase.PExecute("INSERT INTO guilds_members VALUES ('%u', '%u', '%u', '%s', '%s');", Id, memslot->guid, memslot->RankId, memslot->Pnote.c_str(), memslot->OFFnote.c_str());
+	std::stringstream ss,sdel;
+		
+	sdel << "DELETE FROM guilds_members WHERE memguid=" << memslot->guid;
+	sDatabase.Execute( sdel.str( ).c_str( ) );
+		
+	ss << "INSERT INTO guilds_members VALUES (";
+
+	ss << Id << ", ";
+	ss << memslot->guid << ", ";
+	ss << memslot->RankId << ", '";
+	ss << memslot->Pnote << "', '";
+	ss << memslot->OFFnote << "')";
+	Log::getSingleton( ).outDebug( "query member: %s", ss.str( ).c_str( ) );
+
+	sDatabase.Execute( ss.str( ).c_str( ) );
 }
 
 void Guild::DelGuildFromDB()
 {
-	sDatabase.PExecute("DELETE FROM guilds WHERE guildId = '%u';",Id);
-	sDatabase.PExecute("DELETE FROM guilds_ranks WHERE guildId = '%u';",Id);
+	std::stringstream ss;
+		
+	ss << "DELETE FROM guilds WHERE guildId=" << Id;
+	sDatabase.Execute( ss.str( ).c_str( ) );
+	
+	ss.rdbuf()->str("");
+	ss << "DELETE FROM guilds_ranks WHERE guildId=" << Id;
+	sDatabase.Execute( ss.str( ).c_str( ) );
+	
 }
 
 void Guild::DelGuildMembersFromDB()
@@ -326,7 +386,11 @@ void Guild::DelGuildMembersFromDB()
 
 void Guild::DelMemberFromDB(uint64 guid)
 {	
-	sDatabase.PExecute("DELETE FROM guilds_members WHERE memguid = '%d';",guid);
+	
+	std::stringstream ss;
+	ss << "DELETE FROM guilds_members WHERE memguid= " << guid;
+	
+	sDatabase.Execute( ss.str( ).c_str( ) );
 }
 
 void Guild::BroadcastToGuild(WorldSession *session, std::string msg)
@@ -391,7 +455,6 @@ std::string Guild::GetRankName(uint32 rankId)
 			return (*itr)->name;
 		i++;
 	}
-	return 0;
 }
 
 uint32 Guild::GetRankRights(uint32 rankId)
@@ -406,7 +469,6 @@ uint32 Guild::GetRankRights(uint32 rankId)
 			return (*itr)->rights;
 		i++;
 	}
-	return 0;
 }
 
 void Guild::SetRankName(uint32 rankId, std::string name)
@@ -472,11 +534,10 @@ void Guild::Roster(WorldSession *session)
 {
 	WorldPacket data;
 	Player *pl;
-		
+	
 	data.Initialize(SMSG_GUILD_ROSTER);	
 	data << (uint32)members.size();
 	data << MOTD;
-	data << GINFO;
 	data << (uint32)ranks.size();
 
 	std::list<RankInfo*>::iterator ritr;
@@ -488,17 +549,16 @@ void Guild::Roster(WorldSession *session)
 	for (itr = members.begin(); itr != members.end(); itr++)
 	{
 		pl = ObjectAccessor::Instance().FindPlayer((*itr)->guid);
-		
+
 		if (pl)
 		{
-
 			data << pl->GetGUID();
 			data << (uint8)1; 
 			data << pl->GetName();
 			data << pl->GetRank();
 			data << pl->getLevel();
 			data << pl->getClass();
-			data << pl->GetZoneId ();
+			data << pl->GetZoneId();
 			data << (uint8)0;
 			data << (*itr)->Pnote;
 			data << (*itr)->OFFnote;
@@ -520,7 +580,7 @@ void Guild::Roster(WorldSession *session)
 	}
 	
 	session->SendPacket(&data);
-	sLog.outDebug( "WORLD: Sent (SMSG_GUILD_ROSTER)" );
+	Log::getSingleton( ).outDebug( "WORLD: Sent (SMSG_GUILD_ROSTER)" );
 }
 
 void Guild::Query(WorldSession *session)
@@ -541,7 +601,7 @@ void Guild::Query(WorldSession *session)
 
 	session->SendPacket( &data );
 	
-	sLog.outDebug( "WORLD: Sent (SMSG_GUILD_QUERY_RESPONSE)" );
+	Log::getSingleton( ).outDebug( "WORLD: Sent (SMSG_GUILD_QUERY_RESPONSE)" );
 }
 
 

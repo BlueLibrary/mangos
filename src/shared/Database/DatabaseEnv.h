@@ -21,8 +21,8 @@
 
 
 #include "Common.h"
+#include "Singleton.h"
 #include "Log.h"
-#include "Errors.h"
 
 
 #include "Database/DBCStores.h"

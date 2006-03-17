@@ -22,8 +22,6 @@
 #include "Creature.h"
 #include "MapManager.h"
 
-#define SMALL_ALPHA 0.05
-
 #include <cmath>
 
 struct StackCleaner
@@ -40,11 +38,10 @@ struct StackCleaner
 void
 TargetedMovementGenerator::_setTargetLocation(Creature &owner)
 {
-    float x = i_target.GetPositionX();
-    float y = i_target.GetPositionY();
+    float x = i_target.GetPositionX() - i_attackRadius;
+    float y = i_target.GetPositionY() - i_attackRadius;
     float z = i_target.GetPositionZ();
-    Traveller<Creature> traveller(owner);
-    i_destinationHolder.SetDestination(traveller, x, y, z, i_attackRadius);
+    i_destinationHolder.SetDestination(owner, x, y, z);
 }
 
 void
@@ -52,7 +49,7 @@ TargetedMovementGenerator::_setAttackRadius(Creature &owner)
 {
     float combat_reach = owner.GetFloatValue(UNIT_FIELD_COMBATREACH);
     float bounding_radius = owner.GetFloatValue(UNIT_FIELD_BOUNDINGRADIUS);    
-    i_attackRadius =  (combat_reach + bounding_radius - SMALL_ALPHA);
+    i_attackRadius =  combat_reach + bounding_radius;
 }
 
 void
@@ -76,8 +73,7 @@ TargetedMovementGenerator::TargetedHome(Creature &owner)
     DEBUG_LOG("Target home location %d", owner.GetGUIDLow());
     float x, y, z;
     owner.GetRespawnCoord(x, y, z);
-    Traveller<Creature> traveller(owner);
-    i_destinationHolder.SetDestination(traveller, x, y, z);
+    i_destinationHolder.SetDestination(owner, x, y, z);
     i_targetedHome = true;
     owner.ClearState(ALL_STATE);
     owner.SetState(FLEEING);
@@ -99,8 +95,7 @@ TargetedMovementGenerator::Update(Creature &owner, const uint32 & time_diff)
     }
     else
     {
-	Traveller<Creature> traveller(owner);
-	if( i_destinationHolder.UpdateTraveller(traveller, time_diff, false) )
+	if( i_destinationHolder.UpdateTraveller(owner, time_diff, false) )
 	{
 	    if( i_targetedHome )
 	    {

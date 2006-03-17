@@ -24,12 +24,4 @@ namespace AIRegistry
     void Initialize(void);
 }
 
-namespace MaNGOS
-{
-    namespace Game
-    {
-	void Initialize(void);
-    }
-}
-
 #endif

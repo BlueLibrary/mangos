@@ -35,7 +35,7 @@ void WorldSession::HandleMessagechatOpcode( WorldPacket & recv_data )
 {
     WorldPacket data;
 
-    sLog.outDebug("CHAT: packet received");
+    Log::getSingleton().outDebug("CHAT: packet received");
 
     uint32 type;
     uint32 lang;
@@ -80,7 +80,8 @@ void WorldSession::HandleMessagechatOpcode( WorldPacket & recv_data )
                 break;
             }
             player->GetSession()->SendPacket(&data);
-		sChatHandler.FillMessageData(&data,this,CHAT_MSG_WHISPER_INFORM,LANG_UNIVERSAL,(( char *)((uint32)player->GetGUID() )),msg.c_str() );
+            
+            sChatHandler.FillMessageData(&data, this, CHAT_MSG_WHISPER_INFORM, LANG_UNIVERSAL, ((char *)(player->GetGUID())), msg.c_str() );
             SendPacket(&data);
         } break;
         case CHAT_MSG_YELL:
@@ -145,7 +146,7 @@ void WorldSession::HandleMessagechatOpcode( WorldPacket & recv_data )
         }
         	
         default:
-            sLog.outError("CHAT: unknown msg type %u, lang: %u", type, lang);
+            Log::getSingleton().outError("CHAT: unknown msg type %u, lang: %u", type, lang);
     }
 }
 
@@ -168,7 +169,7 @@ void WorldSession::HandleTextEmoteOpcode( WorldPacket & recv_data )
     Creature *pCreature = dynamic_cast<Creature *>(unit);
     if( pCreature != NULL )
     {
-        nam = pCreature->GetCreatureInfo()->Name;
+        nam = pCreature->GetName();
         namlen = strlen(nam) + 1;
     }
     {
@@ -217,7 +218,7 @@ void WorldSession::HandleChatIgnoredOpcode(WorldPacket& recv_data )
 	WorldPacket data;
     uint64 iguid;
 	std::string msg = "";
-	sLog.outDebug("WORLD: Received CMSG_CHAT_IGNORED");
+	Log::getSingleton().outDebug("WORLD: Recieved CMSG_CHAT_IGNORED");
 
     recv_data >> iguid;	
 

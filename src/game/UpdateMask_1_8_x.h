@@ -1,7 +1,5 @@
-/* UpdateMask.h
- *
- * Copyright (C) 2004 Wow Daemon
- * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
+/* 
+ * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -120,12 +118,12 @@ public:
     }
 
 private:
-    uint32 mCount; // in values
-    uint32 mBlocks; // in uint32 blocks
+    uint32 mCount; 
+    uint32 mBlocks; 
     uint32 *mUpdateMask;
 };
 
 #endif
 
-#endif //_VERSION_1_8_0_
+#endif 
 

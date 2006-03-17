@@ -23,7 +23,6 @@
 
 #include "MovementGenerator.h"
 #include "DestinationHolder.h"
-#include "Traveller.h"
 
 
 class Unit;
@@ -49,7 +48,7 @@ private:
     Unit &i_target;
     float i_attackRadius;
     bool i_targetedHome; 
-    DestinationHolder<Traveller<Creature> > i_destinationHolder;
+    DestinationHolder i_destinationHolder;
 };
 
 #endif

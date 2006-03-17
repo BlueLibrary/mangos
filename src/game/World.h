@@ -20,7 +20,7 @@
 #define __WORLD_H
 
 #include "Timer.h"
-#include "Policies/Singleton.h"
+#include "Singleton.h"
 #include "SharedDefines.h" 
 
 class Object;
@@ -56,7 +56,7 @@ enum EnviromentalDamage
     DAMAGE_FIRE = 5
 };
 
-class World 
+class World : public Singleton<World>
 {
     public:
         World();
@@ -99,11 +99,16 @@ class World
 			else
 				return 0;
         }
+
 		
-      
+		void CreaturesCheck();
+
+        
+        typedef std::map< uint32, uint32> SpellPricesMap;
+        SpellPricesMap mPrices;
 
     protected:
-       
+        
         time_t _UpdateGameTime()
         {
             
@@ -131,5 +136,5 @@ class World
         time_t m_nextThinkTime;
 };
 
-#define sWorld MaNGOS::Singleton<World>::Instance()
+#define sWorld World::getSingleton()
 #endif

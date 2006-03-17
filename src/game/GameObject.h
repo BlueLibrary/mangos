@@ -20,14 +20,15 @@
 #define MANGOSSERVER_GAMEOBJECT_H
 
 #include "Object.h"
-#include "LootMgr.h"
 
 struct GameObjectInfo
 {
+
+
     uint32 id;
     uint32 type;
     uint32 displayId;
-	char* name;
+	std::string name;
     uint32 faction;
     uint32 flags;
     float size;
@@ -41,30 +42,27 @@ struct GameObjectInfo
     uint32 sound7;
     uint32 sound8;
     uint32 sound9;
-   	char* ScriptName;
 };
 
 class GameObject : public Object
 {
 public:
     GameObject( );
-   
     
     void Create(uint32 guidlow, uint32 name_id, uint32 mapid, float x, float y, float z, float ang, float rotation0, float rotation1, float rotation2, float rotation3);
     void Update(uint32 p_time);    
-    GameObjectInfo *GetGOInfo();
+    bool FillLoot(Player &, WorldPacket *data);
+        
     
     void SaveToDB();
     void LoadFromDB(uint32 guid);
     void DeleteFromDB();
-	void generateLoot(); 
-
-	Loot loot;
-	uint32 lootid;
+    
 protected:
-	
+    void _generateLoot(Player &, std::vector<uint32> &, std::vector<uint32>&, std::vector<uint32> &, uint32 &) const;    
     uint32 m_RespawnTimer;
 
+    time_t m_nextThinkTime;
 };
 
 #endif

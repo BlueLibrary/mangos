@@ -28,25 +28,108 @@
 #include "MapManager.h"
 
 
+class MovementInfo
+{
+    uint32 flags, time;
+    uint64 unk1;
+    float unk2, unk3, unk4, unk5;
+    float unk6;
+    uint32 FallTime;
+    float unk8, unk9, unk10, unk11, unk12;
+    public:
+        float x, y, z, orientation;
+
+        MovementInfo(WorldPacket &data)
+        {
+            data >> flags >> time;
+            data >> x >> y >> z >> orientation;
+
+            if (flags & 0x2000000)                
+            {
+                data >> unk1 >> unk2 >> unk3 >> unk4 >> unk5;
+            }
+            if (flags & 0x200000)                 
+            {
+                data >> unk6;
+            }
+            if (flags & 0x2000)                   
+            {
+                data >> FallTime >> unk8 >> unk9 >> unk10 >> unk11;
+            }
+            if (flags & 0x4000000)
+            {
+                data >> unk12;
+            }
+        }
+
+        MovementInfo &operator >>(WorldPacket &data)
+        {
+            data << flags << time;
+            data << x << y << z << orientation;
+
+            if (flags & 0x2000000)                
+            {
+                data << unk1 << unk2 << unk3 << unk4 << unk5;
+            }
+            if (flags & 0x200000)                 
+            {
+                data << unk6;
+            }
+            if (flags & 0x2000)                   
+            {
+                data << FallTime << unk8 << unk9 << unk10 << unk11;
+            }
+            if (flags & 0x4000000)
+            {
+                data << unk12;
+            }
+            return *this;
+        }
+};
+
+void WorldSession::HandleMoveHeartbeatOpcode( WorldPacket & recv_data )
+{
+    uint32 flags, time;
+    float x, y, z, orientation;
+
+    if(GetPlayer()->GetDontMove())
+        return;
+
+    recv_data >> flags >> time;
+    recv_data >> x >> y >> z >> orientation;
+
+    if( GetPlayer() && !GetPlayer( )->SetPosition(x, y, z, orientation) )
+    {
+        WorldPacket movedata;
+
+        GetPlayer( )->BuildTeleportAckMsg(&movedata, GetPlayer()->GetPositionX(),
+            GetPlayer()->GetPositionY(), GetPlayer()->GetPositionZ(), GetPlayer()->GetOrientation() );
+
+        SendPacket(&movedata);
+    }
+
+    WorldPacket data;
+    data.Initialize( MSG_MOVE_HEARTBEAT );
+
+    data << GetPlayer()->GetGUID();
+    data << flags << time;
+    data << x << y << z << orientation;
+
+
+
+
+}
 
 
 void WorldSession::HandleMoveWorldportAckOpcode( WorldPacket & recv_data )
 {
-    sLog.outDebug( "WORLD: got MSG_MOVE_WORLDPORT_ACK." );
-	_player->RemoveFromWorld();
-	MapManager::Instance().GetMap(_player->GetMapId())->Add(_player);
-	WorldPacket data;
-    data.Initialize(SMSG_SET_REST_START);
-    data << uint32(8129);
-	SendPacket(&data);   
-	_player->SetDontMove(false);
+    Log::getSingleton( ).outDebug( "WORLD: got MSG_MOVE_WORLDPORT_ACK." );
+    MapManager::Instance().GetMap(_player->GetMapId())->Add(_player);
 }
 
 
 void WorldSession::HandleFallOpcode( WorldPacket & recv_data )
 {
-
-	// TODO Add Watercheck when fall into water no damage
 
     uint32 flags, time;
     float x, y, z, orientation;
@@ -54,7 +137,7 @@ void WorldSession::HandleFallOpcode( WorldPacket & recv_data )
     uint32 FallTime;
 
     uint64 guid;
-//    uint8 type;
+    uint8 type;
     uint32 damage;
 
     if(GetPlayer()->GetDontMove())
@@ -63,20 +146,24 @@ void WorldSession::HandleFallOpcode( WorldPacket & recv_data )
     recv_data >> flags >> time;
     recv_data >> x >> y >> z >> orientation;
     recv_data >> FallTime;
-    if ( FallTime > 1100 && !GetPlayer()->isDead())
+    if ( FallTime > 1100 && !GetPlayer()->isDead() )
     {
-		uint32 MapID = GetPlayer()->GetMapId();
-		Map* Map = MapManager::Instance().GetMap(MapID);
-		float posz = Map->GetWaterLevel(x,y);
-		if (z < (posz - (float) 1))
-		{
-			guid = GetPlayer()->GetGUID();
-			damage = (uint32)((FallTime - 1100)/100)+1;
-			GetPlayer()->EnvironmentalDamage(guid,DAMAGE_FALL, damage);
-		}
-
+        
+        guid = GetPlayer()->GetGUID();
+        type = DAMAGE_FALL;
+        damage = (uint32)((FallTime - 1100)/100)+1;
+        
+        WorldPacket data;
+        data.Initialize(SMSG_ENVIRONMENTALDAMAGELOG);
+        data << guid;
+        data << type;
+        data << damage;
+        SendPacket(&data);
+        GetPlayer()->DealDamage(GetPlayer(),damage,0);
     }
 }
+
+
 
 void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
 {
@@ -84,43 +171,48 @@ void WorldSession::HandleMovementOpcodes( WorldPacket & recv_data )
     float x, y, z, orientation;
 
     
+
     if(GetPlayer()->GetDontMove())
         return;
 
+#ifdef _VERSION_1_7_0_
+    recv_data >> flags >> time;
+    recv_data >> x >> y >> z >> orientation >> nothing;
+#else 
     recv_data >> flags >> time;
     recv_data >> x >> y >> z >> orientation;
-    
+#endif 
 
-		bool isSet = GetPlayer( )->SetPosition(x, y, z, orientation);
-		if(recv_data.GetOpcode() != MSG_MOVE_JUMP)
-		{
-			WorldPacket data;
-			data.Initialize( recv_data.GetOpcode() );
-			data << uint8(0xFF) << GetPlayer()->GetGUID();
-			data << flags << time;
-			data << x << y << z << orientation;
-			GetPlayer()->SendMessageToSet(&data, false);
-  		}
+    if( GetPlayer() && !GetPlayer( )->SetPosition(x, y, z, orientation) )
+    {
+        WorldPacket movedata;
+        GetPlayer( )->BuildTeleportAckMsg(&movedata, GetPlayer()->GetPositionX(),
+            GetPlayer()->GetPositionY(), GetPlayer()->GetPositionZ(), GetPlayer()->GetOrientation() );
 
-	uint32 MapID = GetPlayer()->GetMapId();
-	Map* Map = MapManager::Instance().GetMap(MapID);
-	float posz = Map->GetWaterLevel(x,y);
-	uint8 flag1 = Map->GetTerrainType(x,y);
+        SendPacket(&movedata);
+    }
 
-	//!Underwater check
-	if ((z < (posz - (float)2)) && (flag1 & 0x01))
-		GetPlayer()->m_isunderwater|= 0x01;
-	else if (z > (posz - (float)2))
-		GetPlayer()->m_isunderwater&= 0x7A;
-	//!in lava check
-	if ((z < (posz - (float)2)) && (flag1 & 0x02))
-		GetPlayer()->m_isunderwater|= 0x80;
+    WorldPacket data;
+    data.Initialize( recv_data.GetOpcode() );
+
+#ifdef _VERSION_1_7_0_
+
+    data << GetPlayer()->GetGUID();
+    data << flags << time;
+    data << x << y << z << orientation;
+    data  << nothing << uint32(0) << uint32(0) << uint32(0);
+#else 
+    data << GetPlayer()->GetGUID();
+    data << flags << time;
+    data << x << y << z << orientation;
+#endif 
+
+    GetPlayer()->SendMessageToSet(&data, false);
 }
 
-void WorldSession::HandleSetActiveMoverOpcode(WorldPacket &recv_data)
+void
+WorldSession::HandleSetActiveMoverOpcode(WorldPacket &recv_data)
 {
-	//CMSG_SET_ACTIVE_MOVER 
-
     uint32 guild, time;
     recv_data >> guild >> time;
 }

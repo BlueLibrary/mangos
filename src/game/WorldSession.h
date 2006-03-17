@@ -19,8 +19,6 @@
 #ifndef __WORLDSESSION_H
 #define __WORLDSESSION_H
 
-struct ItemPrototype;
-
 class Player;
 class WorldPacket;
 class WorldSocket;
@@ -78,36 +76,15 @@ class WorldSession
 		void SendTestCreatureQueryOpcode( uint32 entry, uint64 guid, uint32 testvalue );
 		
 		void SendCreatureQuery( uint32 entry, uint64 guid );
-		void SendProficiency (uint8 pr1, uint8 pr2=0, uint8 pr3=0, uint8 pr4=0, uint8 pr5=0);
-		void SendTrainerList( uint64 guid );
-		void SendTrainerList( uint64 guid,std::string strTitle );
-		void SendListInventory( uint64 guid );
-		void SendShowBank( uint64 guid );
-		void SendAuctionHello( uint64 guid );
-		void SendTabardVendorActivate( uint64 guid );
-		void SendTaxiStatus( uint64 guid );
-		void SendSpiritRessurect();
 
     protected:
 
+        
         void HandleCharEnumOpcode(WorldPacket& recvPacket);
         void HandleCharDeleteOpcode(WorldPacket& recvPacket);
         void HandleCharCreateOpcode(WorldPacket& recvPacket);
         void HandlePlayerLoginOpcode(WorldPacket& recvPacket);
 
-	// new
-	void HandleMooveUnRootAck(WorldPacket& recvPacket);
-	void HandleMooveRootAck(WorldPacket& recvPacket);
-	void HandleLookingForGroup(WorldPacket& recvPacket);
-
-	void HandleMoveWaterWalkAck(WorldPacket& recvPacket);
-
-	// repair
-	void HandleRepairItemOpcode(WorldPacket& recvPacket);
-
-	void HandleMoveTeleportAck(WorldPacket& recvPacket);
-	void HandleForceRunSpeedChangeAck(WorldPacket& recvPacket);
-	void HandleForceSwimSpeedChangeAck(WorldPacket& recvPacket);
         
         void HandlePingOpcode(WorldPacket& recvPacket);
         void HandleAuthSessionOpcode(WorldPacket& recvPacket);
@@ -145,8 +122,8 @@ class WorldSession
 
         void HandleAreaTriggerOpcode(WorldPacket& recvPacket);
 		
-	void HandleSetFactionAtWar( WorldPacket & recv_data );
-	void HandleSetFactionCheat( WorldPacket & recv_data );
+		void HandleSetFactionAtWar( WorldPacket & recv_data );
+		void HandleSetFactionCheat( WorldPacket & recv_data );
 
         void HandleUpdateAccountData(WorldPacket& recvPacket);
         void HandleRequestAccountData(WorldPacket& recvPacket);
@@ -164,8 +141,10 @@ class WorldSession
         void HandleCreatureQueryOpcode(WorldPacket& recvPacket);
         
         void HandleGameObjectQueryOpcode(WorldPacket& recvPacket);
-      
-             
+
+        
+        void HandleMoveHeartbeatOpcode(WorldPacket& recvPacket);
+        
         void HandleMoveWorldportAckOpcode(WorldPacket& recvPacket);
         
         void HandleMovementOpcodes(WorldPacket& recvPacket);
@@ -210,7 +189,6 @@ class WorldSession
 		void HandleGuildRankOpcode(WorldPacket& recvPacket);
 		void HandleGuildAddRankOpcode(WorldPacket& recvPacket);
 		void HandleGuildDelRankOpcode(WorldPacket& recvPacket);
-		void HandleGuildChangeInfoOpcode(WorldPacket& recvPacket);
 		void SendCommandResult(uint32 typecmd,std::string str,uint32 cmdresult);
 
         
@@ -221,8 +199,8 @@ class WorldSession
         
         void HandleTabardVendorActivateOpcode(WorldPacket& recvPacket);
         void HandleBankerActivateOpcode(WorldPacket& recvPacket);
-		void HandleBuyBankSlotOpcode(WorldPacket& recvPacket);
         void HandleTrainerListOpcode(WorldPacket& recvPacket);
+		void SendTrainerList( uint64 guid );
         void HandleTrainerBuySpellOpcode(WorldPacket& recvPacket);
         void HandlePetitionShowListOpcode(WorldPacket& recvPacket);
         void HandleGossipHelloOpcode(WorldPacket& recvPacket);
@@ -230,7 +208,6 @@ class WorldSession
         void HandleSpiritHealerActivateOpcode(WorldPacket& recvPacket);
         void HandleNpcTextQueryOpcode(WorldPacket& recvPacket);
         void HandleBinderActivateOpcode(WorldPacket& recvPacket);
-
         
         
         void HandleDuelAcceptedOpcode(WorldPacket& recvPacket);
@@ -270,27 +247,27 @@ class WorldSession
 		bool SendItemInfo( uint32 itemid, WorldPacket data );
         void HandleMailCreateTextItem(WorldPacket & recv_data );
 		void HandleMsgQueryNextMailtime(WorldPacket & recv_data ); 
-		void HandleCancelChanneling(WorldPacket & recv_data );	
 		
-		void SendItemPageInfo( ItemPrototype *itemProto );
-		void HandleSplitItemOpcode(WorldPacket& recvPacket);
-		void HandleSwapInvItemOpcode(WorldPacket& recvPacket);
-		void HandleDestroyItemOpcode(WorldPacket& recvPacket);
-		void HandleAutoEquipItemOpcode(WorldPacket& recvPacket);
-		void HandleItemQuerySingleOpcode(WorldPacket& recvPacket);
-		void HandleSellItemOpcode(WorldPacket& recvPacket);
-		void HandleBuyItemInSlotOpcode(WorldPacket& recvPacket);
-		void HandleBuyItemOpcode(WorldPacket& recvPacket);
-		void HandleListInventoryOpcode(WorldPacket& recvPacket);
-		void HandleAutoStoreBagItemOpcode(WorldPacket& recvPacket);
-		void HandleReadItem(WorldPacket& recvPacket);
-		void HandleSwapItem( WorldPacket & recvPacket);
-		void HandleBuybackItem(WorldPacket & recvPacket);
-		void HandleAutoBankItemOpcode(WorldPacket& recvPacket);
-		void HandleAutoStoreBankItemOpcode(WorldPacket& recvPacket);
+		
+		void SendItemPageInfo( uint32 realID, uint32 itemid );
+		void SendAllItemPageInfos( void );
 
-		void HandleAttackSwingOpcode(WorldPacket& recvPacket);
-		void HandleAttackStopOpcode(WorldPacket& recvPacket);
+        
+        void HandleSwapInvItemOpcode(WorldPacket& recvPacket);
+        void HandleDestroyItemOpcode(WorldPacket& recvPacket);
+        void HandleAutoEquipItemOpcode(WorldPacket& recvPacket);
+        void HandleItemQuerySingleOpcode(WorldPacket& recvPacket);
+        void HandleSellItemOpcode(WorldPacket& recvPacket);
+        void HandleBuyItemInSlotOpcode(WorldPacket& recvPacket);
+        void HandleBuyItemOpcode(WorldPacket& recvPacket);
+        void HandleListInventoryOpcode(WorldPacket& recvPacket);
+		void SendListInventory( uint64 guid );
+        void HandleAutoStoreBagItemOpcode(WorldPacket& recvPacket);
+        void HandleReadItem(WorldPacket& recvPacket);
+
+        
+        void HandleAttackSwingOpcode(WorldPacket& recvPacket);
+        void HandleAttackStopOpcode(WorldPacket& recvPacket);
 		void HandleSetSheathedOpcode(WorldPacket& recvPacket);
 
         
@@ -298,7 +275,6 @@ class WorldSession
         void HandleCastSpellOpcode(WorldPacket& recvPacket);
         void HandleCancelCastOpcode(WorldPacket& recvPacket);
         void HandleCancelAuraOpcode(WorldPacket& recvPacket);
-        void HandleCancelAutoRepeatSpellOpcode(WorldPacket& recvPacket);
 
         
         
@@ -360,18 +336,7 @@ class WorldSession
 		void HandleTutorialClear( WorldPacket & recv_data );
 		void HandleTutorialReset( WorldPacket & recv_data );
 
-		//Pet
-		void HandlePetAction( WorldPacket & recv_data );
-        void HandlePetNameQuery( WorldPacket & recv_data );
-		void HandlePetSetAction( WorldPacket & recv_data );
-
-
-		void HandleSetActionBar(WorldPacket& recv_data);
-
-		void HandleChangePlayerNameOpcode(WorldPacket& recv_data);
-
-
-
+        
         OpcodeHandler* _GetOpcodeHandlerTable() const;
 
     private:

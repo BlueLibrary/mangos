@@ -45,26 +45,22 @@ void Channel::Join(Player *p, const char *pass)
         pinfo.owner = false;
         pinfo.moderator = false;
 
-        //MakeJoined(&data,p);
+        MakeJoined(&data,p);
         p->JoinedChannel(this);
-        /*if(announce)
-            SendToAll(&data);*/
+        if(announce)
+            SendToAll(&data);
 
         data.clear();
         players[p] = pinfo;
 
-        MakeYouJoined(&data,p);
+        MakeYouJoined(&data);
         SendToOne(&data,p);
 
-
-// if no owner first logged will become
-//        if(!constant && owner == NULL)
-//        {
-//            SetOwner(p);
-//            players[p].moderator = true;
-//        }
-
-
+        if(!constant && owner == NULL)
+        {
+            SetOwner(p);
+            players[p].moderator = true;
+        }
     }
 }
 
@@ -90,7 +86,7 @@ void Channel::Leave(Player *p, bool send)
         data.clear();
 
         players.erase(p);
-        /*MakeLeft(&data,p);
+        MakeLeft(&data,p);
         if(announce)
             SendToAll(&data);
 
@@ -98,7 +94,7 @@ void Channel::Leave(Player *p, bool send)
         {
             Player *newowner = players.size() > 0 ? players.begin()->second.player : NULL;
             SetOwner(newowner);
-        }*/
+        }
     }
 }
 
@@ -389,6 +385,15 @@ void Channel::Say(Player *p, const char *what)
     }
     else
     {
+        
+        
+        
+        
+        
+        
+        
+        
+
         uint32 messageLength = strlen((char*)what) + 1;
         uint8 afk = 0;
 

@@ -55,8 +55,8 @@ bool ChatHandler::HandleGUIDCommand(const char* args)
 
 bool ChatHandler::HandleNameCommand(const char* args)
 {
-/*    WorldPacket data;
-Temp. disabled
+    WorldPacket data;
+
     if(!*args)
         return false;
 
@@ -99,11 +99,10 @@ Temp. disabled
     }
 
     pCreature->SetName(args);
-    uint32 idname = objmgr.AddCreatureTemplate(pCreature->GetName());
+    uint32 idname = objmgr.AddCreatureName(pCreature->GetName());
     pCreature->SetUInt32Value(OBJECT_FIELD_ENTRY, idname);
 
     pCreature->SaveToDB();
-*/
 
     return true;
 }
@@ -111,7 +110,6 @@ Temp. disabled
 
 bool ChatHandler::HandleSubNameCommand(const char* args)
 {
-	/* Temp. disabled
     WorldPacket data;
 
     if(!*args)
@@ -158,14 +156,14 @@ bool ChatHandler::HandleSubNameCommand(const char* args)
     pCreature->SetUInt32Value(OBJECT_FIELD_ENTRY, idname);
 
     pCreature->SaveToDB();
-*/
+
     return true;
 }
 
 
 bool ChatHandler::HandleProgCommand(const char* args)
 {
-    m_session->GetPlayer()->smsg_NewWorld(451, 16391.80f, 16341.20f, 69.44f,0.0f);
+    smsg_NewWorld(m_session, 451, 16391.80f, 16341.20f, 69.44f);
 
     return true;
 }
@@ -189,7 +187,7 @@ bool ChatHandler::HandleItemMoveCommand(const char* args)
     Item * dstitem = m_session->GetPlayer()->GetItemBySlot(dstslot);
     Item * srcitem = m_session->GetPlayer()->GetItemBySlot(srcslot);
 
-//    m_session->GetPlayer()->SwapItemSlots(srcslot, dstslot);
+    m_session->GetPlayer()->SwapItemSlots(srcslot, dstslot);
 
     return true;
 }
@@ -254,18 +252,20 @@ bool ChatHandler::HandleAddSpwCommand(const char* args)
 
     uint32 id  = atoi(charID);
 
-    QueryResult *result = sDatabase.PQuery("SELECT modelid, flag, faction, level, name from creaturetemplate where entryid = '%d';", id);
-
+    
+    
+    std::stringstream ss;
+    ss << "select modelid, flag, faction, level, name from creaturetemplate where entryid = " << id << '\0';
+    QueryResult *result;
+    result = sDatabase.Query( ss.str().c_str() );
     if(result)
     {
         Field *fields = result->Fetch();
         
         SpawnCreature(m_session, fields[4].GetString(), fields[0].GetUInt32(), fields[1].GetUInt32(), fields[2].GetUInt32(), fields[3].GetUInt32());
-	delete result;
         return true;
     }
     else
-	delete result;
         return false;
 }
 
@@ -300,7 +300,7 @@ bool ChatHandler::HandleDeleteCommand(const char* args)
 
 bool ChatHandler::HandleDeMorphCommand(const char* args)
 {
-    sLog.outError("Demorphed %s",m_session->GetPlayer()->GetName());
+    Log::getSingleton().outError("Demorphed %s",m_session->GetPlayer()->GetName());
     m_session->GetPlayer()->DeMorph();
     return true;
 }
@@ -345,7 +345,9 @@ bool ChatHandler::HandleItemCommand(const char* args)
     std::stringstream sstext;
     if(tmpItem)
     {
-	QueryResult *result = sDatabase.PQuery("INSERT INTO vendors VALUES('%u','%u','%d');",GUID_LOPART(guid), item, amount);
+        std::stringstream ss;
+        ss << "INSERT INTO vendors VALUES ('" << GUID_LOPART(guid) << "', '" << item << "', '" << amount << "')" << '\0';
+        QueryResult *result = sDatabase.Query( ss.str().c_str() );
 
         uint8 itemscount = (uint8)pCreature->getItemCount();
         pCreature->setItemId(itemscount , item);
@@ -353,7 +355,6 @@ bool ChatHandler::HandleItemCommand(const char* args)
         pCreature->increaseItemCount();
 
         sstext << "Item '" << item << "' '" << tmpItem->Name1 << "' Added to list" << '\0';
-	delete result;
     }
     else
     {
@@ -362,6 +363,7 @@ bool ChatHandler::HandleItemCommand(const char* args)
 
     FillSystemMessageData(&data, m_session, sstext.str().c_str());
     m_session->SendPacket( &data );
+
     return true;
 }
 
@@ -399,7 +401,9 @@ bool ChatHandler::HandleItemRemoveCommand(const char* args)
     {
         uint32 guidlow = GUID_LOPART(guid);
 
-	sDatabase.PExecute("DELETE FROM vendors WHERE vendorGuid = '%u' AND itemGuid = '%u'",guidlow,itemguid);
+        std::stringstream ss;
+        ss << "DELETE FROM vendors WHERE vendorGuid = " << guidlow << " AND itemGuid = " << itemguid << '\0';
+        QueryResult *delresult = sDatabase.Query( ss.str().c_str() );
 
         pCreature->setItemId(slot , 0);
         pCreature->setItemAmount(slot , 0);
@@ -447,8 +451,15 @@ bool ChatHandler::HandleAddMoveCommand(const char* args)
         return true;
     }
 
-    sDatabase.PExecute("INSERT INTO creatures_mov (creatureId,X,Y,Z) VALUES ('%u', '%f', '%f', '%f');", GUID_LOPART(guid), m_session->GetPlayer()->GetPositionX(), m_session->GetPlayer()->GetPositionY(), m_session->GetPlayer()->GetPositionZ());
+    char sql[512];
 
+    sprintf(sql, "INSERT INTO creatures_mov (creatureId,X,Y,Z) VALUES ('%u', '%f', '%f', '%f')",
+        GUID_LOPART(guid),
+        m_session->GetPlayer()->GetPositionX(),
+        m_session->GetPlayer()->GetPositionY(),
+        m_session->GetPlayer()->GetPositionZ());
+
+    sDatabase.Execute( sql );
     FillSystemMessageData(&data, m_session, "Waypoint added.");
     m_session->SendPacket( &data );
 
@@ -492,7 +503,9 @@ bool ChatHandler::HandleRandomCommand(const char* args)
         return true;
     }
 
-    sDatabase.PExecute("UPDATE creatures SET moverandom = '%i' WHERE id = '%u';", option, GUID_LOPART(guid));
+    char sql[512];
+    sprintf(sql, "UPDATE creatures SET moverandom = '%i' WHERE id = '%u'", option, GUID_LOPART(guid));
+    sDatabase.Execute( sql );
 
     pCreature->setMoveRandomFlag(option > 0);
 
@@ -537,7 +550,10 @@ bool ChatHandler::HandleRunCommand(const char* args)
         return true;
     }
 
-    sDatabase.PExecute("UPDATE creatures SET running = '%i' WHERE id = '%u';", option, GUID_LOPART(guid));
+    char sql[512];
+
+    sprintf(sql, "UPDATE creatures SET running = '%i' WHERE id = '%u'", option, GUID_LOPART(guid));
+    sDatabase.Execute( sql );
 
     pCreature->setMoveRunFlag(option > 0);
 

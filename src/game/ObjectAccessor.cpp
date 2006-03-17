@@ -73,13 +73,14 @@ ObjectAccessor::GetCorpse(Unit &u, uint64 guid)
 Unit*
 ObjectAccessor::GetUnit(Unit &u, uint64 guid)
 {
-	Unit *unit = NULL;
-	
+    if( IS_CREATURE_GUID(guid) )
+	return GetCreature(u, guid);
+    
+    Unit *unit = NULL;
+    if( IS_PLAYER_GUID(guid) )
 	unit = FindPlayer(guid);
-	if(!unit)	
-		return GetCreature(u, guid);
 
-	return unit;
+    return unit;
 }
 
 Player*
@@ -123,29 +124,6 @@ ObjectAccessor::FindPlayer(uint64 guid)
     if( iter->second->GetGUID() == guid )
         return iter->second;
     return NULL;
-}
-
-void 
-ObjectAccessor::BuildCreateForSameMapPlayer(Player *pl)
-{
-   if(!pl) return;
-   for(PlayersMapType::iterator iter=i_players.begin(); iter != i_players.end(); ++iter){
-	   if( (iter->second->GetMapId()==pl->GetMapId()) && (iter->second->GetGUID()!=pl->GetGUID()) )
-	   {
-		   sLog.outDebug("Creating same map for both player %d and %d", pl->GetGUIDLow(), iter->second->GetGUIDLow());
-	       UpdateData my_data;
-	       WorldPacket my_packet;
-	       iter->second->BuildCreateUpdateBlockForPlayer(&my_data, pl);
-	       my_data.BuildPacket(&my_packet);
-	       pl->GetSession()->SendPacket(&my_packet);
-
-	       UpdateData his_data;
-	       WorldPacket his_pk;
-	       pl->BuildCreateUpdateBlockForPlayer(&his_data, iter->second);
-	       his_data.BuildPacket(&his_pk);
-	       iter->second->GetSession()->SendPacket(&his_pk);
-	   }
-   }    
 }
 
 Player*
@@ -239,6 +217,7 @@ ObjectAccessor::_buildUpdateObject(Object *obj, UpdateDataMapType &update_player
     if( obj->isType(TYPE_ITEM ))
     {
 	Item *item = static_cast<Item *>(obj);
+	item->UpdateStats();
 	pl = item->GetOwner();
 	build_for_all = false;
     }

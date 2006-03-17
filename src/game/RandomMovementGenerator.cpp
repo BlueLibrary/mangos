@@ -20,7 +20,7 @@
 #include "MapManager.h"
 #include "Opcodes.h"
 #include "RandomMovementGenerator.h"
-#include "DestinationHolderImp.h"
+
 
 
 void
@@ -29,8 +29,7 @@ RandomMovementGenerator::Initialize(Creature &creature)
     const float wander_distance=16;
     float x,y,z;
     creature.GetRespawnCoord(x, y, z);
-	int mapid=creature.GetMapId();
-	z=MapManager::Instance ().GetMap(mapid)->GetHeight(x,y);
+
     
     i_nextMove = 1;
     i_waypoints[0][0] = x;
@@ -44,16 +43,16 @@ RandomMovementGenerator::Initialize(Creature &creature)
 
 	if( idx == 1 )
 	{
+	    
 	    i_waypoints[idx][0] = x + wanderX;
 	    i_waypoints[idx][1] = y + wanderY;
-		i_waypoints[idx][2] = MapManager::Instance ().GetMap(mapid)->GetHeight(i_waypoints[idx][0],i_waypoints[idx][1]);	    
+	    i_waypoints[idx][2] = z;	    
 	}
 	else
 	{
 	    i_waypoints[idx][0] = i_waypoints[idx-1][0]+wanderX;
 	    i_waypoints[idx][1] = i_waypoints[idx-1][1]+wanderY;
-	    i_waypoints[idx][2] =  MapManager::Instance ().GetMap(mapid)->GetHeight(i_waypoints[idx][0],
-			i_waypoints[idx][1]);
+	    i_waypoints[idx][2] = z;
 	}
     }
 
@@ -83,15 +82,13 @@ RandomMovementGenerator::Update(Creature &creature, const uint32 &diff)
 	    const float &z = i_waypoints[i_nextMove][2];
 
 	    creature.SetState(ROAMING);
-	    Traveller<Creature> traveller(creature);
-	    i_destinationHolder.SetDestination(traveller, x, y, z);
+	    i_destinationHolder.SetDestination(creature, x, y, z);
 	    i_nextMoveTime.Reset( i_destinationHolder.GetTotalTravelTime() );
 	}
 	else
 	{	    
 	    
-	    Traveller<Creature> traveller(creature);
-	    i_destinationHolder.UpdateTraveller(traveller, diff, true);
+	    i_destinationHolder.UpdateTraveller(creature, diff, true);
 	    creature.StopMoving();
 	    creature.setMoveRunFlag(rand() % 3); 
 
@@ -128,8 +125,7 @@ RandomMovementGenerator::Permissible(const Creature *creature)
         || creature->HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_SPIRITHEALER)
         || creature->HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_BANKER)
         || creature->HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_PETITIONER)
-        || creature->HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_TABARDVENDOR)
-		|| creature->HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_STABLE))
+        || creature->HasFlag(UNIT_NPC_FLAGS, UNIT_NPC_FLAG_TABARDVENDOR))
 	return CANNOT_HANDLE_TYPE;
 
     return RANDOM_MOTION_TYPE;

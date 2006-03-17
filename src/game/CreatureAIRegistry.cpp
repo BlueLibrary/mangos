@@ -23,11 +23,6 @@
 #include "RandomMovementGenerator.h"
 #include "CreatureAIImpl.h"
 #include "MovementGeneratorImpl.h"
-#include "MapManager.h"
-#include "WaypointMovementGenerator.h"
-#include "RedZoneDistrict.h"
-#include "CreatureAIRegistry.h"
-#include "WaypointMovementGenerator.h"
 
 namespace AIRegistry
 {
@@ -39,21 +34,5 @@ namespace AIRegistry
 
 	
 	(new MovementGeneratorFactory<RandomMovementGenerator>("Random"))->RegisterSelf();
-	(new MovementGeneratorFactory<WaypointMovementGenerator>("Waypoint"))->RegisterSelf();
-    }
-}
-
-namespace MaNGOS
-{
-    namespace Game
-    {
-	void Initialize()
-	{
-	    MapManager::Instance().Initialize();
-	    Map::InitStateMachine();
-	    RedZone::Initialize();
-	    AIRegistry::Initialize();
-	    WaypointMovementGenerator::Initialize();
-	}
     }
 }

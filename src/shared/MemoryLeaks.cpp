@@ -17,11 +17,10 @@
  */
 
 #include "MemoryLeaks.h"
-#include "Policies/SingletonImp.h"
 
 #if COMPILER == MICROSOFT
 
-INSTANTIATE_SINGLETON_1( MemoryManager ) ;
+createFileSingleton( MemoryManager ) ;
 
 
 MemoryManager::MemoryManager( )
@@ -34,5 +33,4 @@ MemoryManager::MemoryManager( )
 
 
 }
-
 #endif

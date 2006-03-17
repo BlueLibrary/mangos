@@ -26,7 +26,6 @@
 #include "ObjectMgr.h"
 #include "Database/DatabaseEnv.h"
 #include "Spell.h"
-#include "SpellAuras.h"
 #include "MapManager.h"
 #include "RedZoneDistrict.h"
 
@@ -42,7 +41,7 @@ DynamicObject::DynamicObject() : Object()
 
 void DynamicObject::Create( uint32 guidlow, Unit *caster, SpellEntry * spell, float x, float y, float z, uint32 duration )
 {
-    Object::_Create(guidlow, 0xF0007000, caster->GetMapId(), x, y, z, 0, (uint8)-1);
+    Object::_Create(guidlow, 0xF0007000, caster->GetMapId(), x, y, z, 0, -1);
     m_spell = spell;
     m_caster = caster;
 
@@ -77,6 +76,11 @@ void DynamicObject::Update(uint32 p_time)
             if(this->IsInWorld())
             {
                 deleteThis = true;
+                WorldPacket data;
+
+                data.Initialize(SMSG_GAMEOBJECT_DESPAWN_ANIM);
+                data << GetGUID();
+                SendMessageToSet(&data,true);
             }
         }
     }
@@ -103,10 +107,6 @@ void DynamicObject::DealWithSpellDamage(Player &caster)
     uint32 runtimes=1;
     if(deleteThis)
         runtimes=m_DamageMaxTimes-m_DamageCurTimes;
-
-	Modifier mod;
-	mod.m_auraname = 3;                             
-    mod.m_amount = m_PeriodicDamage;
        
     for(int i=0;i<runtimes;i++)
     {
@@ -120,7 +120,7 @@ void DynamicObject::DealWithSpellDamage(Player &caster)
            {
                 if(_CalcDistance(GetPositionX(),GetPositionY(),GetPositionZ(),(*iter)->GetPositionX(),(*iter)->GetPositionY(),(*iter)->GetPositionZ()) < m_PeriodicDamageRadius && (*iter)->GetUInt32Value(UNIT_FIELD_FACTIONTEMPLATE) != caster.GetUInt32Value(UNIT_FIELD_FACTIONTEMPLATE))
                 {
-                 caster.PeriodicAuraLog((*iter),m_spell,&mod);
+                 caster.PeriodicAuraLog((*iter),m_spell->Id,m_PeriodicDamage,m_spell->School);
                 }        
            }
         }
@@ -134,24 +134,10 @@ void DynamicObject::DealWithSpellDamage(Unit &caster)
 }
 
 void DynamicObject::Delete()
-{  
-	
+{
     m_PeriodicDamage = 0;
     m_PeriodicDamageTick = 0;
-
-    WorldPacket data;
-
-    data.Initialize(SMSG_GAMEOBJECT_DESPAWN_ANIM);
-    data << GetGUID();
-    SendMessageToSet(&data,true);
-
-    data.Initialize(SMSG_DESTROY_OBJECT);
-    data << GetGUID();
-    SendMessageToSet(&data,true);
-
-	//FIX ME ,NEED TO DELETE
-	//MapManager::Instance().GetMap(GetMapId())->Remove(this, true);   
-	//Log::getSingleton( ).outError("Don't Forget FIX ME at DynamicObject.cpp \n");
-	RemoveFromWorld();
-	 
+    
+    
 }
+

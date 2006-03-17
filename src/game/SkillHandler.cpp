@@ -52,7 +52,7 @@ void WorldSession::HandleLearnTalentOpcode( WorldPacket & recv_data )
         uint32 spellid = talentInfo->RankID[requested_rank];
         if( spellid == 0 || requested_rank > 4)
         {
-            sLog.outDetail("Talent: %d Rank: %d = 0", talent_id, requested_rank);
+            Log::getSingleton( ).outDetail("Talent: %d Rank: %d = 0", talent_id, requested_rank);
         }
         else
         {
@@ -60,7 +60,7 @@ void WorldSession::HandleLearnTalentOpcode( WorldPacket & recv_data )
             {
                 
                 data.Initialize(SMSG_LEARNED_SPELL);
-                sLog.outDetail("TalentID: %d Rank: %d Spell: %d\n", talent_id, requested_rank, spellid);
+                Log::getSingleton( ).outDetail("TalentID: %d Rank: %d Spell: %d\n", talent_id, requested_rank, spellid);
                 data << spellid;
                 GetPlayer( )->GetSession()->SendPacket(&data);
                 GetPlayer( )->addSpell((uint16)spellid);

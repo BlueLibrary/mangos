@@ -66,16 +66,6 @@ struct GridInfo
 };
 
 
-
-
-
-typedef struct{
-uint16 area_flag[16][16];
-uint8 terrain_type[16][16];
-float liquid_level[16][16];
-float Z[MAP_RESOLUTION][MAP_RESOLUTION];
-}GridMap;
-
 class MANGOS_DLL_DECL Map : public MaNGOS::ObjectLevelLockable<Map, ZThread::Mutex>
 {    
 public:
@@ -131,10 +121,6 @@ public:
     uint32 GetId(void) const { return i_id; }
 
     static void InitStateMachine(void);
-	float GetHeight(float x, float y);
-	uint16 GetAreaFlag(float x, float y );
-	uint8 GetTerrainType(float x, float y );
-	float GetWaterLevel(float x, float y );
 
 private:
     bool loaded(const GridPair &) const;
@@ -147,7 +133,7 @@ private:
 
     uint32 i_id;
 
-    GridMap *GridMaps[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
+    
     volatile uint64 i_gridMask[MAX_NUMBER_OF_GRIDS];
     volatile uint64 i_gridStatus[MAX_NUMBER_OF_GRIDS];
         
@@ -157,9 +143,7 @@ private:
 
     NGridType* i_grids[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
     GridInfo *i_info[MAX_NUMBER_OF_GRIDS][MAX_NUMBER_OF_GRIDS];
-    
-		
-		time_t i_gridExpiry;
+    time_t i_gridExpiry;
 };
 
 

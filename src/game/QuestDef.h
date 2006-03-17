@@ -130,6 +130,25 @@ enum __QuestSpecialFlags
 	QUEST_SPECIAL_FLAGS_REPUTATION    = 128, 
 };
 
+struct quest_status{
+
+    quest_status(){
+        memset(m_questItemCount, 0, QUEST_OBJECTIVES_COUNT * sizeof(uint32));
+        memset(m_questMobCount , 0, QUEST_OBJECTIVES_COUNT * sizeof(uint32));
+		m_timerrel = 0;
+    }
+
+    uint32 quest_id;
+    uint32 status;
+	bool rewarded;
+    uint32 m_questItemCount[ QUEST_OBJECTIVES_COUNT ]; 
+    uint32 m_questMobCount [ QUEST_OBJECTIVES_COUNT ];  
+
+	uint32	m_timer;
+	uint32	m_timerrel;
+	bool	m_explored;
+};
+
 class Quest
 {
 public:
@@ -210,8 +229,7 @@ public:
 
 
     uint32 m_qQuestItem;
-    uint32 m_qNextQuestId;
-	Quest* m_qNextQuest;
+    uint32 m_qNextQuest;
 
 	uint32  m_qSpecialFlags;
 
@@ -246,25 +264,6 @@ public:
 	bool HasFlag( uint32 Flag )  { return (( m_qSpecialFlags & Flag ) == Flag); }
 
 
-};
-
-struct quest_status{
-
-    quest_status(){
-        memset(m_questItemCount, 0, QUEST_OBJECTIVES_COUNT * sizeof(uint32));
-        memset(m_questMobCount , 0, QUEST_OBJECTIVES_COUNT * sizeof(uint32));
-		m_timerrel = 0;
-    }
-
-    Quest *m_quest;
-    uint32 status;
-	bool rewarded;
-    uint32 m_questItemCount[ QUEST_OBJECTIVES_COUNT ]; 
-    uint32 m_questMobCount [ QUEST_OBJECTIVES_COUNT ];  
-
-	uint32	m_timer;
-	uint32	m_timerrel;
-	bool	m_explored;
 };
 
 

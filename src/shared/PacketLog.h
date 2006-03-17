@@ -20,11 +20,11 @@
 #define MANGOSSERVER_PACKETLOG_H
 
 #include "Common.h"
-#include "Policies/Singleton.h"
+#include "Singleton.h"
 #include "RealmPacket.h"
 #include "WorldPacket.h"
 
-class PacketLog
+class PacketLog : public Singleton< PacketLog >
 {
     public:
         PacketLog();
@@ -42,5 +42,5 @@ class PacketLog
         void WorldHexDump(WorldPacket * data, uint32 socket, bool direction);
 };
 
-#define sPacketLog MaNGOS::Singleton<PacketLog>::Instance()
+#define sPacketLog PacketLog::getSingleton()
 #endif

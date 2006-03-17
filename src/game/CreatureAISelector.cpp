@@ -31,8 +31,9 @@ namespace FactorySelector
     CreatureAI* selectAI(Creature *creature)
     {
 	CreatureAIRegistry &ai_registry(CreatureAIRepository::Instance());
-	assert( creature->GetCreatureInfo() != NULL );
-	const CreatureAICreator *ai_factory = ai_registry.GetRegistryItem( creature->GetCreatureInfo()->AIName);
+	CreatureInfo *info = objmgr.GetCreatureName(GUID_LOPART(creature->GetGUIDLow()));
+	assert( info != NULL );
+	const CreatureAICreator *ai_factory = ai_registry.GetRegistryItem( info->AIName.c_str() );
 
 	if( ai_factory == NULL  )
 	{
@@ -59,10 +60,11 @@ namespace FactorySelector
     MovementGenerator* selectMovementGenerator(Creature *creature)
     {
 	MovementGeneratorRegistry &mv_registry(MovementGeneratorRepository::Instance());
-	assert( creature->GetCreatureInfo() != NULL );	
-	const MovementGeneratorCreator *mv_factory = mv_registry.GetRegistryItem( creature->GetCreatureInfo()->MovementGen);
+	CreatureInfo *info = objmgr.GetCreatureName(creature->GetGUIDLow());
+	assert( info != NULL );	
+	const MovementGeneratorCreator *mv_factory = mv_registry.GetRegistryItem( info->MovementGen.c_str() );
 
-	/* if( mv_factory == NULL  )
+	if( mv_factory == NULL  )
 	{
 	    int best_val = -1;
 	    std::vector<std::string> l;
@@ -79,10 +81,11 @@ namespace FactorySelector
 		    mv_factory = p;
 		}
 	    }	    
-	}*/
+	}
 
 	return ( mv_factory == NULL ? NULL : mv_factory->Create(creature) );
 
+	
     }
 }
 

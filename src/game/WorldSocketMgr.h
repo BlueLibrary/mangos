@@ -19,11 +19,9 @@
 #ifndef __WORLDSOCKETMGR_H
 #define __WORLDSOCKETMGR_H
 
-#include "Policies/Singleton.h"
-
 class WorldSocket;
 
-class WorldSocketMgr 
+class WorldSocketMgr : public Singleton<WorldSocketMgr>
 {
     public:
         WorldSocketMgr();
@@ -37,5 +35,5 @@ class WorldSocketMgr
         SocketSet m_sockets;
 };
 
-#define sWorldSocketMgr MaNGOS::Singleton<WorldSocketMgr>::Instance()
+#define sWorldSocketMgr WorldSocketMgr::getSingleton()
 #endif

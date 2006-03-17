@@ -17,9 +17,8 @@
  */
 
 #include "Channel.h"
-#include "Policies/Singleton.h"
 
-class ChannelMgr 
+class ChannelMgr :  public Singleton < ChannelMgr >
 {
     map<string,Channel *> channels;
     void MakeNotOnPacket(WorldPacket *data, const char *name)
@@ -60,4 +59,4 @@ class ChannelMgr
         }
 };
 
-#define channelmgr MaNGOS::Singleton<ChannelMgr>::Instance()
+#define channelmgr ChannelMgr::getSingleton()

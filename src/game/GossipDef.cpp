@@ -24,6 +24,9 @@
 #include "WorldPacket.h"
 #include "WorldSession.h"
 
+
+
+
 GossipMenu::GossipMenu()
 {
 	m_gItemsCount = 0;
@@ -38,7 +41,7 @@ GossipMenu::~GossipMenu()
 
 void GossipMenu::MenuItem(uint8 Icon, std::string Message, uint32 dtSender, uint32 dtAction, bool Coded)
 {
-//	uint64 gtData;
+	uint64 gtData;
 
 	char* Text = new char[strlen(Message.c_str()) + 1];
 	strcpy( Text, Message.c_str() );
@@ -46,11 +49,13 @@ void GossipMenu::MenuItem(uint8 Icon, std::string Message, uint32 dtSender, uint
 	m_gItemsCount++;
 	ASSERT( m_gItemsCount < GOSSIP_MAX_MENU_ITEMS  );
 
-	m_gItems[m_gItemsCount - 1].m_gIcon		  = Icon;
-	m_gItems[m_gItemsCount - 1].m_gMessage  = Text;
-	m_gItems[m_gItemsCount - 1].m_gCoded    = Coded;
-	m_gItems[m_gItemsCount - 1].m_gSender   = dtSender;
-	m_gItems[m_gItemsCount - 1].m_gAction   = dtAction;
+	GDATA_SENDER( gtData ) = dtSender;
+	GDATA_ACTION( gtData ) = dtAction;
+
+	m_gItems[m_gItemsCount - 1].m_gIcon		 = Icon;
+	m_gItems[m_gItemsCount - 1].m_gMessage   = Text;
+	m_gItems[m_gItemsCount - 1].m_gCoded     = Coded;
+	m_gItems[m_gItemsCount - 1].m_gData      = gtData;
 }
 
 
@@ -60,18 +65,11 @@ void GossipMenu::MenuItem(uint8 Icon, std::string Message, bool Coded)
 }
 
 
-uint32 GossipMenu::MenuItemSender( unsigned int ItemId )
+uint64 GossipMenu::MenuItemData( unsigned int ItemId )
 {
 	if ( ItemId >= m_gItemsCount ) return 0;
 
-	return m_gItems[ ItemId ].m_gSender;
-}
-
-uint32 GossipMenu::MenuItemAction( unsigned int ItemId )
-{
-	if ( ItemId >= m_gItemsCount ) return 0;
-
-	return m_gItems[ ItemId ].m_gAction;
+	return m_gItems[ ItemId ].m_gData;
 }
 
 
@@ -141,14 +139,9 @@ void PlayerMenu::ClearMenus()
 	pQuestMenu->ClearMenu();
 }
 
-uint32 PlayerMenu::GossipOptionSender( unsigned int Selection )
+uint64 PlayerMenu::GossipOption( unsigned int Selection )
 {
-	return pGossipMenu->MenuItemSender( Selection + pQuestMenu->QuestsInMenu() );
-}
-
-uint32 PlayerMenu::GossipOptionAction( unsigned int Selection )
-{
-	return pGossipMenu->MenuItemAction( Selection + pQuestMenu->QuestsInMenu() );
+	return pGossipMenu->MenuItemData( Selection + pQuestMenu->QuestsInMenu() );
 }
 
 
@@ -181,7 +174,7 @@ void PlayerMenu::SendGossipMenu( uint32 TitleTextId, uint64 npcGUID )
 	}
 
     pSession->SendPacket( &data );
-    sLog.outDebug( "WORLD: Sent SMSG_GOSSIP_MESSAGE" );
+    Log::getSingleton( ).outDebug( "WORLD: Sent SMSG_GOSSIP_MESSAGE" );
 }
 
 
@@ -205,7 +198,7 @@ void PlayerMenu::SendQuestMenu( QEmote eEmote, std::string Title, uint64 npcGUID
 	}
 
     pSession->SendPacket( &data );
-    sLog.outDebug( "WORLD: Sent SMSG_QUESTGIVER_QUEST_LIST" );
+    Log::getSingleton( ).outDebug( "WORLD: Sent SMSG_QUESTGIVER_QUEST_LIST" );
 }
 
 
@@ -216,7 +209,7 @@ void PlayerMenu::CloseGossip()
 	data.Initialize( SMSG_GOSSIP_COMPLETE );
     pSession->SendPacket( &data );
 
-    sLog.outDebug( "WORLD: Sent SMSG_GOSSIP_COMPLETE" );
+    Log::getSingleton( ).outDebug( "WORLD: Sent SMSG_GOSSIP_COMPLETE" );
 }
 
 
@@ -228,7 +221,7 @@ void PlayerMenu::SendQuestStatus( uint32 questStatus, uint64 npcGUID )
     data << npcGUID << questStatus;
 
     pSession->SendPacket( &data );
-	sLog.outDebug( "WORLD: Sent SMSG_QUESTGIVER_STATUS");
+	Log::getSingleton( ).outDebug( "WORLD: Sent SMSG_QUESTGIVER_STATUS");
 }
 
 
@@ -297,7 +290,7 @@ void PlayerMenu::SendQuestDetails( Quest *pQuest, uint64 npcGUID, bool ActivateA
 		}
 
 	pSession->SendPacket( &data ); 
-    sLog.outDebug("WORLD: Sent SMSG_QUESTGIVER_QUEST_DETAILS");
+    Log::getSingleton().outDebug("WORLD: Sent SMSG_QUESTGIVER_QUEST_DETAILS");
 }
 
 
@@ -355,7 +348,7 @@ void PlayerMenu::SendQuestReward( Quest *pQuest, uint64 npcGUID, bool EnbleNext,
 	data << uint32(pQuest->m_qRewSpell);
 
     pSession->SendPacket( &data );
-    sLog.outDebug( "WORLD: Sent SMSG_QUESTGIVER_OFFER_REWARD" );
+    Log::getSingleton( ).outDebug( "WORLD: Sent SMSG_QUESTGIVER_OFFER_REWARD" );
 }
 
 
@@ -404,7 +397,7 @@ void PlayerMenu::SendRequestedItems( Quest *pQuest, uint64 npcGUID, bool Complet
 	data << uint32(0x04) << uint32(0x08) << uint32(0x10);
 
     pSession->SendPacket( &data );
-    sLog.outDebug( "WORLD: Sent SMSG_QUESTGIVER_REQUEST_ITEMS" );
+    Log::getSingleton( ).outDebug( "WORLD: Sent SMSG_QUESTGIVER_REQUEST_ITEMS" );
 }
 
 
@@ -476,7 +469,7 @@ void PlayerMenu::SendUpdateQuestDetails ( Quest *pQuest )
 		data << pQuest->m_qObjectiveInfo[iI];
 
     pSession->SendPacket( &data );
-    sLog.outDebug( "WORLD: Sent SMSG_QUEST_QUERY_RESPONSE" );
+    Log::getSingleton( ).outDebug( "WORLD: Sent SMSG_QUEST_QUERY_RESPONSE" );
 }
 
 
@@ -503,7 +496,7 @@ void PlayerMenu::SendQuestComplete( Quest *pQuest )
 		}
 
     pSession->SendPacket( &data );
-    sLog.outDebug( "WORLD: Sent SMSG_QUESTGIVER_QUEST_COMPLETE" );
+    Log::getSingleton( ).outDebug( "WORLD: Sent SMSG_QUESTGIVER_QUEST_COMPLETE" );
 }
 
 
@@ -516,7 +509,7 @@ void PlayerMenu::SendQuestUpdateComplete( Quest *pQuest )
 	data << pQuest->m_qId;
     pSession->SendPacket( &data );
 
-    sLog.outDebug( "WORLD: Sent SMSG_QUESTUPDATE_COMPLETE" );
+    Log::getSingleton( ).outDebug( "WORLD: Sent SMSG_QUESTUPDATE_COMPLETE" );
 }
 
 
@@ -549,7 +542,7 @@ void PlayerMenu::SendQuestLogFull()
 	data.Initialize( SMSG_QUESTLOG_FULL );
     pSession->SendPacket( &data );
 
-    sLog.outDebug( "WORLD: Sent QUEST_LOG_FULL_MESSAGE" );
+    Log::getSingleton( ).outDebug( "WORLD: Sent QUEST_LOG_FULL_MESSAGE" );
 }
 
 
@@ -579,7 +572,7 @@ void PlayerMenu::SendQuestUpdateAddKill( Quest *pQuest, uint64 mobGUID, uint32 i
     data << mobGUID;
 
 	pSession->SendPacket(&data);
-	sLog.outDebug( "WORLD: Sent SMSG_QUESTUPDATE_ADD_KILL" );
+	Log::getSingleton( ).outDebug( "WORLD: Sent SMSG_QUESTUPDATE_ADD_KILL" );
 
 	
 	if (pSession->GetPlayer() != NULL)
@@ -609,7 +602,7 @@ void PlayerMenu::SendQuestUpdateFailed( Quest *pQuest )
 	data << uint32(pQuest->m_qId);
     pSession->SendPacket( &data );
 
-    sLog.outDebug( "WORLD: Sent SMSG_QUESTUPDATE_FAILED" );
+    Log::getSingleton( ).outDebug( "WORLD: Sent SMSG_QUESTUPDATE_FAILED" );
 }
 
 
@@ -622,7 +615,7 @@ void PlayerMenu::SendQuestUpdateFailedTimer( Quest *pQuest )
 	data << uint32(pQuest->m_qId);
     pSession->SendPacket( &data );
 
-    sLog.outDebug( "WORLD: Sent SMSG_QUESTUPDATE_FAILEDTIMER" );
+    Log::getSingleton( ).outDebug( "WORLD: Sent SMSG_QUESTUPDATE_FAILEDTIMER" );
 
 }
 
@@ -639,7 +632,7 @@ void PlayerMenu::SendPointOfInterest( float X, float Y, uint32 Icon, uint32 Flag
 	data << locName;
 
 	pSession->SendPacket( &data );
-	sLog.outDebug("WORLD: Sent SMSG_GOSSIP_POI");
+	Log::getSingleton().outDebug("WORLD: Sent SMSG_GOSSIP_POI");
 }
 
 
@@ -652,7 +645,7 @@ void PlayerMenu::SendQuestFailed( uint32 iReason )
 
 	pSession->SendPacket( &data );
 
-	sLog.outDebug("WORLD: Sent SMSG_QUESTGIVER_QUEST_FAILED");
+	Log::getSingleton().outDebug("WORLD: Sent SMSG_QUESTGIVER_QUEST_FAILED");
 }
 
 
@@ -665,5 +658,5 @@ void PlayerMenu::SendQuestInvalid( uint32 iReason )
 
 	pSession->SendPacket( &data );
 
-	sLog.outDebug("WORLD: Sent SMSG_QUESTGIVER_QUEST_INVALID");
+	Log::getSingleton().outDebug("WORLD: Sent SMSG_QUESTGIVER_QUEST_INVALID");
 }

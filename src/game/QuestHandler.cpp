@@ -27,30 +27,30 @@
 #include "QuestDef.h"
 #include "ObjectAccessor.h"
 #include "ScriptCalls.h"
-
+#include "ScriptCalls.cpp"
 
 
 void WorldSession::HandleQuestgiverStatusQueryOpcode( WorldPacket & recv_data )
 {
-    sLog.outDebug( "WORLD: Received CMSG_QUESTGIVER_STATUS_QUERY" );
+    Log::getSingleton( ).outDebug( "WORLD: Received CMSG_QUESTGIVER_STATUS_QUERY" );
     uint64 guid;
     recv_data >> guid;
 
     Creature *pCreature = ObjectAccessor::Instance().GetCreature(*_player, guid);
     if (!pCreature)
     {
-        sLog.outError( "WORLD: received incorrect guid in CMSG_QUESTGIVER_STATUS_QUERY" );
+        Log::getSingleton( ).outError( "WORLD: received incorrect guid in CMSG_QUESTGIVER_STATUS_QUERY" );
         return;
     }
 
-    uint32 questStatus = Script->NPCDialogStatus(GetPlayer(), pCreature );    
+    uint32 questStatus = scriptCallNPCDialogStatus(GetPlayer(), pCreature );    
     GetPlayer()->PlayerTalkClass->SendQuestStatus(questStatus, guid);
 }
 
 
 void WorldSession::HandleQuestgiverHelloOpcode( WorldPacket & recv_data )
 {
-    sLog.outDebug( "WORLD: Received CMSG_QUESTGIVER_HELLO" );
+    Log::getSingleton( ).outDebug( "WORLD: Received CMSG_QUESTGIVER_HELLO" );
 
     uint64 guid;
     recv_data >> guid;
@@ -58,17 +58,17 @@ void WorldSession::HandleQuestgiverHelloOpcode( WorldPacket & recv_data )
 
     if(!pCreature)
     {
-        sLog.outError( "WORLD: Received incorrect guid in CMSG_QUESTGIVER_HELLO" );
+        Log::getSingleton( ).outError( "WORLD: Received incorrect guid in CMSG_QUESTGIVER_HELLO" );
         return;
     }
     
-    Script->GossipHello( GetPlayer(), pCreature );
+    scriptCallGossipHello( GetPlayer(), pCreature );
 }
 
 
 void WorldSession::HandleQuestgiverAcceptQuestOpcode( WorldPacket & recv_data )
 {
-    sLog.outDebug( "WORLD: Received CMSG_QUESTGIVER_ACCEPT_QUEST" );
+    Log::getSingleton( ).outDebug( "WORLD: Received CMSG_QUESTGIVER_ACCEPT_QUEST" );
 
     uint64 guid;
     uint32 quest_id;
@@ -103,17 +103,17 @@ void WorldSession::HandleQuestgiverAcceptQuestOpcode( WorldPacket & recv_data )
     GetPlayer()->SetUInt32Value(log_slot + 1, 0);
     GetPlayer()->SetUInt32Value(log_slot + 2, 0);
 
-    sLog.outDebug( "WORLD: Sent Quest Acceptance" );
+    Log::getSingleton( ).outDebug( "WORLD: Sent Quest Acceptance" );
 
     GetPlayer()->setQuestStatus(quest_id, QUEST_STATUS_INCOMPLETE, false);
 
-	if ( GetPlayer()->checkQuestStatus(pQuest) )
+	if ( GetPlayer()->checkQuestStatus(quest_id) )
 	{
 		GetPlayer()->PlayerTalkClass->SendQuestUpdateComplete( pQuest );
 		GetPlayer()->setQuestStatus(quest_id, QUEST_STATUS_COMPLETE, false);
 	}
 
-	Creature *pCreature = ObjectAccessor::Instance().GetCreature(*_player, guid);
+	Creature *pCreature = ObjectAccessor::Instance().GetCreature(*_player, GUID_LOPART(guid));
 
 	if (!pCreature)
 	{
@@ -125,17 +125,18 @@ void WorldSession::HandleQuestgiverAcceptQuestOpcode( WorldPacket & recv_data )
 
 		if (!islot || !pItem)
 		{
-			GameObject *pGO = ObjectAccessor::Instance().GetGameObject(*_player, guid);
-	
-	    if(pGO) Script->GOQuestAccept( GetPlayer(), pGO, pQuest );
+			GameObject *pGO = ObjectAccessor::Instance().GetGameObject(*_player, GUID_LOPART(guid));
+			ASSERT(pGO);
+
+	        scriptCallGOQuestAccept( GetPlayer(), pGO, pQuest );
 			return;
 		}
 
-		Script->ItemQuestAccept( GetPlayer(), pItem, pQuest );
+		scriptCallItemQuestAccept( GetPlayer(), pItem, pQuest );
 		return;
 	}
 
-	Script->QuestAccept( GetPlayer(), pCreature, pQuest );
+	scriptCallQuestAccept( GetPlayer(), pCreature, pQuest );
 
 	GetPlayer()->SaveToDB();
 }
@@ -143,7 +144,7 @@ void WorldSession::HandleQuestgiverAcceptQuestOpcode( WorldPacket & recv_data )
 
 void WorldSession::HandleQuestgiverQuestQueryOpcode( WorldPacket & recv_data )
 {
-    sLog.outDebug( "WORLD: Received CMSG_QUESTGIVER_QUERY_QUEST" );
+    Log::getSingleton( ).outDebug( "WORLD: Received CMSG_QUESTGIVER_QUERY_QUEST" );
 
 	uint64 guid;
     uint32 quest_id = 0;
@@ -153,12 +154,12 @@ void WorldSession::HandleQuestgiverQuestQueryOpcode( WorldPacket & recv_data )
 
 	if (!pQuest)
 	{
-		sLog.outError("Invalid Quest ID (or not in the ObjMgr) '%d' received from player.", quest_id);
+		Log::getSingleton( ).outError("Invalid Quest ID (or not in the ObjMgr) '%d' received from player.", quest_id);
 		return;
 	}
 
 
-	Creature *pCreature = ObjectAccessor::Instance().GetCreature(*_player, guid);
+	Creature *pCreature = ObjectAccessor::Instance().GetCreature(*_player, GUID_LOPART(guid));
 	if (!pCreature)
 	{
 		uint32 islot = GetPlayer()->GetSlotByItemGUID( guid );
@@ -169,22 +170,23 @@ void WorldSession::HandleQuestgiverQuestQueryOpcode( WorldPacket & recv_data )
 
 		if (!islot || !pItem)
 		{
-			GameObject *pGO = ObjectAccessor::Instance().GetGameObject(*_player, guid);
+			GameObject *pGO = ObjectAccessor::Instance().GetGameObject(*_player, GUID_LOPART(guid));
+			ASSERT(pGO);
 
-	    if(pGO) Script->GOHello( GetPlayer(), pGO );
+	        scriptCallGOHello( GetPlayer(), pGO );
 			return;
 		}
 
-		Script->ItemHello( GetPlayer(), pItem, pQuest );
+		scriptCallItemHello( GetPlayer(), pItem, pQuest );
 		return;
 	}
 
-	Script->QuestSelect( GetPlayer(), pCreature, pQuest );
+	scriptCallQuestSelect( GetPlayer(), pCreature, pQuest );
 }
 
 void WorldSession::HandleQuestQueryOpcode( WorldPacket & recv_data )
 {
-    sLog.outDebug( "WORLD: Received CMSG_QUEST_QUERY" );
+    Log::getSingleton( ).outDebug( "WORLD: Received CMSG_QUEST_QUERY" );
 
     uint32 quest_id = 0;
     recv_data >> quest_id;
@@ -199,7 +201,7 @@ void WorldSession::HandleQuestQueryOpcode( WorldPacket & recv_data )
 void WorldSession::HandleQuestgiverChooseRewardOpcode( WorldPacket & recv_data )
 {
     
-    sLog.outString( "WORLD: Received CMSG_QUESTGIVER_CHOOSE_REWARD" );
+    Log::getSingleton( ).outString( "WORLD: Received CMSG_QUESTGIVER_CHOOSE_REWARD" );
 
 	unsigned int iI;
     uint32 quest_id, rewardid;
@@ -246,7 +248,7 @@ void WorldSession::HandleQuestgiverChooseRewardOpcode( WorldPacket & recv_data )
 
 	if ( ( rewardid >= pQuest->m_qRewChoicesCount ) && ( pQuest->m_qRewChoicesCount > 0 ) )
 	{
-		sLog.outString("WORLD: Attempt to select an unexisting rewardid !");
+		Log::getSingleton().outString("WORLD: Attempt to select an unexisting rewardid !");
 		return;
 	}
 
@@ -300,13 +302,13 @@ void WorldSession::HandleQuestgiverChooseRewardOpcode( WorldPacket & recv_data )
 
 	chr->setQuestStatus( quest_id, QUEST_STATUS_AVAILABLE, true); 
 
-	Creature *pCreature = ObjectAccessor::Instance().GetCreature(*_player, guid1);
-	GameObject *pGameObject = ObjectAccessor::Instance().GetGameObject(*_player, guid1);
+	Creature *pCreature = ObjectAccessor::Instance().GetCreature(*_player, GUID_LOPART(guid1));
+	GameObject *pGameObject = ObjectAccessor::Instance().GetGameObject(*_player, GUID_LOPART(guid1));
     
 	if (pCreature)
-		Script->ChooseReward(  GetPlayer(), pCreature, pQuest, rewardid ); else
+		scriptCallChooseReward(  GetPlayer(), pCreature, pQuest, rewardid ); else
 		if (pGameObject)
-			Script->GOChooseReward(  GetPlayer(), pGameObject, pQuest, rewardid );
+			scriptCallGOChooseReward(  GetPlayer(), pGameObject, pQuest, rewardid );
 
 	GetPlayer()->SaveToDB();
 }
@@ -314,35 +316,35 @@ void WorldSession::HandleQuestgiverChooseRewardOpcode( WorldPacket & recv_data )
 
 void WorldSession::HandleQuestgiverRequestRewardOpcode( WorldPacket & recv_data )
 {
-    sLog.outString( "WORLD: Received CMSG_QUESTGIVER_REQUEST_REWARD" );
+    Log::getSingleton( ).outString( "WORLD: Received CMSG_QUESTGIVER_REQUEST_REWARD" );
 
     uint32 quest_id;
 	uint64 guid;
 	recv_data >> guid >> quest_id;
 
 	Quest *pQuest		= objmgr.GetQuest( quest_id );
-	Creature *pCreature = ObjectAccessor::Instance().GetCreature(*_player, guid);
+	Creature *pCreature = ObjectAccessor::Instance().GetCreature(*_player, GUID_LOPART(guid));
 
 	if (!pQuest)
 	{
-		sLog.outError("Invalid Quest ID (or not in the ObjMgr) '%d' received from player.", quest_id);
+		Log::getSingleton( ).outError("Invalid Quest ID (or not in the ObjMgr) '%d' received from player.", quest_id);
 		return;
 	}
 
 	if (!pCreature)
 	{
-		sLog.outError("Invalid NPC GUID (or not in the ObjMgr) '%d' received from player.", guid);
+		Log::getSingleton( ).outError("Invalid NPC GUID (or not in the ObjMgr) '%d' received from player.", guid);
 		return;
 	}
 
-	if ( GetPlayer()->isQuestComplete( pQuest, pCreature ) )
+	if ( GetPlayer()->isQuestComplete( quest_id, pCreature ) )
 		GetPlayer()->PlayerTalkClass->SendQuestReward( pQuest, guid, true, NULL, 0);
 }
 
 
 void WorldSession::HandleQuestgiverCancel(WorldPacket& recv_data )
 {
-    sLog.outString( "WORLD: Received CMSG_QUESTGIVER_CANCEL" );
+    Log::getSingleton( ).outString( "WORLD: Received CMSG_QUESTGIVER_CANCEL" );
 
 	
 	GetPlayer()->PlayerTalkClass->CloseGossip();
@@ -350,7 +352,7 @@ void WorldSession::HandleQuestgiverCancel(WorldPacket& recv_data )
 
 void WorldSession::HandleQuestLogSwapQuest(WorldPacket& recv_data )
 {
-    sLog.outString( "WORLD: Received CMSG_QUESTLOG_SWAP_QUEST" );
+    Log::getSingleton( ).outString( "WORLD: Received CMSG_QUESTLOG_SWAP_QUEST" );
 
 	uint8 slot_id1, slot_id2;
 
@@ -375,7 +377,7 @@ void WorldSession::HandleQuestLogSwapQuest(WorldPacket& recv_data )
 
 void WorldSession::HandleQuestLogRemoveQuest(WorldPacket& recv_data)
 {
-    sLog.outString( "WORLD: Received CMSG_QUESTLOG_REMOVE_QUEST" );
+    Log::getSingleton( ).outString( "WORLD: Received CMSG_QUESTLOG_REMOVE_QUEST" );
 
 	uint8 slot_id;
 	uint32 quest_id;
@@ -389,7 +391,7 @@ void WorldSession::HandleQuestLogRemoveQuest(WorldPacket& recv_data)
 	if ( ( GetPlayer()->getQuestStatus(quest_id) != QUEST_STATUS_COMPLETE ) &&
 		 ( GetPlayer()->getQuestStatus(quest_id) != QUEST_STATUS_INCOMPLETE ) )
 		{
-			sLog.outError("Trying to remove an invalid quest '%d' from log.", quest_id);
+			Log::getSingleton( ).outError("Trying to remove an invalid quest '%d' from log.", quest_id);
 			return;
 		}
 	GetPlayer()->SetUInt32Value(log_slot + 0, 0);
@@ -402,7 +404,7 @@ void WorldSession::HandleQuestLogRemoveQuest(WorldPacket& recv_data)
 
 void WorldSession::HandleQuestConfirmAccept(WorldPacket& recv_data)
 {
-    sLog.outString( "WORLD: Received CMSG_QUEST_CONFIRM_ACCEPT" );
+    Log::getSingleton( ).outString( "WORLD: Received CMSG_QUEST_CONFIRM_ACCEPT" );
 
     uint32 quest_id;
 	recv_data >> quest_id;
@@ -411,7 +413,7 @@ void WorldSession::HandleQuestConfirmAccept(WorldPacket& recv_data)
 
 	if (!pQuest)
 	{
-		sLog.outError("Invalid Quest ID (or not in the ObjMgr) '%d' received from player.", quest_id);
+		Log::getSingleton( ).outError("Invalid Quest ID (or not in the ObjMgr) '%d' received from player.", quest_id);
 		return;
 	}
 
@@ -420,7 +422,7 @@ void WorldSession::HandleQuestConfirmAccept(WorldPacket& recv_data)
 
 void WorldSession::HandleQuestComplete(WorldPacket& recv_data)
 {
-    sLog.outString( "WORLD: Received CMSG_QUESTGIVER_COMPLETE_QUEST" );
+    Log::getSingleton( ).outString( "WORLD: Received CMSG_QUESTGIVER_COMPLETE_QUEST" );
 
     uint32 quest_id;
 	uint64 guid;
@@ -428,11 +430,11 @@ void WorldSession::HandleQuestComplete(WorldPacket& recv_data)
 	recv_data >> guid >> quest_id;
 
 	Quest *pQuest = objmgr.GetQuest( quest_id );
-	Creature *pCreature = ObjectAccessor::Instance().GetCreature(*_player, guid);
+	Creature *pCreature = ObjectAccessor::Instance().GetCreature(*_player, GUID_LOPART(guid));
 
 	if (!pQuest)
 	{
-		sLog.outError("Invalid Quest ID (or not in the ObjMgr) '%d' received from player.", quest_id);
+		Log::getSingleton( ).outError("Invalid Quest ID (or not in the ObjMgr) '%d' received from player.", quest_id);
 		return;
 	}
 
@@ -451,12 +453,12 @@ void WorldSession::HandleQuestComplete(WorldPacket& recv_data)
 	GetPlayer()->SetStanding(pCreature->getFaction(), points);
 	
 
-	Script->QuestComplete( GetPlayer(), pCreature, pQuest );
+	scriptCallQuestComplete( GetPlayer(), pCreature, pQuest );
 }
 
 void WorldSession::HandleQuestAutoLaunch(WorldPacket& recvPacket)
 {
-	sLog.outString( "WORLD: Received CMSG_QUESTGIVER_QUEST_AUTOLAUNCH (Unhandled!)" );
+	Log::getSingleton( ).outString( "WORLD: Received CMSG_QUESTGIVER_QUEST_AUTOLAUNCH (Unhandled!)" );
 
 	
 }

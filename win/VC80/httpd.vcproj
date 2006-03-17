@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8,00"
+	Version="8.00"
 	Name="httpd"
 	ProjectGUID="{B9AA9651-0B57-4E45-B14F-834D807063D8}"
 	RootNamespace="httpd"
@@ -520,12 +520,16 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="0"
+				Optimization="3"
+				FavorSizeOrSpeed="1"
+				EnableFiberSafeOptimizations="true"
 				AdditionalIncludeDirectories="..\..\dep\include,..\..\src\shared,../../src/framework"
 				PreprocessorDefinitions="WIN32;_DEBUG,_LIB"
 				MinimalRebuild="false"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="3"
+				EnableEnhancedInstructionSet="2"
+				OpenMP="true"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 				CallingConvention="0"

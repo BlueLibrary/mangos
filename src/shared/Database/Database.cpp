@@ -18,4 +18,4 @@
 
 #include "DatabaseEnv.h"
 
-Database* DatabaseRegistry::si_database = NULL;
+initialiseSingleton(Database);

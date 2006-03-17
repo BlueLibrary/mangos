@@ -27,51 +27,60 @@
 #include "UpdateData.h"
 #include "Chat.h"
 #include "MapManager.h"
-#include "FactionTemplateResolver.h"
-#include "EventSystem.h"
+
+
 
 
 void WorldSession::HandleDuelAcceptedOpcode(WorldPacket& recvPacket)
 {
 
+    sLog.outString( "HandleDuelAcceptedOpcode.\n" );
+
+    
+    
     uint64 guid;
 
     recvPacket >> guid;
 
     Player *pl;
     Player *plTarget;
+    WorldPacket data;
+
+
+    WorldPacket Msgdata;
+
+    WorldPacket packet,packetR;
+    UpdateData updata;
+
+    pl     = GetPlayer();                         
+    plTarget = objmgr.GetPlayer(pl->m_duelGUID);
     
-    pl     = GetPlayer();
-    plTarget = pl->m_pDuel;
 
-	if(pl->GetGUID() != plTarget->GetGUID())
-	{
+    if(pl->m_duelSenderGUID == pl->GetGUID())
+    {
+   
+        data.Initialize(SMSG_GAMEOBJECT_SPAWN_ANIM);
+        data << (uint64)guid;
+        pl->GetSession()->SendPacket(&data);
+        plTarget->GetSession()->SendPacket(&data);
 
-	    sLog.outDebug( "WORLD: received CMSG_DUEL_ACCEPTED" );
-	    DEBUG_LOG("Player 1 is: %lu", (unsigned long)pl->GetGUID());
-	    DEBUG_LOG("Player 2 is: %lu", (unsigned long)plTarget->GetGUID());
-      
-	    pl->SetUInt32Value(PLAYER_DUEL_TEAM,1);
-	    plTarget->SetUInt32Value(PLAYER_DUEL_TEAM,2);
+    }
+    else
+    {
+        data.Initialize(SMSG_PET_BROKEN | CMSG_LEARN_SPELL);
+        data << (uint64)0xbb8;
+        pl->GetSession()->SendPacket(&data);
+        plTarget->GetSession()->SendPacket(&data);
+        
 
-	    pl->SetUInt32Value(UNIT_FIELD_FLAGS , 0x1008 );
-	    pl->SetPvP(true);
+        pl->SetUInt32Value(UNIT_FIELD_FACTIONTEMPLATE, 469 );
+        plTarget->SetUInt32Value(UNIT_FIELD_FACTIONTEMPLATE, 67 );
 
-	    plTarget->SetUInt32Value(UNIT_FIELD_FLAGS , 0x1008 );
-	    plTarget->SetPvP(true);
 
-	    pl->m_isInDuel = true;
-	    plTarget->m_isInDuel = true;
+    }
 
-	    WorldPacket data;
-
-	    data.Initialize(SMSG_DUEL_COUNTDOWN);
-	    data << (uint64)0xbb8; // 3 seconds
-	    pl->GetSession()->SendPacket(&data);
-	    plTarget->GetSession()->SendPacket(&data);
-
-	}
-
+    pl->m_isInDuel = true;
+    plTarget->m_isInDuel = true;
 
 }
 
@@ -79,7 +88,7 @@ void WorldSession::HandleDuelAcceptedOpcode(WorldPacket& recvPacket)
 void WorldSession::HandleDuelCancelledOpcode(WorldPacket& recvPacket)
 {
 
-    sLog.outDebug( "WORLD: received CMSG_DUEL_CANCELLED" );
+    sLog.outString( "HandleDuelCancelledOpcode.\n" );
 
     uint64 guid;
     Player *pl;
@@ -89,7 +98,7 @@ void WorldSession::HandleDuelCancelledOpcode(WorldPacket& recvPacket)
     recvPacket >> guid;
 
     pl       = GetPlayer();                       
-    plTarget = pl->m_pDuel;
+    plTarget = objmgr.GetPlayer(pl->m_duelGUID);
 
     data.Initialize(SMSG_GAMEOBJECT_DESPAWN_ANIM);
     data << (uint64)guid;
@@ -114,13 +123,8 @@ void WorldSession::HandleDuelCancelledOpcode(WorldPacket& recvPacket)
        obj = ObjectAccessor::Instance().GetGameObject(*pl, guid);
 
     if(obj)
-			MapManager::Instance().GetMap(obj->GetMapId())->Remove(obj,true);
-		
-		pl->SetUInt64Value(PLAYER_DUEL_ARBITER,0);
-   	plTarget->SetUInt64Value(PLAYER_DUEL_ARBITER,0);
-   	pl->SetUInt32Value(PLAYER_DUEL_TEAM,0);
-    plTarget->SetUInt32Value(PLAYER_DUEL_TEAM,0);
-   	
+    {
+	
+	MapManager::Instance().GetMap(obj->GetMapId())->Remove(obj,true);
+    }
 }
-
-

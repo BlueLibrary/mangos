@@ -21,130 +21,6 @@
 #include "ObjectMgr.h"
 #include "Database/DatabaseEnv.h"
 
-
-
-
-Spell* Cast(Player*player,uint32 spellId)
-{
-
-	SpellEntry *spellInfo = sSpellStore.LookupEntry(spellId);
-	if(!spellInfo)
-	{
-		sLog.outError("WORLD: unknown spell id %i", spellId);
-		return NULL;
-	}
-	Spell *spell = new Spell(player, spellInfo, false, 0);
-	WPAssert(spell);
-
-	SpellCastTargets targets;
-	targets.m_unitTarget = player;
-	spell->prepare(&targets); 
-	return spell;
-
-}
-
-
-void AddItemsSetItem(Player*player,uint32 setid)
-{
-	
-	ItemSetEntry *set=sItemSetStore.LookupEntry(setid);
-	assert(set);
-
-	ItemsSetEffect *eff=NULL;
-
-	for(uint32 x =0;x<3;x++)
-		if(player->ItemsSetEff[x])
-			if(((ItemsSetEffect*)player->ItemsSetEff[x])->setid==setid)
-			{
-				eff=(ItemsSetEffect*)player->ItemsSetEff[x];
-				break;
-			}
-
-	if(!eff)
-	{
-		eff=new ItemsSetEffect;
-		memset(eff,0,sizeof(ItemsSetEffect));
-		eff->setid=setid;
-		
-		for(uint32 x =0;x<3;x++)
-		if(!player->ItemsSetEff[x])
-		{
-				player->ItemsSetEff[x]=eff;
-				break;
-		}
-	}
-	
-	eff->item_count++;
-
-	if(set->required_skill_id )
-		if(player->GetSkillValue(set->required_skill_id) < set->required_skill_value) return;
-	
-
-	for(uint32 x=0;x<8;x++)
-	if(set->spells [x])
-	if(set->items_to_triggerspell[x] <= eff->item_count)//enough for  spell
-	{
-		uint32 z=0;
-		for(;z<8;z++)
-			if(eff->spells[z])
-			if(eff->spells[z]->m_spellInfo->Id==set->spells[x])break;
-		
-		
-		if(z==8)//new spell
-		for(uint32 y=0;y<8;y++)
-			if(!eff->spells[y])
-			{
-				eff->spells[y]=Cast(player,set->spells[x]);
-				break;
-			}
-	}
-
-}
-
-void RemoveItemsSetItem(Player*player,uint32 setid)
-{
-	ItemSetEntry *set=sItemSetStore.LookupEntry(setid);
-	assert(set);
-	
-	ItemsSetEffect *eff=NULL;
-	uint32 setindex=0;
-	for(;setindex<3;setindex++)
-		if(player->ItemsSetEff[setindex])
-			if(((ItemsSetEffect*)player->ItemsSetEff[setindex])->setid==setid)
-			{
-				eff=(ItemsSetEffect*)player->ItemsSetEff[setindex];
-				break;
-			}
-
-	assert(eff);
-	eff->item_count--;
-
-
-	for(uint32 x=0;x<8;x++)
-	if(set->spells[x])
-	if(set->items_to_triggerspell[x] > eff->item_count)//not enough for spell
-	{
-		for(uint32 z=0;z<8;z++)
-			if(eff->spells[z])
-			if(eff->spells[z]->m_spellInfo->Id==set->spells[x])
-			{
-				//fixme: remove spell effect
-				delete eff->spells[z];
-				eff->spells[z]=NULL;
-				break;
-			}
-
-	}
-
-	if(!eff->item_count)//all items of a set were removed
-	{
-		delete eff;
-		player->ItemsSetEff[setindex]=NULL;
-
-	}
-}
-
-
 Item::Item( )
 {
     m_objectType |= TYPE_ITEM;
@@ -172,7 +48,7 @@ uint32 GetRandPropertiesIDfromDisplayInfoDBC(uint32 DisplayID)
 	else
 		return 0;
 }
-/*
+
 extern char *fmtstring( char *format, ... );
 
 char *GetImageFilefromDisplayInfoDBC(uint32 DisplayID)
@@ -191,12 +67,17 @@ char *GetInventoryImageFilefromDisplayInfoDBC(uint32 DisplayID)
 
 	if (itemDisplayTemplateEntry && itemDisplayTemplateEntry->invImageFile)
 	{
-		sLog.outDebug( "Image file is [%s].", itemDisplayTemplateEntry->invImageFile );
+		Log::getSingleton( ).outDebug( "Image file is [%s].", itemDisplayTemplateEntry->invImageFile );
 		return fmtstring("%s", itemDisplayTemplateEntry->invImageFile);
 	}
 	else
 	{
-	    return fmtstring("");
+		
+		
+		
+		
+
+		return fmtstring("");
 	}
 }
 
@@ -400,36 +281,82 @@ char *GetInventoryImageFilefromObjectClass(uint32 classNum, uint32 subclassNum, 
 
 	return itemIcon;
 }
-*/
-void Item::Create( uint32 guidlow, uint32 itemid, Player *owner) {
-    Object::_Create( guidlow, HIGHGUID_ITEM );
 
-    SetUInt32Value(OBJECT_FIELD_ENTRY, itemid);
-    SetFloatValue(OBJECT_FIELD_SCALE_X, 1.0f);
-
-    SetUInt64Value(ITEM_FIELD_OWNER, owner->GetGUID());
-    SetUInt64Value(ITEM_FIELD_CONTAINED, owner->GetGUID());
+void Item::UpdateStats()
+{
 	
-    ItemPrototype *m_itemProto = objmgr.GetItemPrototype(itemid);
-    ASSERT(m_itemProto);
-    
-    SetUInt32Value(ITEM_FIELD_STACK_COUNT, 1); //this seems to be wrong (c) Phantomas
-    SetUInt32Value(ITEM_FIELD_MAXDURABILITY, m_itemProto->MaxDurability);
-    SetUInt32Value(ITEM_FIELD_DURABILITY, m_itemProto->MaxDurability);
 
-    SetUInt32Value(ITEM_FIELD_SPELL_CHARGES, m_itemProto->Spells[0].SpellCharges );
-    SetUInt32Value(ITEM_FIELD_SPELL_CHARGES+1,m_itemProto->Spells[1].SpellCharges);
-    SetUInt32Value(ITEM_FIELD_SPELL_CHARGES+2, m_itemProto->Spells[2].SpellCharges);
-    SetUInt32Value(ITEM_FIELD_SPELL_CHARGES+3,m_itemProto->Spells[3].SpellCharges);
-    SetUInt32Value(ITEM_FIELD_SPELL_CHARGES+4, m_itemProto->Spells[4].SpellCharges);
-    SetUInt32Value(ITEM_FIELD_FLAGS, m_itemProto->Flags);
-	SetUInt32Value(ITEM_FIELD_DURATION, m_itemProto->Delay);
-    m_owner = owner;
+
+
 }
 
-void Item::SaveToDB() {
+void Item::Create( uint32 guidlow, uint32 itemid, Player *owner )
+{
+    Object::_Create( guidlow, HIGHGUID_ITEM );
+
+    SetUInt32Value( OBJECT_FIELD_ENTRY, itemid );
+    SetFloatValue( OBJECT_FIELD_SCALE_X, 1.0f );
+
+    SetUInt64Value( ITEM_FIELD_OWNER, owner->GetGUID() );
+    SetUInt64Value( ITEM_FIELD_CONTAINED, owner->GetGUID() );
+    SetUInt32Value( ITEM_FIELD_STACK_COUNT, 1 );
+
+    m_itemProto = objmgr.GetItemPrototype( itemid );
+    ASSERT(m_itemProto);
+
+    
+    
+
+    SetUInt32Value( ITEM_FIELD_MAXDURABILITY, m_itemProto->MaxDurability);
+    SetUInt32Value( ITEM_FIELD_DURABILITY, m_itemProto->MaxDurability);
+
+
+    SetUInt32Value( ITEM_FIELD_SPELL_CHARGES, m_itemProto->SpellCharges[0]);
+    SetUInt32Value( ITEM_FIELD_SPELL_CHARGES+1, m_itemProto->SpellCharges[1]);
+    SetUInt32Value( ITEM_FIELD_SPELL_CHARGES+2, m_itemProto->SpellCharges[2]);
+    SetUInt32Value( ITEM_FIELD_SPELL_CHARGES+3, m_itemProto->SpellCharges[3]);
+    SetUInt32Value( ITEM_FIELD_SPELL_CHARGES+4, m_itemProto->SpellCharges[4]);
+    SetUInt32Value( ITEM_FIELD_FLAGS, m_itemProto->Flags);
+    SetUInt32Value( ITEM_FIELD_ITEM_TEXT_ID, m_itemProto->DisplayInfoID);
+    m_owner = owner;
+
+	
+	
+	
+    
+	
+	
+	
+
+	SetUInt32Value( ITEM_FIELD_DURATION, m_itemProto->Delay);
+    
+	
+    
+	SetUInt32Value( ITEM_FIELD_PROPERTY_SEED, m_itemProto->DisplayInfoID);
+	
+
+	
+
+	
+
+
+	
+	
+
+
+
+
+	
+	
+
+}
+
+
+void Item::SaveToDB()
+{
     std::stringstream ss;
-    sDatabase.PExecute("DELETE FROM item_instances WHERE guid = '%u'",GetGUIDLow());
+    ss << "DELETE FROM item_instances WHERE guid = " << GetGUIDLow();
+    sDatabase.Execute( ss.str( ).c_str( ) );
 
     ss.rdbuf()->str("");
     ss << "INSERT INTO item_instances (guid, data) VALUES ("
@@ -444,40 +371,42 @@ void Item::SaveToDB() {
 }
 
 
-void Item::LoadFromDB(uint32 guid, uint32 auctioncheck) {
-	QueryResult *result;
+void Item::LoadFromDB(uint32 guid, uint32 auctioncheck)
+{
+    std::stringstream ss;
+    if (auctioncheck == 1)
+    {
+        ss << "SELECT data FROM item_instances WHERE guid = " << guid;
+    }
+    else if (auctioncheck == 2)
+    {
+        ss << "SELECT data FROM auctioned_items WHERE guid = " << guid;
+    }
+    else
+    {
+        ss << "SELECT data FROM mailed_items WHERE guid = " << guid;
+    }
 
-	if (auctioncheck == 1) {
-		result = sDatabase.PQuery("SELECT data FROM item_instances WHERE guid = '%u';", guid);
-	} else if (auctioncheck == 2) {
-		result = sDatabase.PQuery("SELECT data FROM auctioned_items WHERE guid = '%u';", guid);
-	} else {
-		result = sDatabase.PQuery("SELECT data FROM mailed_items WHERE guid = '%u';", guid);
-	}
+    QueryResult *result = sDatabase.Query( ss.str().c_str() );
+    if(result==NULL)
+        return;
+    
 
-	if (!result) return;
+    Field *fields = result->Fetch();
 
-	Field *fields = result->Fetch();
+    LoadValues( fields[0].GetString() );
 
-	LoadValues(fields[0].GetString());
+    delete result;
 
-	delete result;
+    m_itemProto = objmgr.GetItemPrototype( GetUInt32Value(OBJECT_FIELD_ENTRY) );
+    ASSERT(m_itemProto);
 
-	
 }
 
 
 void Item::DeleteFromDB()
 {
-    sDatabase.PExecute("DELETE FROM item_instances WHERE guid = '%u'",GetGUIDLow());
-}
-
-ItemPrototype *Item::GetProto()
-{ 
-	return objmgr.GetItemPrototype(GetUInt32Value(OBJECT_FIELD_ENTRY)); 
-}
-
-ItemPrototype *Item::GetItemProto()
-{ 
-	return objmgr.GetItemPrototype(GetUInt32Value(OBJECT_FIELD_ENTRY)); 
+    std::stringstream ss;
+    ss << "DELETE FROM item_instances WHERE guid = " << GetGUIDLow();
+    sDatabase.Execute( ss.str( ).c_str( ) );
 }

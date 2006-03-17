@@ -19,11 +19,10 @@
 #include "Common.h"
 #include "PacketLog.h"
 #include "Config/ConfigEnv.h"
-#include "Policies/SingletonImpl.h"
 
 #include <ctype.h>
 
-INSTANTIATE_SINGLETON_1( PacketLog );
+createFileSingleton( PacketLog );
 
 PacketLog::PacketLog()
 {

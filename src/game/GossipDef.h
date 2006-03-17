@@ -27,12 +27,14 @@ class WorldSession;
 #define GOSSIP_MAX_MENU_ITEMS 15
 
 
+#define GDATA_SENDER(x) (*(((uint32*)&(x))+1))
+#define GDATA_ACTION(x) (*((uint32*)&(x)))
+
 struct GossipMenuItem {
 	uint8		m_gIcon;
 	bool		m_gCoded;
 	char*		m_gMessage;
-	uint32	m_gSender;
-	uint32  m_gAction;
+	uint64		m_gData;
 };
 
 
@@ -63,8 +65,7 @@ public:
 		return m_gItems[ Id ];
 	}
 
-	uint32 MenuItemSender( unsigned int ItemId );
-	uint32 MenuItemAction( unsigned int ItemId );
+	uint64 MenuItemData( unsigned int ItemId );
 
 	void ClearMenu();
 
@@ -108,6 +109,10 @@ private:
 
 public:
 
+	
+	
+	
+
 	PlayerMenu( WorldSession *Session );
 	~PlayerMenu();
 
@@ -115,8 +120,10 @@ public:
 	QuestMenu* GetQuestMenu() { return pQuestMenu; }
 
 	void ClearMenus();
-	uint32 GossipOptionSender( unsigned int Selection );
-	uint32 GossipOptionAction( unsigned int Selection );
+	uint64 GossipOption( unsigned int Selection );
+
+	
+	
 	
 
 	void SendGossipMenu( uint32 TitleTextId, uint64 npcGUID );

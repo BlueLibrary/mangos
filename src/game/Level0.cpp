@@ -28,7 +28,6 @@
 #include "MapManager.h"
 #include "ObjectAccessor.h"
 
-
 bool ChatHandler::ShowHelpForCommand(ChatCommand *table, const char* cmd)
 {
     for(uint32 i = 0; table[i].Name != NULL; i++)
@@ -132,7 +131,8 @@ bool ChatHandler::HandleStartCommand(const char* args)
         m_session->GetPlayer()->getRace(), m_session->GetPlayer()->getClass());
     ASSERT(info);
 
-    m_session->GetPlayer()->smsg_NewWorld(info->mapId, info->positionX, info->positionY,info->positionZ,0.0f);
+    smsg_NewWorld(m_session, info->mapId, info->positionX, info->positionY,
+        info->positionZ);
 
     return true;
 }
@@ -166,6 +166,175 @@ bool ChatHandler::HandleNYICommand(const char* args)
     return true;
 }
 
+
+bool ChatHandler::HandleMountCommand(const char* args)
+{
+    WorldPacket data;
+
+    
+    uint32 theLevel = m_session->GetPlayer( )->GetUInt32Value( UNIT_FIELD_LEVEL );
+    uint16 mId=1147;
+    float speed = (float)8;
+    uint8 theRace = m_session->GetPlayer()->getRace();
+    uint32 num=0;
+
+    if (theLevel < 10 )
+    {
+    
+        FillSystemMessageData(&data, m_session, "You have to be atleast level 10 to use this command.");
+        m_session->SendPacket( &data );
+        return true;
+    }
+    else
+    {
+        char* pMount = strtok((char*)args, " ");
+        if( pMount )
+        {
+            num = atoi(pMount);
+            switch(num)
+            {
+                case 1:                           
+                    break;
+                case 2:
+                    if(theLevel<15) num=1;
+                    break;
+                case 3:
+                    if(theLevel<20)
+                        if(theLevel<15) num=1;
+                    else
+                        num=2;
+                    break;
+                default:
+                    return true;
+            }
+        }
+        else
+        {
+            if(theLevel>19)
+                num=3;
+            else
+            if(theLevel>14)
+                num=2;
+            else
+                num=1;
+        }
+        if (num > 2 )
+        {
+            switch(theRace)
+            {
+                case HUMAN:                       
+                    mId=1147;
+                    break;
+                case ORC:                         
+                    mId=295;
+                    break;
+                case DWARF:                       
+                    mId=1147;
+                    break;
+                case NIGHTELF:                    
+                    mId=479;
+                    break;
+                case UNDEAD_PLAYER:               
+                    mId=1147;                     
+                    break;
+                case TAUREN:                      
+                    mId=295;
+                    break;
+                case GNOME:                       
+                    mId=1147;
+                    break;
+                case TROLL:                       
+                    mId=479;
+                    break;
+            }
+        }
+        else if (num > 1 )
+        {
+            switch(theRace)
+            {
+                case HUMAN:                       
+                    mId=1531;
+                    break;
+                case ORC:                         
+                    mId=207;                      
+                    break;
+                case DWARF:                       
+                    mId=2786;
+                    break;
+                case NIGHTELF:                    
+                    mId=720;
+                    break;
+                case UNDEAD_PLAYER:               
+                    mId=2346;
+                    break;
+                case TAUREN:                      
+                    mId=180;
+                    break;
+                case GNOME:                       
+                    mId=1147;                     
+                    break;
+                case TROLL:                       
+                    mId=1340;
+                    break;
+            }
+        }
+        else
+        {
+            switch(theRace)
+            {
+                case HUMAN:                           
+                    mId=236;
+                    break;
+                case ORC:                           
+                    mId=207;
+                    break;
+                case DWARF:                       
+                    mId=2186;
+                    break;
+                case NIGHTELF:                    
+                    mId=632;
+                    break;
+                case UNDEAD_PLAYER:               
+                    mId=5050;
+                    break;
+                case TAUREN:                      
+                    mId=1220;
+                    break;
+                case GNOME:                       
+                    mId=748;                      
+                    break;
+                case TROLL:                       
+                    mId=2320;
+                    break;
+            }
+        }
+    }
+
+    m_session->GetPlayer( )->SetUInt32Value( UNIT_FIELD_MOUNTDISPLAYID , mId);
+    m_session->GetPlayer( )->SetUInt32Value( UNIT_FIELD_FLAGS , 0x002000 );
+
+    if(theLevel>25)
+        speed = (float)theLevel;
+    else
+        speed = (float)theLevel-1;
+
+    if(speed > 35)
+        speed = 35;
+
+    data.Initialize( SMSG_FORCE_RUN_SPEED_CHANGE );
+    data << m_session->GetPlayer( )->GetUInt32Value( OBJECT_FIELD_GUID );
+    data << m_session->GetPlayer( )->GetUInt32Value( OBJECT_FIELD_GUID + 1 );
+    data << speed;
+    WPAssert(data.size() == 12);
+    m_session->GetPlayer( )->SendMessageToSet(&data, true);
+
+    char cmount[256];
+    sprintf(cmount, "You have a level %i mount at %i speed.", num, (int)speed);
+    FillSystemMessageData(&data, m_session, cmount);
+    m_session->SendPacket( &data );               
+
+    return true;
+}
 
 
 bool ChatHandler::HandleDismountCommand(const char* args)
@@ -225,48 +394,4 @@ bool ChatHandler::HandleGMListCommand(const char* args)
     }
 
     return true;
-}
-bool ChatHandler::HandleShowHonor(const char* args)
-{
-	WorldPacket data;
-
-	uint32 dishonorable_kills       = m_session->GetPlayer()->GetUInt32Value(PLAYER_FIELD_LIFETIME_DISHONORABLE_KILLS);		
-	uint32 honorable_kills          = m_session->GetPlayer()->GetUInt32Value(PLAYER_FIELD_LIFETIME_HONORABLE_KILLS);
-	uint32 highest_rank             = m_session->GetPlayer()->GetUInt32Value(PLAYER_FIELD_HONOR_HIGHEST_RANK);
-	uint32 today_honorable_kills    = m_session->GetPlayer()->GetUInt32Value((uint16)PLAYER_FIELD_TODAY_KILLS);
-	uint32 today_dishonorable_kills = m_session->GetPlayer()->GetUInt32Value((uint16)PLAYER_FIELD_TODAY_KILLS >> 16);
-	uint32 yestarday_kills          = m_session->GetPlayer()->GetUInt32Value(PLAYER_FIELD_YESTERDAY_HONORABLE_KILLS);
-	uint32 yestarday_honor          = m_session->GetPlayer()->GetUInt32Value(PLAYER_FIELD_YESTERDAY_HONOR);
-	uint32 this_week_kills          = m_session->GetPlayer()->GetUInt32Value(PLAYER_FIELD_THIS_WEEK_HONORABLE_KILLS);
-	uint32 this_week_honor          = m_session->GetPlayer()->GetUInt32Value(PLAYER_FIELD_THIS_WEEK_HONOR);
-	uint32 last_week_kills          = m_session->GetPlayer()->GetUInt32Value(PLAYER_FIELD_LAST_WEEK_HONORABLE_KILLS);
-	uint32 last_week_honor          = m_session->GetPlayer()->GetUInt32Value(PLAYER_FIELD_LAST_WEEK_HONOR);
-	uint32 last_week_standing       = m_session->GetPlayer()->GetUInt32Value(PLAYER_FIELD_LAST_WEEK_STANDING);
-	
-	char msg[256];
-	sprintf(msg, "%s%s (Rank %u)", m_session->GetPlayer()->GetHonorRankName(), m_session->GetPlayer()->GetName(), m_session->GetPlayer()->CalculateHonorRank( m_session->GetPlayer()->GetTotalHonor() ));
-    FillSystemMessageData(&data, m_session, msg);
-    m_session->SendPacket( &data ); 
-
-	sprintf(msg, "Life Time: [Honorable Kills: %u] [Dishonorable Kills: %u] [Highest Rank: %u]", honorable_kills, dishonorable_kills, highest_rank);
-    FillSystemMessageData(&data, m_session, msg);
-    m_session->SendPacket( &data ); 
-
-	sprintf(msg, "Today: [Honorable Kills: %u] [Dishonorable Kills: %u]", today_honorable_kills, today_dishonorable_kills);
-    FillSystemMessageData(&data, m_session, msg);
-    m_session->SendPacket( &data ); 
-
-	sprintf(msg, "Yestarday: [Kills: %u] [Honor: %u]", yestarday_kills, yestarday_honor);
-    FillSystemMessageData(&data, m_session, msg);
-    m_session->SendPacket( &data ); 
-
-	sprintf(msg, "This Week: [Kills: %u] [Honor: %u]", this_week_kills, this_week_honor);
-    FillSystemMessageData(&data, m_session, msg);
-    m_session->SendPacket( &data ); 
-
-	sprintf(msg, "Last Week: [Kills: %u] [Honor: %u] [Rank: %u]", last_week_kills, last_week_honor, last_week_standing);
-    FillSystemMessageData(&data, m_session, msg);
-    m_session->SendPacket( &data ); 
-
-	return true;
 }

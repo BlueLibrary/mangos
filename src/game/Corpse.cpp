@@ -43,7 +43,7 @@ void Corpse::Create( uint32 guidlow )
 
 void Corpse::Create( uint32 guidlow, Player *owner, uint32 mapid, float x, float y, float z, float ang )
 {
-    Object::_Create(guidlow, HIGHGUID_CORPSE, mapid, x, y, z, ang, (uint8)-1);
+    Object::_Create(guidlow, HIGHGUID_CORPSE, mapid, x, y, z, ang, -1);
 
     SetFloatValue( OBJECT_FIELD_SCALE_X, 1 );
     SetFloatValue( CORPSE_FIELD_POS_X, x );
@@ -58,19 +58,27 @@ void Corpse::SaveToDB()
 {
     
     std::stringstream ss;
+    ss << "DELETE FROM corpses WHERE guid = " << GetGUIDLow();
+    sDatabase.Execute( ss.str( ).c_str( ) );
 
     ss.rdbuf()->str("");
-    ss << "REPLACE INTO corpses (guid, player_guid, positionX, positionY, positionZ, orientation,mapId, data) VALUES (" << GetGUIDLow() << ", " << GetUInt64Value(CORPSE_FIELD_OWNER) << ", " << GetPositionX() << ", " << GetPositionY() << ", " << GetPositionZ() << ", " << GetOrientation() << ", "  << GetMapId() << ", '";
+    ss << "INSERT INTO corpses (guid, positionX, positionY, positionZ, orientation, zoneId, mapId,  data) VALUES ("
+        << GetGUIDLow() << ", '" << GetPositionX() << "', '" << GetPositionY() << "', '" << GetPositionZ() << "', '" << GetOrientation() << "', '" << GetZoneId() << "', '" << GetMapId() << "', '";
 
     for(uint16 i = 0; i < m_valuesCount; i++ )
         ss << GetUInt32Value(i) << " ";
+
     ss << "' )";
 
-		sDatabase.Execute( ss.str().c_str() );
+    sDatabase.Execute( ss.str().c_str() );
 }
 
 
 void Corpse::DeleteFromDB()
 {
-    sDatabase.PExecute("DELETE FROM corpses WHERE guid = '%u'",GetGUIDLow());
+    
+    char sql[256];
+
+    sprintf(sql, "DELETE FROM corpses WHERE guid=%u", GetGUIDLow());
+    sDatabase.Execute(sql);
 }

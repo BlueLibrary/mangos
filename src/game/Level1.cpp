@@ -96,7 +96,7 @@ bool ChatHandler::HandleGPSCommand(const char* args)
 
 
 
-bool ChatHandler::HandleNamegoCommand(const char* args)
+bool ChatHandler::HandleSummonCommand(const char* args)
 {
     WorldPacket data;
 
@@ -125,11 +125,11 @@ bool ChatHandler::HandleNamegoCommand(const char* args)
         FillSystemMessageData(&data, m_session, buf0);
         chr->GetSession()->SendPacket( &data );
 
-        chr->smsg_NewWorld(m_session->GetPlayer()->GetMapId(),
+        smsg_NewWorld(chr->GetSession(),
+            m_session->GetPlayer()->GetMapId(),
             m_session->GetPlayer()->GetPositionX(),
             m_session->GetPlayer()->GetPositionY(),
-            m_session->GetPlayer()->GetPositionZ()
-            ,0.0f);
+            m_session->GetPlayer()->GetPositionZ());
     }
     else
     {
@@ -142,7 +142,7 @@ bool ChatHandler::HandleNamegoCommand(const char* args)
 }
 
 
-bool ChatHandler::HandleGonameCommand(const char* args)
+bool ChatHandler::HandleAppearCommand(const char* args)
 {
     WorldPacket data;
 
@@ -171,7 +171,7 @@ bool ChatHandler::HandleGonameCommand(const char* args)
 
         chr->GetSession()->SendPacket(&data);
 
-        m_session->GetPlayer()->smsg_NewWorld(chr->GetMapId(), chr->GetPositionX(), chr->GetPositionY(), chr->GetPositionZ(),0.0f);
+        smsg_NewWorld(m_session, chr->GetMapId(), chr->GetPositionX(), chr->GetPositionY(), chr->GetPositionZ());
     }
     else
     {
@@ -191,25 +191,25 @@ bool ChatHandler::HandleRecallCommand(const char* args)
         return false;
 
     if (strncmp((char*)args,"sunr",5)==0)
-        m_session->GetPlayer()->smsg_NewWorld(1, -180.949f, -296.467f, 11.5384f,0.0f);
+        smsg_NewWorld(m_session, 1, -180.949f, -296.467f, 11.5384f);
     else if (strncmp((char*)args,"thun",5)==0)
-        m_session->GetPlayer()->smsg_NewWorld(1, -1196.22f, 29.0941f, 176.949f,0.0f);
+        smsg_NewWorld(m_session, 1, -1196.22f, 29.0941f, 176.949f);
     else if (strncmp((char*)args,"cross",6)==0)
-        m_session->GetPlayer()->smsg_NewWorld(1, -443.128f, -2598.87f, 96.2114f,0.0f);
+        smsg_NewWorld(m_session, 1, -443.128f, -2598.87f, 96.2114f);
     else if (strncmp((char*)args,"ogri",5)==0)
-        m_session->GetPlayer()->smsg_NewWorld(1, 1676.21f, -4315.29f, 61.5293f,0.0f);
+        smsg_NewWorld(m_session, 1, 1676.21f, -4315.29f, 61.5293f);
     else if (strncmp((char*)args,"neth",5)==0)
-        m_session->GetPlayer()->smsg_NewWorld(0, -10996.9f, -3427.67f, 61.996f,0.0f);
+        smsg_NewWorld(m_session, 0, -10996.9f, -3427.67f, 61.996f);
     else if (strncmp((char*)args,"thel",5)==0)
-        m_session->GetPlayer()->smsg_NewWorld(0, -5395.57f, -3015.79f, 327.58f,0.0f);
+        smsg_NewWorld(m_session, 0, -5395.57f, -3015.79f, 327.58f);
     else if (strncmp((char*)args,"storm",6)==0)
-        m_session->GetPlayer()->smsg_NewWorld(0, -8913.23f, 554.633f, 93.7944f,0.0f);
+        smsg_NewWorld(m_session, 0, -8913.23f, 554.633f, 93.7944f);
     else if (strncmp((char*)args,"iron",5)==0)
-        m_session->GetPlayer()->smsg_NewWorld(0, -4981.25f, -881.542f, 501.66f,0.0f);
+        smsg_NewWorld(m_session, 0, -4981.25f, -881.542f, 501.66f);
     else if (strncmp((char*)args,"under",6)==0)
-        m_session->GetPlayer()->smsg_NewWorld(0, 1586.48f, 239.562f, -52.149f,0.0f);
+        smsg_NewWorld(m_session, 0, 1586.48f, 239.562f, -52.149f);
     else if (strncmp((char*)args,"darr",5)==0)
-        m_session->GetPlayer()->smsg_NewWorld(1, 10037.6f, 2496.8f, 1318.4f,0.0f);
+        smsg_NewWorld(m_session, 1, 10037.6f, 2496.8f, 1318.4f);
     else
         return false;
 
@@ -222,21 +222,16 @@ bool ChatHandler::HandleModifyHPCommand(const char* args)
     WorldPacket data;
 
     
-//    char* pHp = strtok((char*)args, " ");
-//    if (!pHp)
-//        return false;
+    char* pHp = strtok((char*)args, " ");
+    if (!pHp)
+        return false;
 
-//    char* pHpMax = strtok(NULL, " ");
-//    if (!pHpMax)
-//        return false;
+    char* pHpMax = strtok(NULL, " ");
+    if (!pHpMax)
+        return false;
 
-//    int32 hpm = atoi(pHpMax);
-//    int32 hp = atoi(pHp);
-
-    int32 hp = atoi((char*)args);
-    int32 hpm = atoi((char*)args);
-
-
+    int32 hpm = atoi(pHpMax);
+    int32 hp = atoi(pHp);
 
     if (hp <= 0 || hpm <= 0 || hpm < hp)
     {
@@ -471,31 +466,13 @@ bool ChatHandler::HandleModifyFactionCommand(const char* args)
 {
 
     WorldPacket data;
-  
-	uint32 factionid; 
-    uint32 flag;
-	uint32  npcflag;
-	uint32 dyflag;
-    char buf[256];
 
-    char* pfactionid = strtok((char*)args, " ");
-	Unit* chr =NULL; 
-	chr	= ObjectAccessor::Instance().GetUnit(*m_session->GetPlayer(), m_session->GetPlayer()->GetSelection());
+    if(!*args)
+        return false;
 
-	if(!pfactionid){
-		if(chr)
-		{
-            factionid = chr->GetUInt32Value(UNIT_FIELD_FACTIONTEMPLATE);
-            flag      = chr->GetUInt32Value(UNIT_FIELD_FLAGS);
-			npcflag   = chr->GetUInt32Value(UNIT_NPC_FLAGS);
-			dyflag   = chr->GetUInt32Value(UNIT_DYNAMIC_FLAGS);
-		    sprintf((char*)buf,"GUID %i,faction is %i,flags is %i,npcflag is %i,DY flag is %i",chr->GetGUIDLow(),factionid,flag,npcflag,dyflag);
-            FillSystemMessageData(&data, m_session, buf);
-            m_session->SendPacket( &data );
-		}
-		return true;
-	}
+    uint32 factionid = atoi((char*)args);
 
+    Player *chr = getSelectedChar(m_session);
     if (chr == NULL)                              
     {
         FillSystemMessageData(&data, m_session, "No character selected.");
@@ -503,42 +480,25 @@ bool ChatHandler::HandleModifyFactionCommand(const char* args)
         return true;
     }
 
-    factionid = atoi(pfactionid);
+    char buf[256];
 
-	char*  pflag = strtok(NULL, " ");
-    if (!pflag)
-        flag = chr->GetUInt32Value(UNIT_FIELD_FLAGS);
-	else
-        flag = atoi(pflag);
-
-	char* pnpcflag = strtok(NULL, " ");
-	if(!pnpcflag)
-       npcflag   = chr->GetUInt32Value(UNIT_NPC_FLAGS);
-	else
-	   npcflag = atoi(pnpcflag);
-
-	char* pdyflag = strtok(NULL, " ");
-	if(!pdyflag)
-       dyflag   = chr->GetUInt32Value(UNIT_DYNAMIC_FLAGS);
-	else
-	   dyflag = atoi(pdyflag);
-
-    sprintf((char*)buf,"You change GUID=%i 's Faction to %i ,flags to %i,npcflag to %i,dyflag to %i.", chr->GetGUIDLow(),factionid,flag,npcflag,dyflag);
+    
+    sprintf((char*)buf,"You change the Faction to %i of %s.", factionid, chr->GetName());
     FillSystemMessageData(&data, m_session, buf);
     m_session->SendPacket( &data );
 
     
-    //sprintf((char*)buf,"%s changed your Faction to %i.", m_session->GetPlayer()->GetName(), factionid);
-    //FillSystemMessageData(&data, m_session, buf);
+    sprintf((char*)buf,"%s changed your Faction to %i.", m_session->GetPlayer()->GetName(), factionid);
+    FillSystemMessageData(&data, m_session, buf);
 
-    //chr->GetSession()->SendPacket(&data);
+    chr->GetSession()->SendPacket(&data);
 
     chr->SetUInt32Value(UNIT_FIELD_FACTIONTEMPLATE,factionid);
-	chr->SetUInt32Value(UNIT_FIELD_FLAGS,flag);
-    chr->SetUInt32Value(UNIT_NPC_FLAGS,npcflag);
-	chr->SetUInt32Value(UNIT_DYNAMIC_FLAGS,dyflag);
+
 	
 	
+	
+  
     return true;
 }
 
@@ -701,20 +661,17 @@ bool ChatHandler::HandleModifyASpedCommand(const char* args)
     chr->GetSession()->SendPacket(&data);
 
     data.Initialize( SMSG_FORCE_RUN_SPEED_CHANGE );
-	data << uint8(0xFF);
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID );
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID + 1 );
     data << (float)ASpeed;
     chr->SendMessageToSet( &data, true );
 
     data.Initialize( SMSG_FORCE_SWIM_SPEED_CHANGE );
-	data << uint8(0xFF);
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID );
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID + 1 );
     data << (float)ASpeed;
     chr->SendMessageToSet( &data, true );
     data.Initialize( SMSG_FORCE_RUN_BACK_SPEED_CHANGE );
-	data << uint8(0xFF);
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID );
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID + 1 );
     data << (float)ASpeed;
@@ -761,7 +718,6 @@ bool ChatHandler::HandleModifySpeedCommand(const char* args)
     chr->GetSession()->SendPacket(&data);
 
     data.Initialize( SMSG_FORCE_RUN_SPEED_CHANGE );
-	data << uint8(0xFF);
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID );
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID + 1 );
     data << (float)Speed;
@@ -809,7 +765,6 @@ bool ChatHandler::HandleModifySwimCommand(const char* args)
     chr->GetSession()->SendPacket(&data);
 
     data.Initialize( SMSG_FORCE_SWIM_SPEED_CHANGE );
-	data << uint8(0xFF);
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID );
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID + 1 );
     data << (float)Swim;
@@ -857,7 +812,6 @@ bool ChatHandler::HandleModifyBWalkCommand(const char* args)
     chr->GetSession()->SendPacket(&data);
 
     data.Initialize( SMSG_FORCE_RUN_BACK_SPEED_CHANGE );
-	data << uint8(0xFF);
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID );
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID + 1 );
     data << (float)BSpeed;
@@ -1164,19 +1118,17 @@ bool ChatHandler::HandleModifyMountCommand(const char* args)
     chr->SetUInt32Value( UNIT_FIELD_FLAGS , 0x003000 );
 
     data.Initialize( SMSG_FORCE_RUN_SPEED_CHANGE );
-	data << uint8(0xFF);
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID );
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID + 1 );
-    data << float(speed);
-    WPAssert(data.size() == 13);
+    data << speed;
+    WPAssert(data.size() == 12);
     chr->SendMessageToSet( &data, true );
 
     data.Initialize( SMSG_FORCE_SWIM_SPEED_CHANGE );
-	data << uint8(0xFF);
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID );
     data << chr->GetUInt32Value( OBJECT_FIELD_GUID + 1 );
-    data << float(speed);
-    WPAssert(data.size() == 13);
+    data << speed;
+    WPAssert(data.size() == 12);
     chr->SendMessageToSet( &data, true );
 
     return true;
@@ -1208,7 +1160,7 @@ bool ChatHandler::HandleModifyGoldCommand(const char* args)
     {
         int32 newmoney = moneyuser + gold;
         
-        sLog.outDetail("USER1: %i, ADD: %i, DIF: %i\n", moneyuser, gold, newmoney);
+        Log::getSingleton( ).outDetail("USER1: %i, ADD: %i, DIF: %i\n", moneyuser, gold, newmoney);
         if(newmoney < 0 )
         {
             
@@ -1251,7 +1203,7 @@ bool ChatHandler::HandleModifyGoldCommand(const char* args)
     }
 
     
-    sLog.outDetail("USER2: %i, ADD: %i, RESULT: %i\n", moneyuser, gold, moneyuser+gold);
+    Log::getSingleton( ).outDetail("USER2: %i, ADD: %i, RESULT: %i\n", moneyuser, gold, moneyuser+gold);
     chr->SetUInt32Value( PLAYER_FIELD_COINAGE, moneyuser+gold );
 
     return true;

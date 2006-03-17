@@ -1,7 +1,5 @@
-/* RealmList.h
- *
- * Copyright (C) 2004 Wow Daemon
- * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
+/* 
+ * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,42 +19,36 @@
 #ifndef _REALMLIST_H
 #define _REALMLIST_H
 
-/*struct Realm
-{
-    std::string address;
-    uint8 icon;
-    uint8 color;
-    uint8 timezone;
-};*/
+
 
 #include "Network/socket_include.h"
 
 struct Realm
 {
-    /// Realm name
+    
     const char *name;
-    /// Server address (x.x.x.x:port)
+    
     std::string address;
-    /// Low/Medium/High, absolute values do not matter, everything is relative
-    // float population;
-    /// 0 - Normal, 1 - PvP, 2 - Offline
+    
+    
+    
     uint32 icon;
-    /// 0 - Orange, 1 - Red, 2 - Disabled
+    
     uint8 color;
-    /// 0,1 - English, 2 - German, 3 - French, 4 - Other
+    
     uint8 timezone;
-    /// Number of characters owned by the client on this server
-    // uint8 numChars;
+    
+    
 
     Realm (const char *Name, std::string Address, uint32 Icon, uint8 Color, uint8 Timezone)
     {
         name = Name;
         address = Address;
-        // population = Population;
+        
         icon = Icon;
         color = Color;
         timezone = Timezone;
-        // numChars = 0;
+        
     }
 
     ~Realm ()

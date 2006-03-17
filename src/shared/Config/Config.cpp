@@ -17,9 +17,8 @@
  */
 
 #include "ConfigEnv.h"
-#include "Policies/SingletonImp.h"
 
-INSTANTIATE_SINGLETON_1(Config);
+createFileSingleton(Config);
 
 Config::Config() : mConf(0)
 {

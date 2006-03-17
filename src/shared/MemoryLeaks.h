@@ -20,7 +20,7 @@
 #define MANGOSSERVER_MEMORY_H
 
 #include "Common.h"
-#include "Policies/Singleton.h"
+#include "Singleton.h"
 
 #if COMPILER == COMPILER_MICROSOFT
 #  define _CRTDBG_MAP_ALLOC
@@ -28,9 +28,8 @@
 #  include <crtdbg.h>
 #endif
 
-struct MemoryManager : public MaNGOS::Singleton < MemoryManager >
+struct MemoryManager : public Singleton < MemoryManager >
 {
     MemoryManager();
 };
-
 #endif

@@ -1,4 +1,4 @@
-/*  
+/* 
  * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -60,11 +60,11 @@ int main(int argc, char **argv)
     }
 
      
-    if (!sConfig.SetSource(cfg_file.c_str()) )
+    if (!Config::getSingleton().SetSource(cfg_file.c_str()) )
     {
         sLog.outError("\nCould not find configuration file %s.", cfg_file.c_str());
     }
 
-    sMaster.Run();
+    Master::getSingleton().Run();
     return 0;
 }

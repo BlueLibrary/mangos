@@ -1,7 +1,5 @@
-/* UpdateData.cpp
- *
- * Copyright (C) 2004 Wow Daemon
- * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
+/* 
+ * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,9 +43,9 @@ void UpdateData::AddUpdateBlock(const ByteBuffer &block)
     m_blockCount++;
 }
 
-// uses zlib with Z_BEST_SPEED method
-// out: dst/dst_size
-// *dst_size=0 if error
+
+
+
 void UpdateData::Compress(void* dst, uint32 *dst_size, void* src, int src_size)
 {
     z_stream c_stream;
@@ -105,7 +103,7 @@ bool UpdateData::BuildPacket(WorldPacket *packet)
     ByteBuffer buf(m_data.size() + 10 + m_outOfRangeGUIDs.size()*8);
 
     buf << (uint32) (m_outOfRangeGUIDs.size() > 0 ? m_blockCount + 1 : m_blockCount);
-    buf << (uint8) 0; // unknown
+    buf << (uint8) 0; 
 
     if(m_outOfRangeGUIDs.size())
     {
@@ -123,22 +121,22 @@ bool UpdateData::BuildPacket(WorldPacket *packet)
 
     packet->clear();
 
-    // do not compress small packets
+    
     if (m_data.size() > 50 )
     {
-        // not sure about that, saw in qz code
+        
         unsigned long destsize = buf.size() + buf.size()/10 + 16;
         packet->resize( destsize );
 
         packet->put(0, (uint32)buf.size());
 
-        // i know, it's evil
+        
         Compress(const_cast<uint8*>(packet->contents()) + sizeof(uint32),
                     &destsize,
                     (void*)buf.contents(),
                     buf.size());
         if (destsize == 0)
-            return false; // Loged by Compress()
+            return false; 
 
         packet->resize( destsize + sizeof(uint32) );
         packet->SetOpcode( SMSG_COMPRESSED_UPDATE_OBJECT );
@@ -160,5 +158,5 @@ void UpdateData::Clear()
     m_blockCount = 0;
 }
 
-#endif //defined( _VERSION_1_7_0_ ) || defined( _VERSION_1_8_0_ )
+#endif 
 

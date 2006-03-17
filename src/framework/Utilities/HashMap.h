@@ -22,9 +22,7 @@
 #include "Platform/CompilerDefs.h"
 #include "Platform/Define.h"
 
-#if COMPILER == COMPILER_INTEL
-#include <ext/hash_map>
-#elif COMPILER == COMPILER_GNU && __GNUC__ >= 3
+#if COMPILER == COMPILER_GNU && __GNUC__ >= 3
 #include <ext/hash_map>
 #else
 #include <hash_map>
@@ -36,9 +34,6 @@ using std::hash_map;
 #elif COMPILER == COMPILER_MICROSOFT && _MSC_VER >= 1300
 #define HM_NAMESPACE stdext
 using stdext::hash_map;
-#elif COMPILER == COMPILER_INTEL
-#define HM_NAMESPACE std
-using std::hash_map;
 #elif COMPILER == COMPILER_GNU && __GNUC__ >= 3
 #define HM_NAMESPACE __gnu_cxx
 using __gnu_cxx::hash_map;

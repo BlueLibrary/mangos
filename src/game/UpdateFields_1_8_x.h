@@ -1,7 +1,5 @@
-/* UpdateFields.h
- *
- * Copyright (C) 2004 Wow Daemon
- * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
+/* 
+ * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,9 +41,9 @@ enum EItemFields
     ITEM_FIELD_GIFTCREATOR                  =   12,
     ITEM_FIELD_STACK_COUNT                  =   14,
     ITEM_FIELD_DURATION                     =   15,
-    ITEM_FIELD_SPELL_CHARGES                =   16,      //  5 of them
+    ITEM_FIELD_SPELL_CHARGES                =   16,      
     ITEM_FIELD_FLAGS                        =   21,
-    ITEM_FIELD_ENCHANTMENT                  =   22,      //  21 of them
+    ITEM_FIELD_ENCHANTMENT                  =   22,      
     ITEM_FIELD_PROPERTY_SEED                =   43,
     ITEM_FIELD_RANDOM_PROPERTIES_ID         =   44,
     ITEM_FIELD_ITEM_TEXT_ID                 =   45,
@@ -58,7 +56,7 @@ enum EContainerFields
 {
     CONTAINER_FIELD_NUM_SLOTS               =   48,
     CONTAINER_ALIGN_PAD                     =   49,
-    CONTAINER_FIELD_SLOT_1                  =   50,      //  40 of them
+    CONTAINER_FIELD_SLOT_1                  =   50,      
     CONTAINER_END                           =   90,
 };
 
@@ -90,17 +88,17 @@ enum EUnitFields
     UNIT_VIRTUAL_ITEM_SLOT_DISPLAY          =   37,
     UNIT_VIRTUAL_ITEM_SLOT_DISPLAY_01       =   38,
     UNIT_VIRTUAL_ITEM_SLOT_DISPLAY_02       =   39,
-    UNIT_VIRTUAL_ITEM_INFO                  =   40,       //  6 of them
+    UNIT_VIRTUAL_ITEM_INFO                  =   40,       
 	UNIT_VIRTUAL_ITEM_INFO_01               =   41,
 	UNIT_VIRTUAL_ITEM_INFO_02               =   42,
 	UNIT_VIRTUAL_ITEM_INFO_03               =   43,
 	UNIT_VIRTUAL_ITEM_INFO_04               =   44,
 	UNIT_VIRTUAL_ITEM_INFO_05               =   45,
     UNIT_FIELD_FLAGS                        =   46,
-    UNIT_FIELD_AURA                         =   47,       //  64 of them
-    UNIT_FIELD_AURAFLAGS                    =  111,       //  8 of them
-    UNIT_FIELD_AURALEVELS                   =  119,       //  8 of them
-    UNIT_FIELD_AURAAPPLICATIONS             =  127,       //  16 of them
+    UNIT_FIELD_AURA                         =   47,       
+    UNIT_FIELD_AURAFLAGS                    =  111,       
+    UNIT_FIELD_AURALEVELS                   =  119,       
+    UNIT_FIELD_AURAAPPLICATIONS             =  127,       
     UNIT_FIELD_AURASTATE                    =  143,
     UNIT_FIELD_BASEATTACKTIME               =  144,
     UNIT_FIELD_RANGEDATTACKTIME             =  146,
@@ -135,9 +133,9 @@ enum EUnitFields
     UNIT_FIELD_SPIRIT = UNIT_FIELD_STAT3,
     UNIT_FIELD_STAT4                        =  172,
     UNIT_FIELD_IQ = UNIT_FIELD_STAT4,
-    //UNIT_FIELD_ARMOR = UNIT_FIELD_STAT4,    // UQ1: I dont think this is correct! Was IQ +1 in old code...
+    
     UNIT_FIELD_RESISTANCES                  =  173,
-	UNIT_FIELD_ARMOR = UNIT_FIELD_RESISTANCES,    // UQ1: I dont think this is correct! Was IQ +1 in old code...
+	UNIT_FIELD_ARMOR = UNIT_FIELD_RESISTANCES,    
     UNIT_FIELD_RESISTANCES_01               =  174,
     UNIT_FIELD_RESISTANCES_02               =  175,
     UNIT_FIELD_RESISTANCES_03               =  176,
@@ -156,7 +154,7 @@ enum EUnitFields
     UNIT_FIELD_POWER_COST_MODIFIER          =  189,
     UNIT_FIELD_POWER_COST_MULTIPLIER        =  190,
     UNIT_FIELD_PADDING                      =  191,
-    UNIT_FIELD_UNKNOWN180                   =  192,      //  12 of them
+    UNIT_FIELD_UNKNOWN180                   =  192,      
     UNIT_END                                =  204,
 };
 
@@ -213,92 +211,92 @@ enum EPlayerFields
     PLAYER_QUEST_LOG_20_1                   =  273,
     PLAYER_QUEST_LOG_20_2                   =  274,
     PLAYER_VISIBLE_ITEM_1_CREATOR           =  276,
-    PLAYER_VISIBLE_ITEM_1_0                 =  278,      //  8 of them
+    PLAYER_VISIBLE_ITEM_1_0                 =  278,      
     PLAYER_VISIBLE_ITEM_1_PROPERTIES        =  286,
     PLAYER_VISIBLE_ITEM_1_PAD               =  287,
     PLAYER_VISIBLE_ITEM_2_CREATOR           =  288,
-    PLAYER_VISIBLE_ITEM_2_0                 =  290,      //  8 of them
+    PLAYER_VISIBLE_ITEM_2_0                 =  290,      
     PLAYER_VISIBLE_ITEM_2_PROPERTIES        =  298,
     PLAYER_VISIBLE_ITEM_2_PAD               =  299,
     PLAYER_VISIBLE_ITEM_3_CREATOR           =  300,
-    PLAYER_VISIBLE_ITEM_3_0                 =  302,      //  8 of them
+    PLAYER_VISIBLE_ITEM_3_0                 =  302,      
     PLAYER_VISIBLE_ITEM_3_PROPERTIES        =  310,
     PLAYER_VISIBLE_ITEM_3_PAD               =  311,
     PLAYER_VISIBLE_ITEM_4_CREATOR           =  312,
-    PLAYER_VISIBLE_ITEM_4_0                 =  314,      //  8 of them
+    PLAYER_VISIBLE_ITEM_4_0                 =  314,      
     PLAYER_VISIBLE_ITEM_4_PROPERTIES        =  322,
     PLAYER_VISIBLE_ITEM_4_PAD               =  323,
     PLAYER_VISIBLE_ITEM_5_CREATOR           =  324,
-    PLAYER_VISIBLE_ITEM_5_0                 =  326,      //  8 of them
+    PLAYER_VISIBLE_ITEM_5_0                 =  326,      
     PLAYER_VISIBLE_ITEM_5_PROPERTIES        =  334,
     PLAYER_VISIBLE_ITEM_5_PAD               =  335,
     PLAYER_VISIBLE_ITEM_6_CREATOR           =  336,
-    PLAYER_VISIBLE_ITEM_6_0                 =  338,      //  8 of them
+    PLAYER_VISIBLE_ITEM_6_0                 =  338,      
     PLAYER_VISIBLE_ITEM_6_PROPERTIES        =  346,
     PLAYER_VISIBLE_ITEM_6_PAD               =  347,
     PLAYER_VISIBLE_ITEM_7_CREATOR           =  348,
-    PLAYER_VISIBLE_ITEM_7_0                 =  350,      //  8 of them
+    PLAYER_VISIBLE_ITEM_7_0                 =  350,      
     PLAYER_VISIBLE_ITEM_7_PROPERTIES        =  358,
     PLAYER_VISIBLE_ITEM_7_PAD               =  359,
     PLAYER_VISIBLE_ITEM_8_CREATOR           =  360,
-    PLAYER_VISIBLE_ITEM_8_0                 =  362,      //  8 of them
+    PLAYER_VISIBLE_ITEM_8_0                 =  362,      
     PLAYER_VISIBLE_ITEM_8_PROPERTIES        =  370,
     PLAYER_VISIBLE_ITEM_8_PAD               =  371,
     PLAYER_VISIBLE_ITEM_9_CREATOR           =  372,
-    PLAYER_VISIBLE_ITEM_9_0                 =  374,      //  8 of them
+    PLAYER_VISIBLE_ITEM_9_0                 =  374,      
     PLAYER_VISIBLE_ITEM_9_PROPERTIES        =  382,
     PLAYER_VISIBLE_ITEM_9_PAD               =  383,
     PLAYER_VISIBLE_ITEM_10_CREATOR          =  384,
-    PLAYER_VISIBLE_ITEM_10_0                =  386,      //  8 of them
+    PLAYER_VISIBLE_ITEM_10_0                =  386,      
     PLAYER_VISIBLE_ITEM_10_PROPERTIES       =  394,
     PLAYER_VISIBLE_ITEM_10_PAD              =  395,
     PLAYER_VISIBLE_ITEM_11_CREATOR          =  396,
-    PLAYER_VISIBLE_ITEM_11_0                =  398,      //  8 of them
+    PLAYER_VISIBLE_ITEM_11_0                =  398,      
     PLAYER_VISIBLE_ITEM_11_PROPERTIES       =  406,
     PLAYER_VISIBLE_ITEM_11_PAD              =  407,
     PLAYER_VISIBLE_ITEM_12_CREATOR          =  408,
-    PLAYER_VISIBLE_ITEM_12_0                =  410,      //  8 of them
+    PLAYER_VISIBLE_ITEM_12_0                =  410,      
     PLAYER_VISIBLE_ITEM_12_PROPERTIES       =  418,
     PLAYER_VISIBLE_ITEM_12_PAD              =  419,
     PLAYER_VISIBLE_ITEM_13_CREATOR          =  420,
-    PLAYER_VISIBLE_ITEM_13_0                =  422,      //  8 of them
+    PLAYER_VISIBLE_ITEM_13_0                =  422,      
     PLAYER_VISIBLE_ITEM_13_PROPERTIES       =  430,
     PLAYER_VISIBLE_ITEM_13_PAD              =  431,
     PLAYER_VISIBLE_ITEM_14_CREATOR          =  432,
-    PLAYER_VISIBLE_ITEM_14_0                =  434,      //  8 of them
+    PLAYER_VISIBLE_ITEM_14_0                =  434,      
     PLAYER_VISIBLE_ITEM_14_PROPERTIES       =  442,
     PLAYER_VISIBLE_ITEM_14_PAD              =  443,
     PLAYER_VISIBLE_ITEM_15_CREATOR          =  444,
-    PLAYER_VISIBLE_ITEM_15_0                =  446,      //  8 of them
+    PLAYER_VISIBLE_ITEM_15_0                =  446,      
     PLAYER_VISIBLE_ITEM_15_PROPERTIES       =  454,
     PLAYER_VISIBLE_ITEM_15_PAD              =  455,
     PLAYER_VISIBLE_ITEM_16_CREATOR          =  456,
-    PLAYER_VISIBLE_ITEM_16_0                =  458,      //  8 of them
+    PLAYER_VISIBLE_ITEM_16_0                =  458,      
     PLAYER_VISIBLE_ITEM_16_PROPERTIES       =  466,
     PLAYER_VISIBLE_ITEM_16_PAD              =  467,
     PLAYER_VISIBLE_ITEM_17_CREATOR          =  468,
-    PLAYER_VISIBLE_ITEM_17_0                =  470,      //  8 of them
+    PLAYER_VISIBLE_ITEM_17_0                =  470,      
     PLAYER_VISIBLE_ITEM_17_PROPERTIES       =  478,
     PLAYER_VISIBLE_ITEM_17_PAD              =  479,
     PLAYER_VISIBLE_ITEM_18_CREATOR          =  480,
-    PLAYER_VISIBLE_ITEM_18_0                =  482,      //  8 of them
+    PLAYER_VISIBLE_ITEM_18_0                =  482,      
     PLAYER_VISIBLE_ITEM_18_PROPERTIES       =  490,
     PLAYER_VISIBLE_ITEM_18_PAD              =  491,
     PLAYER_VISIBLE_ITEM_19_CREATOR          =  492,
-    PLAYER_VISIBLE_ITEM_19_0                =  494,      //  8 of them
+    PLAYER_VISIBLE_ITEM_19_0                =  494,      
     PLAYER_VISIBLE_ITEM_19_PROPERTIES       =  502,
     PLAYER_VISIBLE_ITEM_19_PAD              =  503,
-    PLAYER_FIELD_INV_SLOT_HEAD              =  504,      //  46 of them
-    PLAYER_FIELD_PACK_SLOT_1                =  550,      //  32 of them
-    PLAYER_FIELD_BANK_SLOT_1                =  582,      //  48 of them
-    PLAYER_FIELD_BANKBAG_SLOT_1             =  630,      //  12 of them
-    PLAYER_FIELD_VENDORBUYBACK_SLOT_1       =  642,      //  24 of them
+    PLAYER_FIELD_INV_SLOT_HEAD              =  504,      
+    PLAYER_FIELD_PACK_SLOT_1                =  550,      
+    PLAYER_FIELD_BANK_SLOT_1                =  582,      
+    PLAYER_FIELD_BANKBAG_SLOT_1             =  630,      
+    PLAYER_FIELD_VENDORBUYBACK_SLOT_1       =  642,      
     PLAYER_FARSIGHT                         =  666,
     PLAYER__FIELD_COMBO_TARGET              =  668,
     PLAYER_XP                               =  670,
     PLAYER_NEXT_LEVEL_XP                    =  671,
-    PLAYER_SKILL_INFO_1_1                   =  672,         //  384 of them
-    PLAYER_SKILL_INFO_1_1_381  = PLAYER_SKILL_INFO_1_1+381, //  384 of them
+    PLAYER_SKILL_INFO_1_1                   =  672,         
+    PLAYER_SKILL_INFO_1_1_381  = PLAYER_SKILL_INFO_1_1+381, 
     PLAYER_CHARACTER_POINTS1                = 1056,
     PLAYER_CHARACTER_POINTS2                = 1057,
     PLAYER_TRACK_CREATURES                  = 1058,
@@ -308,7 +306,7 @@ enum EPlayerFields
     PLAYER_PARRY_PERCENTAGE                 = 1062,
     PLAYER_CRIT_PERCENTAGE                  = 1063,
     PLAYER_RANGED_CRIT_PERCENTAGE           = 1064,
-    PLAYER_EXPLORED_ZONES_1                 = 1065,         //  64 of them
+    PLAYER_EXPLORED_ZONES_1                 = 1065,         
     PLAYER_REST_STATE_EXPERIENCE            = 1129,
     PLAYER_FIELD_COINAGE                    = 1130,
     PLAYER_FIELD_POSSTAT0                   = 1131,
@@ -356,7 +354,7 @@ enum EPlayerFields
     PLAYER_FIELD_LAST_WEEK_RANK             = 1191,
     PLAYER_FIELD_BYTES2                     = 1192,
     PLAYER_FIELD_PADDING                    = 1193,
-    PLAYER_FIELD_UNKNOWN180                 = 1194,      //  44 of them
+    PLAYER_FIELD_UNKNOWN180                 = 1194,      
     PLAYER_END                              = 1238,
 };
 
@@ -365,7 +363,7 @@ enum EGameObjectFields
     OBJECT_FIELD_CREATED_BY                 =    6,
     GAMEOBJECT_DISPLAYID                    =    8,
     GAMEOBJECT_FLAGS                        =    9,
-    GAMEOBJECT_ROTATION                     =   10,      //  4 of them
+    GAMEOBJECT_ROTATION                     =   10,      
     GAMEOBJECT_STATE                        =   14,
     GAMEOBJECT_TIMESTAMP                    =   15,
     GAMEOBJECT_POS_X                        =   16,
@@ -401,7 +399,7 @@ enum ECorpseFields
     CORPSE_FIELD_POS_Y                      =   10,
     CORPSE_FIELD_POS_Z                      =   11,
     CORPSE_FIELD_DISPLAY_ID                 =   12,
-    CORPSE_FIELD_ITEM                       =   13,      //  19 of them
+    CORPSE_FIELD_ITEM                       =   13,      
     CORPSE_FIELD_BYTES_1                    =   32,
     CORPSE_FIELD_BYTES_2                    =   33,
     CORPSE_FIELD_GUILD                      =   34,
@@ -413,5 +411,5 @@ enum ECorpseFields
 
 #endif
 
-#endif //_VERSION_1_8_0_
+#endif 
 

@@ -65,7 +65,6 @@ public:
     
     Player* FindPlayer(uint64);
     Player* FindPlayerByName(const char *name) ;
-    void BuildCreateForSameMapPlayer(Player *pl);
 
     inline PlayersMapType& GetPlayers(void) { return i_players; }
     void InsertPlayer(Player *);

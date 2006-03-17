@@ -1,7 +1,5 @@
-/* AuthSocket.cpp
- *
- * Copyright (C) 2004 Wow Daemon
- * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
+/* 
+ * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,36 +26,39 @@
 
 #pragma pack(push, 1)
 
+
+char last_ip[32];
+
 typedef struct
 {
     uint8   cmd;
-    uint8   error;                                // 0x00
-    uint16  size;                                 // 0x0026
-    uint8   gamename[4];                          // 'MaNGOS'
-    uint8   version1;                             // 0x00
-    uint8   version2;                             // 0x00 (0.0.1)
-    uint8   version3;                             // 0x01
-    uint16  build;                                // 3734
-    uint8   platform[4];                          // 'x86'
-    uint8   os[4];                                // 'Win'
-    uint8   country[4];                           // 'enUS'
-    uint32  timezone_bias;                        // -419
-    uint32  ip;                                   // client ip
-    uint8   I_len;                                // length of account name
-    uint8   I[1];                                 // account name
+    uint8   error;                                
+    uint16  size;                                 
+    uint8   gamename[4];                          
+    uint8   version1;                             
+    uint8   version2;                             
+    uint8   version3;                             
+    uint16  build;                                
+    uint8   platform[4];                          
+    uint8   os[4];                                
+    uint8   country[4];                           
+    uint32  timezone_bias;                        
+    uint32  ip;                                   
+    uint8   I_len;                                
+    uint8   I[1];                                 
 } sAuthLogonChallenge_C;
 
 typedef sAuthLogonChallenge_C sAuthReconnectChallenge_C;
 
 typedef struct
 {
-    uint8   cmd;                                  // 0x00 CMD_AUTH_LOGON_CHALLENGE
-    uint8   error;                                // 0 - ok
-    uint8   unk2;                                 // 0x00
+    uint8   cmd;                                  
+    uint8   error;                                
+    uint8   unk2;                                 
     uint8   B[32];
-    uint8   g_len;                                // 0x01
+    uint8   g_len;                                
     uint8   g[1];
-    uint8   N_len;                                // 0x20
+    uint8   N_len;                                
     uint8   N[32];
     uint8   s[32];
     uint8   unk3[16];
@@ -65,7 +66,7 @@ typedef struct
 
 typedef struct
 {
-    uint8   cmd;                                  // 0x01
+    uint8   cmd;                                  
     uint8   A[32];
     uint8   M1[20];
     uint8   crc_hash[20];
@@ -77,12 +78,12 @@ typedef struct
     uint16  unk1;
     uint32  unk2;
     uint8   unk3[4];
-    uint16  unk4[20];                             // sha1(A,g,?)
+    uint16  unk4[20];                             
 }  sAuthLogonProofKey_C;
 
 typedef struct
 {
-    uint8   cmd;                                  // 0x01 CMD_AUTH_LOGON_PROOF
+    uint8   cmd;                                  
     uint8   error;
     uint8   M2[20];
     uint32  unk2;
@@ -126,7 +127,7 @@ void AuthSocket::OnRead()
             return;
         }
 
-        // are we waiting for a new packet?
+        
         if (_cmd == AUTH_NO_CMD)
             ibuf.SoftRead((char *)&_cmd, 1);
         else
@@ -162,13 +163,13 @@ void AuthSocket::OnRead()
 
 bool AuthSocket::_HandleLogonChallenge()
 {
-    // not even header..
+    
     if (ibuf.GetLength() < 4)
         return false;
 
     std::vector<uint8> buf;
     buf.resize(4);
-    // got only packet header
+    
     ibuf.Read((char *)&buf[0], 4);
     uint16 remaining = ((sAuthLogonChallenge_C *)&buf[0])->size;
     DEBUG_LOG("[AuthChallenge] got header, body is %#04x bytes", remaining);
@@ -176,16 +177,16 @@ bool AuthSocket::_HandleLogonChallenge()
     if (ibuf.GetLength() < remaining)
         return false;
 
-    // got full packet
+    
     buf.resize(remaining + buf.size() + 1);
-    // we want I zero-terminated
+    
     buf[buf.size() - 1] = 0;
     sAuthLogonChallenge_C *ch = (sAuthLogonChallenge_C*)&buf[0];
     ibuf.Read((char *)&buf[4], remaining);
     DEBUG_LOG("[AuthChallenge] got full packet, %#04x bytes", ch->size);
     DEBUG_LOG("    I(%d): '%s'", ch->I_len, ch->I);
 
-    // AuthChallenge
+    
     ByteBuffer pkt;
 
     _login = (const char*)ch->I;
@@ -206,7 +207,7 @@ bool AuthSocket::_HandleLogonChallenge()
 
     std::string password;
 
-    // check for an accepted client version
+    
     bool valid_version=false;
     int accepted_versions[]=EXPECTED_MANGOS_CLIENT_BUILD;
     for(int i=0;accepted_versions[i]&&(!valid_version);i++)
@@ -223,31 +224,32 @@ bool AuthSocket::_HandleLogonChallenge()
     }
     else
     {
-        // TODO: in the far future should check if the account is expired too
+        
         std::stringstream sb;
         std::string ipb;
         ipb=GetRemoteAddress().c_str();
+	strcpy( last_ip, GetRemoteAddress().c_str() );
         sb << "SELECT * FROM `ipbantable` where ip='" << ipb << "'";
         QueryResult *result = sDatabase.Query( sb.str().c_str() );
         if(result)
         {
             res = CE_IPBAN;
-            //Add ip here
+            
             sLog.outBasic("Banned ip try to login!");
         }
         else
         {
             std::stringstream ss;
-            // Deadknight Fix Start
-            // ss << "SELECT password, gm FROM accounts WHERE login='" << _login << "'"; // password
-            // password,banned
+            
+            
+            
             ss << "SELECT password, gm, banned FROM accounts WHERE login='" << _login << "'";
             QueryResult *result = sDatabase.Query(ss.str().c_str());
 
             if( result )
             {
                 int banned;
-                banned = (*result)[2].GetUInt8(); //database banned field
+                banned = (*result)[2].GetUInt8(); 
                 if( banned == 1 )
                 {
                     res = CE_ACCOUNT_CLOSED;
@@ -279,7 +281,7 @@ bool AuthSocket::_HandleLogonChallenge()
                 res = CE_NO_ACCOUNT;
             }
         }
-        // Finish fix
+        
 
         pkt << (uint8) AUTH_LOGON_CHALLENGE;
 
@@ -346,13 +348,13 @@ bool AuthSocket::_HandleLogonChallenge()
             BigNumber unk3;
             unk3.SetRand(16*8);
 
-            pkt << (uint8)0;                      // no error
+            pkt << (uint8)0;                      
             pkt << (uint8)0;
             pkt.append(B.AsByteArray(), 32);
-            pkt                                   // g_len, g
+            pkt                                   
                 << (uint8)1;
             pkt.append(g.AsByteArray(), 1);
-            // N_len, N
+            
             pkt << (uint8)32;
             pkt.append(N.AsByteArray(), 32);
 
@@ -453,7 +455,7 @@ bool AuthSocket::_HandleLogonProof()
     {
         sLog.outBasic("User '%s' successfully authed", _login.c_str());
 
-        //saving session key to database
+        
         std::stringstream ss;
         ss << "UPDATE accounts SET sessionkey = '";
         ss << K.AsHexStr();
@@ -482,7 +484,7 @@ bool AuthSocket::_HandleLogonProof()
         ByteBuffer pkt;
 
         pkt << (uint8) AUTH_LOGON_PROOF;
-        pkt << (uint8) 4;                         // bad password
+        pkt << (uint8) 4;                         
 
         SendBuf((char *)pkt.contents(), pkt.size());
         _cmd = AUTH_NO_CMD;
@@ -506,16 +508,16 @@ bool AuthSocket::_HandleRealmList()
     ByteBuffer pkt;
 
     std::stringstream ss;
-    // password
+    
     ss << "SELECT acct FROM accounts WHERE login='" << _login << "'";
     QueryResult *result = sDatabase.Query(ss.str().c_str());
-    if(!result)                                   // we got an error.
+    if(!result)                                   
     {
         Log::getSingleton().outError("[ERROR] user %s tried to login and we cant find him in the database.",_login.c_str());
         this->Close();
         return false;
     }
-    ASSERT (result);                              // should be fine when we get here now, just incase.
+    ASSERT (result);                              
 
     uint32 id = (*result)[0].GetUInt32();
     delete result;
@@ -541,17 +543,17 @@ bool AuthSocket::_HandleRealmList()
     RealmList::RealmMap::const_iterator i;
     for( i = sRealmList.begin( ); i != sRealmList.end( ); i++ )
     {
-        pkt << (uint32) i->second->icon;          // icon
+        pkt << (uint32) i->second->icon;          
         pkt << (uint8) i->second->color;
         pkt << i->first;
         pkt << i->second->address;
-        pkt << (float) 1.6;                       // population value. lower == lower population and vice versa
-        pkt << (uint8) chars;                     // number of characters on this server
+        pkt << (float) 1.6;                       
+        pkt << (uint8) chars;                     
         pkt << (uint8) i->second->timezone;
-        pkt << (uint8) 0;                         // unknown
+        pkt << (uint8) 0;                         
     }
-    pkt << (uint8) 0;                             // unknown
-    pkt << (uint8) 0x2;                           // unknown
+    pkt << (uint8) 0;                             
+    pkt << (uint8) 0x2;                           
 
     ByteBuffer hdr;
     hdr << (uint8) REALM_LIST;

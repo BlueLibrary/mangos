@@ -20,6 +20,7 @@
 #define MANGOS_MOVEMENTGENERATOR_H
 
 
+
 #include "Platform/Define.h"
 #include "Policies/Singleton.h"
 #include "Dynamic/ObjectRegistry.h"

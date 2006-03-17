@@ -1,7 +1,5 @@
-/* Opcodes.cpp
- *
- * Copyright (C) 2004 Wow Daemon
- * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
+/* 
+ * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -714,10 +712,10 @@ NameTableEntry g_worldOpcodeNames[] =
     { SMSG_SCRIPT_MESSAGE,                          "SMSG_SCRIPT_MESSAGE" },
     { CMSG_MOVE_TIME_SKIPPED,                       "CMSG_MOVE_TIME_SKIPPED" },
     { CMSG_BATTLEFIELD_STATUS,                      "CMSG_BATTLEFIELD_STATUS" },
-//    { NUM_MSG_TYPES,                                "NUM_MSG_TYPES" },
+
     { SMSG_AUTH_RESPONSE2_UNKNOWN180,               "SMSG_AUTH_RESPONSE2_UNKNOWN180" },
     { 0,                                            0 }
 };
 
-#endif //_VERSION_1_8_0_
+#endif 
 

@@ -19,9 +19,7 @@
 #if !defined (CONFIG_H)
 #define CONFIG_H
 
-#include <Policies/Singleton.h>
-
-class Config 
+class Config : public Singleton<Config>
 {
     public:
         Config();
@@ -45,5 +43,5 @@ class Config
         DOTCONFDocument *mConf;
 };
 
-#define sConfig MaNGOS::Singleton<Config>::Instance()
+#define sConfig Config::getSingleton()
 #endif

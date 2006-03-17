@@ -17,9 +17,8 @@
  */
 
 #include "ChannelMgr.h"
-#include "Policies/SingletonImp.h"
 
-INSTANTIATE_SINGLETON_1( ChannelMgr );
+initialiseSingleton( ChannelMgr );
 
 void WorldSession::HandleChannelJoin(WorldPacket& recvPacket)
 {

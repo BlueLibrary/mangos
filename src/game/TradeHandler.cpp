@@ -32,13 +32,13 @@
 
 void WorldSession::HandleIgnoreTradeOpcode(WorldPacket& recvPacket)
 {
-    sLog.outDebug( "\nWORLD: Ignore Trade %u", GetPlayer()->GetGUID());
+    Log::getSingleton( ).outDebug( "\nWORLD: Ignore Trade %u", GetPlayer()->GetGUID());
     recvPacket.print_storage();
 }
 
 void WorldSession::HandleBusyTradeOpcode(WorldPacket& recvPacket)
 {
-    sLog.outDebug( "\nWORLD: Busy Trade %u", GetPlayer()->GetGUID());
+    Log::getSingleton( ).outDebug( "\nWORLD: Busy Trade %u", GetPlayer()->GetGUID());
     recvPacket.print_storage();
 }
 
@@ -71,6 +71,7 @@ void WorldSession::UpdateTrade()
         data << (uint8) i;
         if(item)
         {
+			item->UpdateStats();
 
             data << (uint32) item->GetProto()->ItemId;
             data << (uint32) 0;
@@ -159,9 +160,9 @@ void WorldSession::HandleAcceptTradeOpcode(WorldPacket& recvPacket)
             for(i=0; i<6; i++)
             {
                 if( GetPlayer()->tradeItems[i] >= 0 )
-                    myItems[i] = GetPlayer()->RemoveItemFromSlot(0, (uint8) GetPlayer()->tradeItems[i],true );
+                    myItems[i] = GetPlayer()->RemoveItemFromSlot( (uint8) GetPlayer()->tradeItems[i] );
                 if( GetPlayer()->pTrader->tradeItems[i] >= 0)
-                    hisItems[i] = GetPlayer()->pTrader->RemoveItemFromSlot(0, (uint8) GetPlayer()->pTrader->tradeItems[i], true );
+                    hisItems[i] = GetPlayer()->pTrader->RemoveItemFromSlot( (uint8) GetPlayer()->pTrader->tradeItems[i] );
             }
             
             for(i=0; i<6; i++)
@@ -171,14 +172,14 @@ void WorldSession::HandleAcceptTradeOpcode(WorldPacket& recvPacket)
 					
 					hisItems[i]->SetUInt64Value( ITEM_FIELD_GIFTCREATOR, GetPlayer()->pTrader->GetGUID());
 
-                    GetPlayer()->AddItemToInventory(0, NULL_SLOT, hisItems[i], false, false, false);
+                    GetPlayer()->AddItemToSlot( GetPlayer()->FindFreeItemSlot(INVTYPE_SLOT_ITEM), hisItems[i]);
 				}
                 if(myItems[i])
 				{
 					
 					myItems[i]->SetUInt64Value( ITEM_FIELD_GIFTCREATOR, GetPlayer()->GetGUID());
 
-                    GetPlayer()->pTrader->AddItemToInventory(0, NULL_SLOT, myItems[i], false, false, false);
+                    GetPlayer()->pTrader->AddItemToSlot( GetPlayer()->pTrader->FindFreeItemSlot(INVTYPE_SLOT_ITEM), myItems[i]);
 				}
             }
 

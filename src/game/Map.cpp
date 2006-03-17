@@ -33,51 +33,6 @@
 #define MAX_GRID_LOAD_TIME      50 
 static GridState* si_GridStates[MAX_GRID_STATE];
 
-inline
-bool FileExists(const char * fn)
-{
-    FILE *pf=fopen(fn,"rb");
-    if(!pf)return false;
-    fclose(pf);
-    return true;
-}
-
-
-GridMap * LoadMAP(int mapid,int x,int y)
-{
-    char tmp[32];
-    static bool showcheckmapInfo=false;
-    static int oldx=0,oldy=0;
-    sprintf(tmp,"maps/%03u%02u%02u.map",mapid,x,y);
-
-    if( (oldx!=x) || (oldy!=y) )
-    {
-	    sLog.outDetail("Loading map %s",tmp);
-        oldx =x;
-        oldy =y;
-	    showcheckmapInfo = true;
-    }
-
-    FILE *pf=fopen(tmp,"rb");
-
-    if(!pf)
-    {
-	    if( showcheckmapInfo )
-	    {
-            sLog.outDetail("Map file %s does not exist",tmp);
-	        showcheckmapInfo = false;
-	    }
-	    return NULL;
-    }
-//fseek(pf,0,2);
-//uint32 fs=ftell(pf);
-//fseek(pf,0,0);
-    GridMap * buf= new GridMap;
-    fread(buf,1,sizeof(GridMap),pf);
-    fclose(pf);
-
-    return buf;
-}
 
 void Map::InitStateMachine()
 {
@@ -90,18 +45,12 @@ void Map::InitStateMachine()
 
 Map::Map(uint32 id, time_t expiry) : i_id(id), i_gridExpiry(expiry)
 {
-//	char tmp[32];
     for(unsigned int idx=0; idx < MAX_NUMBER_OF_GRIDS; ++idx)
     {
     i_gridMask[idx] = 0;
     i_gridStatus[idx] = 0;
     for(unsigned int j=0; j < MAX_NUMBER_OF_GRIDS; ++j)
     {
-		//z code
-		GridMaps[idx][j] =NULL;
-		
-        //z code
-
         i_grids[idx][j] = NULL;
         i_info[idx][j] = NULL;
     }
@@ -111,26 +60,17 @@ Map::Map(uint32 id, time_t expiry) : i_id(id), i_gridExpiry(expiry)
 uint64
 Map::EnsureGridCreated(const GridPair &p)
 {
-	//char tmp[128];
     uint64 mask = CalculateGridMask(p.y_coord);
 
     if( !(i_gridMask[p.x_coord] & mask) )
     {
-		Guard guard(*this);
-		if( !(i_gridMask[p.x_coord] & mask) )
-		{
-			i_grids[p.x_coord][p.y_coord] = new NGridType(p.x_coord*MAX_NUMBER_OF_GRIDS + p.y_coord);
-			i_info[p.x_coord][p.y_coord] = new GridInfo(i_gridExpiry);
-			i_gridMask[p.x_coord] |= mask; 
-			//z coord
-		
-			int gx=63-p.x_coord;
-			int gy=63-p.y_coord;
-
-			if(!GridMaps[gx][gy])
-				GridMaps[gx][gy]=LoadMAP(i_id,gx,gy);
-				
-		}	
+	Guard guard(*this);
+	if( !(i_gridMask[p.x_coord] & mask) )
+	{
+	    i_grids[p.x_coord][p.y_coord] = new NGridType(p.x_coord*MAX_NUMBER_OF_GRIDS + p.y_coord);
+	    i_info[p.x_coord][p.y_coord] = new GridInfo(i_gridExpiry);
+	    i_gridMask[p.x_coord] |= mask; 
+	}	
     }
 
     return mask;
@@ -198,8 +138,6 @@ void Map::Add(Player *player)
     EnsureGridLoadedForPlayer(cell, player, true);
     cell.data.Part.reserved = ALL_DISTRICT; 
     NotifyPlayerVisibility(cell, p, player);
-
-    ObjectAccessor::Instance().BuildCreateForSameMapPlayer(player);
 }
 
 
@@ -221,7 +159,7 @@ Map::Add(T *obj)
 	(*grid)(cell.CellX(), cell.CellY()).template AddGridObject<T>(obj, obj->GetGUID());
     }
 
-    DEBUG_LOG("Object %lu enters grid[%d,%d]", (unsigned long)obj->GetGUID(), cell.GridX(), cell.GridY());
+    DEBUG_LOG("Object %d enters grid[%d,%d]", obj->GetGUID(), cell.GridX(), cell.GridY());
     cell.data.Part.reserved = ALL_DISTRICT;
 
     
@@ -346,7 +284,7 @@ Map::Remove(T *obj, bool remove)
     if( !loaded(GridPair(cell.data.Part.grid_x, cell.data.Part.grid_y)) )
 	return; 
 
-    DEBUG_LOG("Remove object %lu from grid[%d,%d]", (unsigned long)obj->GetGUID(), cell.data.Part.grid_x, cell.data.Part.grid_y);
+    DEBUG_LOG("Remove object % from grid[%d,%d]", obj->GetGUID(), cell.data.Part.grid_x, cell.data.Part.grid_y);
     NGridType *grid = i_grids[cell.GridX()][cell.GridY()];
     assert( grid != NULL );
 
@@ -483,6 +421,7 @@ bool Map::UnloadGrid(const uint32 &x, const uint32 &y)
     assert( grid != NULL && i_info[x][y] != NULL );
 
     {
+	
 	if( ObjectAccessor::Instance().PlayersNearGrid(x, y, i_id) )
 	    return false;
 	
@@ -495,22 +434,10 @@ bool Map::UnloadGrid(const uint32 &x, const uint32 &y)
 	unloader.UnloadN();
 	delete i_grids[x][y];
 	i_grids[x][y] = NULL;
-    
     }
+    
     delete i_info[x][y];
     i_info[x][y] = NULL;
-	//z coordinate
-	
-	int gx=63-x;
-	int gy=63-y;
-	if(GridMaps[gx][gy])
-	{
-		delete (GridMaps[gx][gy]);
-		GridMaps[gx][gy]=NULL;
-	
-	}
-	
-	//z coordinate
     return true;
 }
 
@@ -532,151 +459,6 @@ void Map::GetUnitList(const float &x, const float &y,std::list<Unit*> &unlist)
     cell_lock->Visit(cell_lock, object_notifier, *this);
 }
 
-float Map::GetHeight(float x, float y )
-{
-	//local x,y coords
-	float lx,ly;
-	int gx,gy;
-	GridPair p = MaNGOS::ComputeGridPair(x, y); 
-	//Note: p.x_coord = 63-gx...
-/* method with no opt
-	x=32* SIZE_OF_GRIDS-x;
-	y=32* SIZE_OF_GRIDS-y;
-
-	gx=x/SIZE_OF_GRIDS ;//grid x
-	gy=y/SIZE_OF_GRIDS ;//grid y 
-
-    lx= x*(MAP_RESOLUTION/SIZE_OF_GRIDS) - gx*MAP_RESOLUTION;
-	ly= y*(MAP_RESOLUTION/SIZE_OF_GRIDS) - gy*MAP_RESOLUTION;
-*/
-
-// half opt method
-	gx=(int)(32-x/SIZE_OF_GRIDS) ;//grid x
-	gy=(int)(32-y/SIZE_OF_GRIDS);//grid y 
-
-
-    lx=MAP_RESOLUTION*(32 -x/SIZE_OF_GRIDS - gx);
-    ly=MAP_RESOLUTION*(32 -y/SIZE_OF_GRIDS - gy);
-	//DEBUG_LOG("my %d %d si %d %d",gx,gy,p.x_coord,p.y_coord);
-
-	if(!GridMaps[gx][gy])//this map is not loaded
-	GridMaps[gx][gy]=LoadMAP(i_id,gx,gy);
-	
-	if(GridMaps[gx][gy])
-	    return GridMaps[gx][gy]->Z[(int)(lx)][(int)(ly)];
-	else
-		return 0;
-}
-
-uint16 Map::GetAreaFlag(float x, float y )
-{
-//local x,y coords
-	float lx,ly;
-	int gx,gy;
-	GridPair p = MaNGOS::ComputeGridPair(x, y); 
-	//Note: p.x_coord = 63-gx...
-/* method with no opt
-	x=32* SIZE_OF_GRIDS-x;
-	y=32* SIZE_OF_GRIDS-y;
-
-	gx=x/SIZE_OF_GRIDS ;//grid x
-	gy=y/SIZE_OF_GRIDS ;//grid y 
-
-    lx= x*(MAP_RESOLUTION/SIZE_OF_GRIDS) - gx*MAP_RESOLUTION;
-	ly= y*(MAP_RESOLUTION/SIZE_OF_GRIDS) - gy*MAP_RESOLUTION;
-*/
-
-// half opt method
-	gx=(int)(32-x/SIZE_OF_GRIDS) ;//grid x
-	gy=(int)(32-y/SIZE_OF_GRIDS);//grid y 
-
-
-    lx=16*(32 -x/SIZE_OF_GRIDS - gx);
-    ly=16*(32 -y/SIZE_OF_GRIDS - gy);
-	//DEBUG_LOG("my %d %d si %d %d",gx,gy,p.x_coord,p.y_coord);
-
-	if(!GridMaps[gx][gy])//this map is not loaded
-	GridMaps[gx][gy]=LoadMAP(i_id,gx,gy);
-
-	if(GridMaps[gx][gy])
-	    return GridMaps[gx][gy]->area_flag[(int)(lx)][(int)(ly)];
-	else
-		return 0;
-
-}
-
-uint8 Map::GetTerrainType(float x, float y )
-{
-//local x,y coords
-	float lx,ly;
-	int gx,gy;
-	//GridPair p = MaNGOS::ComputeGridPair(x, y); 
-	//Note: p.x_coord = 63-gx...
-/* method with no opt
-	x=32* SIZE_OF_GRIDS-x;
-	y=32* SIZE_OF_GRIDS-y;
-
-	gx=x/SIZE_OF_GRIDS ;//grid x
-	gy=y/SIZE_OF_GRIDS ;//grid y 
-
-    lx= x*(MAP_RESOLUTION/SIZE_OF_GRIDS) - gx*MAP_RESOLUTION;
-	ly= y*(MAP_RESOLUTION/SIZE_OF_GRIDS) - gy*MAP_RESOLUTION;
-*/
-
-// half opt method
-	gx=(int)(32-x/SIZE_OF_GRIDS) ;//grid x
-	gy=(int)(32-y/SIZE_OF_GRIDS);//grid y 
-
-
-    lx=16*(32 -x/SIZE_OF_GRIDS - gx);
-    ly=16*(32 -y/SIZE_OF_GRIDS - gy);
-
-	if(!GridMaps[gx][gy])//this map is not loaded
-	GridMaps[gx][gy]=LoadMAP(i_id,gx,gy);
-
-	if(GridMaps[gx][gy])
-	    return GridMaps[gx][gy]->terrain_type[(int)(lx)][(int)(ly)];
-	else
-		return 0;
-
-}
-
-
-float Map::GetWaterLevel(float x, float y )
-{
-//local x,y coords
-	float lx,ly;
-	int gx,gy;
-	//GridPair p = MaNGOS::ComputeGridPair(x, y); 
-	//Note: p.x_coord = 63-gx...
-/* method with no opt
-	x=32* SIZE_OF_GRIDS-x;
-	y=32* SIZE_OF_GRIDS-y;
-
-	gx=x/SIZE_OF_GRIDS ;//grid x
-	gy=y/SIZE_OF_GRIDS ;//grid y 
-
-    lx= x*(MAP_RESOLUTION/SIZE_OF_GRIDS) - gx*MAP_RESOLUTION;
-	ly= y*(MAP_RESOLUTION/SIZE_OF_GRIDS) - gy*MAP_RESOLUTION;
-*/
-
-// half opt method
-	gx=(int)(32-x/SIZE_OF_GRIDS) ;//grid x
-	gy=(int)(32-y/SIZE_OF_GRIDS);//grid y 
-
-
-    lx=16*(32 -x/SIZE_OF_GRIDS - gx);
-    ly=16*(32 -y/SIZE_OF_GRIDS - gy);
-
-	if(!GridMaps[gx][gy])//this map is not loaded
-	GridMaps[gx][gy]=LoadMAP(i_id,gx,gy);
-
-	if(GridMaps[gx][gy])
-	    return GridMaps[gx][gy]->liquid_level[(int)(lx)][(int)(ly)];
-	else
-		return 0;
-
-}
 
 template void Map::Add(Creature *);
 template void Map::Add(GameObject *);

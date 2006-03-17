@@ -35,16 +35,10 @@
 #include "LootMgr.h"
 #include "ProgressBar.hpp"
 #include "MapManager.h"
-#include "ScriptCalls.h"
-#include "CreatureAIRegistry.h" // need for Game::Initialize()
 #include "Policies/SingletonImp.h"
-#include "EventSystem.h"
-
-INSTANTIATE_SINGLETON_1( World );
-
-extern bool LoadScriptingModule();
 
 
+initialiseSingleton( World );
 
 World::World()
 {
@@ -55,6 +49,7 @@ World::World()
 
 World::~World()
 {
+    mPrices.clear();
 }
 
 
@@ -89,8 +84,17 @@ void World::AddSession(WorldSession* s)
 
 void World::SetInitialWorldSettings()
 {
+    
+    if (sConfig.GetBoolDefault("LogWorld", false))
+    {
+        FILE *pFile = fopen("world.log", "w+");
+        fclose(pFile);
+    }
+
     srand((unsigned int)time(NULL));
+
     m_lastTick = time(NULL);
+
     
     time_t tiempo;
     char hour[3];
@@ -106,95 +110,132 @@ void World::SetInitialWorldSettings()
     m_gameTime = (3600*atoi(hour))+(atoi(minute)*60)+(atoi(second));
 
     
-    sDatabase.PExecute("UPDATE characters set online=0;");
     
+    
+    mPrices[1] = 10;
+    mPrices[4] = 80;
+    mPrices[6] = 150;
+    mPrices[8] = 200;
+    mPrices[10] = 300;
+    mPrices[12] = 800;
+    mPrices[14] = 900;
+    mPrices[16] = 1800;
+    mPrices[18] = 2200;
+    mPrices[20] = 2300;
+    mPrices[22] = 3600;
+    mPrices[24] = 4200;
+    mPrices[26] = 6700;
+    mPrices[28] = 7200;
+    mPrices[30] = 8000;
+    mPrices[32] = 11000;
+    mPrices[34] = 14000;
+    mPrices[36] = 16000;
+    mPrices[38] = 18000;
+    mPrices[40] = 20000;
+    mPrices[42] = 27000;
+    mPrices[44] = 32000;
+    mPrices[46] = 37000;
+    mPrices[48] = 42000;
+    mPrices[50] = 47000;
+    mPrices[52] = 52000;
+    mPrices[54] = 57000;
+    mPrices[56] = 62000;
+    mPrices[58] = 67000;
+    mPrices[60] = 7200;
+
     new ChannelMgr;
 
-
-	sLog.outString("Initialize data stores...");
-    barGoLink bar( 12 );
-    bar.step();
-    sEmoteStore.Load("dbc/EmotesText.dbc");
-    bar.step();
-    sSpellStore.Load("dbc/Spell.dbc");
-    bar.step();
-    sSpellRange.Load("dbc/SpellRange.dbc");
-    bar.step();
-    sCastTime.Load("dbc/SpellCastTimes.dbc");
-    bar.step();
-    sSpellDuration.Load("dbc/SpellDuration.dbc");
-    bar.step();
-    sSpellRadius.Load("dbc/SpellRadius.dbc");
-    bar.step();
-    sTalentStore.Load("dbc/Talent.dbc");
-    bar.step();
-    sFactionStore.Load("dbc/Faction.dbc");
-    bar.step();
-    sFactionTemplateStore.Load("dbc/FactionTemplate.dbc");
-    bar.step();
-    sItemDisplayTemplateStore.Load("dbc/ItemDisplayInfo.dbc");
-    bar.step();
-	
-	sItemSetStore.Load("dbc/ItemSet.dbc");
-    bar.step();
-	sAreaStore.Load("dbc/AreaTable.dbc");
-    sLog.outString( "" );
-    sLog.outString( ">> Loaded 12 data stores" );
-    sLog.outString( "" );
-
-
-
-    sLog.outString( "Loading Quests..." );
+    
+    Log::getSingleton( ).outString( "Loading Quests..." );
     objmgr.LoadQuests();
 
     
-    sLog.outString( "Loading NPC Texts..." );
+    Log::getSingleton( ).outString( "Loading NPC Texts..." );
     objmgr.LoadGossipText();
 
     
-    sLog.outString( "Loading Quest Area Triggers..." );
+    Log::getSingleton( ).outString( "Loading Quest Area Triggers..." );
     objmgr.LoadAreaTriggerPoints();
 
     
-    sLog.outString( "Loading Items..." );
+    Log::getSingleton( ).outString( "Loading Items..." );
     objmgr.LoadItemPrototypes();
     objmgr.LoadAuctions();
     objmgr.LoadAuctionItems();
     objmgr.LoadMailedItems();
-
-
-    sLog.outString( "Loading Creature templates..." );
-    objmgr.LoadCreatureTemplates();
+    
+    Log::getSingleton( ).outString( "Loading Creatures..." );
+    objmgr.LoadCreatureNames();
 
     
-    sLog.outString( "Loading Guilds..." );
+    Log::getSingleton( ).outString( "Loading Guilds..." );
     objmgr.LoadGuilds();
+
     
-    sLog.outString( "Loading Teleport Coords..." );
+   
+   
+    Log::getSingleton( ).outString( "Loading Trainers..." );
+    objmgr.LoadTrainerSpells();
+    
+    Log::getSingleton( ).outString( "Loading Teleport Coords..." );
     objmgr.LoadTeleportCoords();
+
     
     objmgr.SetHighestGuids();
 
-    LoadCreaturesLootTables();
+	
+    LootManager.LoadLootTables();
 
-    sLog.outString( "Loading Game Object Templates..." );
-    objmgr.LoadGameobjectInfo();
+	Log::getSingleton( ).outString( "Loading Game Object Templates..." );
+	objmgr.LoadGameobjectInfo();
+
+    Log::getSingleton().outString("Initialize data stores...");
+    barGoLink bar( 15 );
+    bar.step();
+    new SkillStore("DBC/SkillLineAbility.dbc");
+    bar.step();
+    new EmoteStore("DBC/EmotesText.dbc");
+    bar.step();
+    new SpellStore("DBC/Spell.dbc");
+    bar.step();
+    new RangeStore("DBC/SpellRange.dbc");
+    bar.step();
+    new CastTimeStore("DBC/SpellCastTimes.dbc");
+    bar.step();
+    new DurationStore("DBC/SpellDuration.dbc");
+    bar.step();
+    new RadiusStore("DBC/SpellRadius.dbc");
+    bar.step();
+    new TalentStore("DBC/Talent.dbc");
+    bar.step();
     
-    if(!LoadScriptingModule())
-			exit(1);
-				
-		sLog.outString( "Initializing Scripts..." );
-		Script->ScriptsInit();
+    new AreaTableStore("DBC/AreaTable.dbc");
+    bar.step();
+    new WorldMapAreaStore("DBC/WorldMapArea.dbc");
+    bar.step();
+    new WorldMapOverlayStore("DBC/WorldMapOverlay.dbc");
+	bar.step();
+    new FactionStore("DBC/Faction.dbc");
+	bar.step();
+    new FactionTemplateStore("DBC/FactionTemplate.dbc");
+	bar.step();
+    
+	new ItemDisplayTemplateStore("DBC/ItemDisplayInfo.dbc");
+	bar.step();
+    
+	
 
-    m_timers[WUPDATE_OBJECTS].SetInterval(0);
-    m_timers[WUPDATE_SESSIONS].SetInterval(0);
+	Log::getSingleton( ).outString( "" );
+	Log::getSingleton( ).outString( ">> Loaded 15 data stores" );
+    Log::getSingleton( ).outString( "" );
+
+    
+    m_timers[WUPDATE_OBJECTS].SetInterval(100);
+    m_timers[WUPDATE_SESSIONS].SetInterval(100);
     m_timers[WUPDATE_AUCTIONS].SetInterval(1000);
 
-    MaNGOS::Game::Initialize();
-    sLog.outString( "WORLD: SetInitialWorldSettings done" );
-
-    StartEventSystem();
-    sLog.outString( "WORLD: Starting Event System" );
+    MapManager::Instance().Initialize();
+    Log::getSingleton( ).outString( "WORLD: SetInitialWorldSettings done" );
 }
 
 void World::Update(time_t diff)
@@ -242,11 +283,20 @@ void World::Update(time_t diff)
                     ss << "' )";
                     sDatabase.Execute( ss.str().c_str() );
 
-		    sDatabase.PExecute("DELETE FROM mail WHERE mailID = '%d'",m->messageID);
+                    std::stringstream md;
+                    
+                    md << "DELETE FROM mail WHERE mailID = " << m->messageID;
+                    sDatabase.Execute( md.str().c_str( ) );
 
-                    sDatabase.PExecute("INSERT INTO mail (mailId,sender,reciever,subject,body,item,time,money,COD,checked) VALUES ('%u', '%u', '%u', '%s', '%s', '%u', '%u', '%u', '%u', '%u');", m->messageID, m->sender, m->reciever, m->subject.c_str(), m->body.c_str(), m->item, m->time, m->money, 0,  m->checked);
+                    std::stringstream mi;
+                    mi << "INSERT INTO mail (mailId,sender,reciever,subject,body,item,time,money,COD,checked) VALUES ( " <<
+                        m->messageID << ", " << m->sender << ", " << m->reciever << ",' " << m->subject.c_str() << "' ,' " <<
+                        m->body.c_str() << "', " << m->item << ", " << m->time << ", " << m->money << ", " << 0 << ", " << m->checked << " )";
+                    sDatabase.Execute( mi.str().c_str( ) );
 
-                    uint64 rcpl = m->reciever;
+                    uint64 rcpl;
+                    GUID_LOPART(rcpl) = m->reciever;
+                    GUID_HIPART(rcpl) = 0;
                     std::string pname;
                     objmgr.GetPlayerNameByGUID(rcpl,pname);
                     Player *rpl = objmgr.GetPlayer(pname.c_str());
@@ -254,9 +304,20 @@ void World::Update(time_t diff)
                     {
                         rpl->AddMail(m);
                     }
-		    sDatabase.PExecute("DELETE FROM auctionhouse WHERE itemowner = '%d'",m->reciever);
-		    sDatabase.PExecute("DELETE FROM auctioned_items WHERE guid = '%d'",m->item);
-		    sDatabase.PExecute("DELETE FROM bids WHERE Id = '%d'",itr->second->Id);
+                    std::stringstream delinvq;
+                    std::stringstream id;
+                    std::stringstream bd;
+                    
+                    delinvq << "DELETE FROM auctionhouse WHERE itemowner = " << m->reciever;
+                    sDatabase.Execute( delinvq.str().c_str( ) );
+
+                    
+                    id << "DELETE FROM auctioned_items WHERE guid = " << m->item;
+                    sDatabase.Execute( id.str().c_str( ) );
+
+                    
+                    bd << "DELETE FROM bids WHERE Id = " << itr->second->Id;
+                    sDatabase.Execute( bd.str().c_str( ) );
 
                     objmgr.RemoveAuction(itr->second->Id);
                 }
@@ -273,12 +334,18 @@ void World::Update(time_t diff)
                     m->time = time(NULL) + (29 * 3600);
                     m->subject = "Your item sold!";
                     m->item = 0;
-                   
-		    sDatabase.PExecute("DELETE FROM mail WHERE mailID = '%d'",m->messageID);
-
-                    sDatabase.PExecute("INSERT INTO mail (mailId,sender,reciever, subject,body,item,time,money,COD,checked) VALUES ('%u', '%u', '%u', '%s', '%s', '%u', '%u', '%u', '%u', '%u');", m->messageID, m->sender, m->reciever, m->subject.c_str(), m->body.c_str(), m->item, m->time, m->money, 0, m->checked);
-
-                    uint64 rcpl = m->reciever;
+                    std::stringstream md;
+                    
+                    md << "DELETE FROM mail WHERE mailID = " << m->messageID;
+                    sDatabase.Execute( md.str().c_str( ) );
+                    std::stringstream mi;
+                    mi << "INSERT INTO mail (mailId,sender,reciever,subject,body,item,time,money,COD,checked) VALUES ( " <<
+                        m->messageID << ", " << m->sender << ", " << m->reciever << ",' " << m->subject.c_str() << "' ,' " <<
+                        m->body.c_str() << "', " << m->item << ", " << m->time << ", " << m->money << ", " << 0 << ", " << m->checked << " )";
+                    sDatabase.Execute( mi.str().c_str( ) );
+                    uint64 rcpl;
+                    GUID_LOPART(rcpl) = m->reciever;
+                    GUID_HIPART(rcpl) = 0;
                     std::string pname;
                     objmgr.GetPlayerNameByGUID(rcpl,pname);
                     Player *rpl = objmgr.GetPlayer(pname.c_str());
@@ -311,11 +378,18 @@ void World::Update(time_t diff)
                     ss << "' )";
                     sDatabase.Execute( ss.str().c_str() );
 
-		    sDatabase.PExecute("DELETE FROM mail WHERE mailID = '%d'", mn->messageID);
-
-                    sDatabase.PExecute("INSERT INTO mail (mailId,sender,reciever,subject,body,item,time,money,COD,checked) VALUES ('%u', '%u', '%u', '%s', '%s', '%u', '%u', '%u', '%u', '%u');", mn->messageID, mn->sender, mn->reciever, mn->subject.c_str(), mn->body.c_str(), mn->item, mn->time, mn->money, 0, mn->checked);
-
-                    uint64 rcpl1 = mn->reciever;
+                    std::stringstream mdn;
+                    
+                    mdn << "DELETE FROM mail WHERE mailID = " << mn->messageID;
+                    sDatabase.Execute( mdn.str().c_str( ) );
+                    std::stringstream min;
+                    min << "INSERT INTO mail (mailId,sender,reciever,subject,body,item,time,money,COD,checked) VALUES ( " <<
+                        mn->messageID << ", " << mn->sender << ", " << mn->reciever << ",' " << mn->subject.c_str() << "' ,' " <<
+                        mn->body.c_str() << "', " << mn->item << ", " << mn->time << ", " << mn->money << ", " << 0 << ", " << mn->checked << " )";
+                    sDatabase.Execute( min.str().c_str( ) );
+                    uint64 rcpl1;
+                    GUID_LOPART(rcpl1) = mn->reciever;
+                    GUID_HIPART(rcpl1) = 0;
                     std::string pname1;
                     objmgr.GetPlayerNameByGUID(rcpl1,pname1);
                     Player *rpl1 = objmgr.GetPlayer(pname1.c_str());
@@ -349,8 +423,8 @@ void World::Update(time_t diff)
 
     if (m_timers[WUPDATE_OBJECTS].Passed())
     {
-			m_timers[WUPDATE_OBJECTS].Reset();
-			MapManager::Instance().Update(diff);
+        m_timers[WUPDATE_OBJECTS].Reset();
+	MapManager::Instance().Update(diff);
     }
 }
 

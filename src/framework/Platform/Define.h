@@ -22,24 +22,6 @@
 #include "Platform/CompilerDefs.h"
 
 #ifdef WIN32
-#define MANGOS_EXPORT __declspec(dllexport) 
-#define MANGOS_LIBRARY_HANDLE HMODULE
-#define MANGOS_LOAD_LIBRARY(a) LoadLibrary(a)
-#define MANGOS_CLOSE_LIBRARY FreeLibrary
-#define MANGOS_GET_PROC_ADDR GetProcAddress
-#define MANGOS_IMPORT __cdecl
-#define MANGOS_SCRIPT_FILE "MaNGOSScript.dll"
-#else
-#define MANGOS_LIBRARY_HANDLE void*
-#define MANGOS_EXPORT export
-#define MANGOS_LOAD_LIBRARY(a) dlopen(a,RTLD_NOW)
-#define MANGOS_CLOSE_LIBRARY dlclose
-#define MANGOS_GET_PROC_ADDR dlsym
-#define MANGOS_IMPORT __attribute__ ((cdecl))
-#define MANGOS_SCRIPT_FILE "libMaNGOSScript.so"
-#endif
-
-#ifdef WIN32
 
 #ifdef MANGOS_WIN32_DLL_IMPORT
 

@@ -36,18 +36,15 @@ void WorldSession::HandleCharEnumOpcode( WorldPacket & recv_data )
 {
     WorldPacket data;
 
-    /*// uknown opcode ?
-    WorldPacket packet;
-    packet.Initialize(SMSG_AUTH_RESPONSE2_UNKNOWN180);
-    packet << uint8(10);
-    for (int i=0; i<10; i++)
-    packet << uint8(0x02) << uint8(0x01) << uint16(0) << uint32(0);
-    SendPacket(&packet);*/
+    
     
     data.Initialize(SMSG_CHAR_ENUM);
-    
-    QueryResult *result = sDatabase.PQuery("SELECT guid FROM characters WHERE acct = '%lu';", (unsigned long)GetAccountId());
 
+    
+    std::stringstream ss;
+    ss << "SELECT guid FROM characters WHERE acct=" << GetAccountId();
+
+    QueryResult* result = sDatabase.Query( ss.str().c_str() );
     uint8 num = 0;
 
     data << num;
@@ -60,7 +57,7 @@ void WorldSession::HandleCharEnumOpcode( WorldPacket & recv_data )
             plr = new Player(this);
             ASSERT(plr);
             
-            sLog.outError("Loading char guid %d from account %d.",(*result)[0].GetUInt32(),GetAccountId());
+            Log::getSingleton().outError("Loading char guid %d from account %d.",(*result)[0].GetUInt32(),GetAccountId());
 
             plr->LoadFromDB( (*result)[0].GetUInt32() );
 
@@ -89,23 +86,26 @@ void WorldSession::HandleCharCreateOpcode( WorldPacket & recv_data )
     recv_data >> name;
     recv_data.rpos(0);
 
-    QueryResult *result = sDatabase.PQuery("SELECT guid FROM characters WHERE name = '%s';", name.c_str());
+    std::stringstream ss;
+    ss << "SELECT guid FROM characters WHERE name = '" << name << "'";
 
-    if ( result )
+    QueryResult *result = sDatabase.Query( ss.str( ).c_str( ) );
+    if (result)
     {
         delete result;
 
         data.Initialize(SMSG_CHAR_CREATE);
-        data << (uint8)0x31;                      
+        data << (uint8)0x30;                      
         SendPacket( &data );
 
         return;
     }
 
     
-    result = sDatabase.PQuery("SELECT guid FROM characters WHERE acct = '%lu';", (unsigned long)GetAccountId());
-
-    if ( result )
+    ss.rdbuf()->str("");
+    ss << "SELECT guid FROM characters WHERE acct=" << GetAccountId();
+    result = sDatabase.Query( ss.str( ).c_str( ) );
+    if (result)
     {
         if (result->GetRowCount() >= 10)
         {
@@ -124,18 +124,36 @@ void WorldSession::HandleCharCreateOpcode( WorldPacket & recv_data )
 
     delete pNewChar;
 
-    // we have successfull creation
-    // note all error codes moved + 1
-    // 0x2E - Character created
-    // 0x30 - Char create failed
-    // 0x31 - Char name is in use
-    // 0x35 - Char delete Okay
-    // 0x36 - Char delete failed
-
     data.Initialize( SMSG_CHAR_CREATE );
-    data << (uint8)0x2E;                          
+    data << (uint8)0x2C;                          
+    data << uint8(0x2D);
     SendPacket( &data );
 
+
+    data.Initialize(SMSG_CHAR_ENUM);
+    ss << "SELECT guid FROM characters WHERE acct=" << GetAccountId();
+    QueryResult* result1 = sDatabase.Query( ss.str().c_str() );
+    uint8 num = 0;
+    data << num;
+    if( result1 )
+    {
+        Player *plr;
+        do
+        {
+            plr = new Player(this);
+            ASSERT(plr);
+            Log::getSingleton().outError("Loading char guid %d from account %d.",(*result1)[0].GetUInt32(),GetAccountId());
+            plr->LoadFromDB( (*result1)[0].GetUInt32() );
+            plr->BuildEnumData( &data );
+
+            delete plr;
+            num++;
+        }
+        while( result1->NextRow() );
+        delete result1;
+    }
+    data.put<uint8>(0, num);
+    SendPacket( &data );
 }
 
 
@@ -187,188 +205,63 @@ void WorldSession::HandlePlayerLoginOpcode( WorldPacket & recv_data )
 
     SendPacket(&data);
 
+    
+    extern char last_ip[32];
+    printf("Character have IP: %s\n",last_ip);
+    std::stringstream ips;
+    ips << "UPDATE `characters` SET last_ip = '" << last_ip << "' WHERE guid = '" << playerGuid << "'";
+    sDatabase.Execute(ips.str().c_str());
+
+    
     sChatHandler.FillSystemMessageData(&data, this, sWorld.GetMotd());
     SendPacket( &data );
 
     DEBUG_LOG( "WORLD: Sent motd (SMSG_MESSAGECHAT)" );
 
-    // home bind stuff
-    Field *fields;
-    QueryResult *result7 = sDatabase.PQuery("SELECT COUNT(*) FROM homebind where guid = '%d';", playerGuid);
-       if (result7)
-        {
-            int cnt;
-            fields = result7->Fetch();
-            cnt = fields[0].GetUInt32();
-
-            if ( cnt > 0 )
-            {
-                QueryResult *result4 = sDatabase.PQuery("SELECT mapID,zoneID,positionX,positionY,positionZ from homebind where guid = '%d';", playerGuid);
-                fields = result4->Fetch();
-                data.Initialize (SMSG_BINDPOINTUPDATE);
-                data << fields[2].GetFloat() << fields[3].GetFloat() << fields[4].GetFloat();
-                data << fields[0].GetUInt32();
-                data << fields[1].GetUInt32();
-                SendPacket (&data);
-                DEBUG_LOG("Setting player home position: mapID is: %d, zoneID is %d, X is %f, Y is %f, Z is %f\n",fields[0].GetUInt32(),fields[1].GetUInt32(),fields[2].GetFloat(), fields[3].GetFloat(), fields[4].GetFloat());
-                delete result4;
-            }
-            else {
-                int plrace = GetPlayer()->getRace();
-                int plclass = GetPlayer()->getClass();
-                QueryResult *result5 = sDatabase.PQuery("SELECT mapID,zoneID,positionX,positionY,positionZ from playercreateinfo where race = '%u' AND class = '%u';", plrace, plclass);
-                fields = result5->Fetch();
-                // store and send homebind for player
-                sDatabase.PExecute("INSERT INTO `homebind` (guid, mapID, zoneID, positionX, positionY, positionZ) VALUES ('%lu', '%d', '%d', '%f', '%f', '%f');", (unsigned long)playerGuid, fields[0].GetUInt32(), fields[1].GetUInt32(), fields[2].GetFloat(), fields[3].GetFloat(), fields[4].GetFloat());
-                data.Initialize (SMSG_BINDPOINTUPDATE);
-                data << fields[2].GetFloat() << fields[3].GetFloat() << fields[4].GetFloat();
-                data << fields[0].GetUInt32();
-                data << fields[1].GetUInt32();
-                SendPacket (&data);
-                DEBUG_LOG("Setting player home position: mapID is: %d, zoneID is %d, X is %f, Y is %f, Z is %f\n",fields[0].GetUInt32(),fields[1].GetUInt32(),fields[2].GetFloat(), fields[3].GetFloat(), fields[4].GetFloat());
-                delete result5;
-                }
-        delete result7;
-        }
-
+    
+    
+    
 
     
-    // set proficiency
-    switch (GetPlayer()->getClass())
-	{
-        case CLASS_MAGE:
-		SendProficiency (0x04, 0x02);
-		SendProficiency (0x02, 0x00, 0x04);
-		SendProficiency (0x02, 0x00, 0x44);
-		SendProficiency (0x04, 0x03);
-		SendProficiency (0x02, 0x00, 0x44, 0x08);
-		break;
-        case CLASS_ROGUE:
-                SendProficiency (0x04, 0x02);
-                SendProficiency (0x02, 0x00, 0x00, 0x01);
-                SendProficiency (0x04, 0x06);
-                SendProficiency (0x02, 0x00, 0x80, 0x01);
-                SendProficiency (0x02, 0x00, 0xC0, 0x01);
-                SendProficiency (0x04, 0x07);
-                break;
-        case CLASS_WARRIOR:
-                SendProficiency (0x04, 0x02);
-                SendProficiency (0x02, 0x01);
-                SendProficiency (0x02, 0x11);
-                SendProficiency (0x04, 0x42);
-                SendProficiency (0x04, 0x4A);
-                SendProficiency (0x04, 0x4E);
-                SendProficiency (0x02, 0x11, 0x40);
-                SendProficiency (0x04, 0x4F);
-                SendProficiency (0x02, 0x91, 0x40);
-                break;
-        case CLASS_PALADIN:
-                SendProficiency (0x04, 0x02);
-                SendProficiency (0x02, 0x10);
-                SendProficiency (0x04, 0x42);
-                SendProficiency (0x02, 0x30);
-                SendProficiency (0x04, 0x4A);
-                SendProficiency (0x04, 0x4E);
-                SendProficiency (0x02, 0x30, 0x40);
-                SendProficiency (0x04, 0x4F);
-                break;
-        case CLASS_WARLOCK:
-                SendProficiency (0x04, 0x02);
-                SendProficiency (0x02, 0x00, 0x80);
-                SendProficiency (0x02, 0x00, 0xC0);
-                SendProficiency (0x04, 0x03);
-                SendProficiency (0x02, 0x00, 0xC0, 0x08);
-                break;
-        case CLASS_PRIEST:
-                SendProficiency (0x04, 0x02);
-                SendProficiency (0x02, 0x10);
-                SendProficiency (0x02, 0x10, 0x40);
-                SendProficiency (0x04, 0x03);
-                SendProficiency (0x02, 0x10, 0x40, 0x08);
-                break;
-        case CLASS_DRUID:
-                SendProficiency (0x04, 0x02);
-                SendProficiency (0x02, 0x00, 0x04);
-                SendProficiency (0x04, 0x06);
-                SendProficiency (0x02, 0x00, 0x84);
-                SendProficiency (0x02, 0x00, 0xC4);
-                SendProficiency (0x04, 0x07);
-                break;
-        case CLASS_HUNTER:
-                SendProficiency (0x04, 0x02);
-                SendProficiency (0x02, 0x01);
-                SendProficiency (0x04, 0x06);
-                SendProficiency (0x02, 0x05);
-                SendProficiency (0x02, 0x05, 0x40);
-                SendProficiency (0x04, 0x07);
-                break;
-        case CLASS_SHAMAN:
-                SendProficiency (0x04, 0x02);
-                SendProficiency (0x02, 0x00, 0x04);
-                SendProficiency (0x02, 0x10, 0x04);
-                SendProficiency (0x04, 0x42);
-                SendProficiency (0x04, 0x46);
-                SendProficiency (0x02, 0x10, 0x44);
-                SendProficiency (0x04, 0x47);
-                break;
-	}
+    std::stringstream homeloc;
+    Field *fields;
+    int plrace = GetPlayer()->getRace();
+    int plclass = GetPlayer()->getClass();
 
+    homeloc << "SELECT mapID,zoneID,positionX,positionY,positionZ from playercreateinfo where race='" << plrace << "' AND class='" << plclass << "'";
+    QueryResult *homeresult = sDatabase.Query( homeloc.str().c_str() );
+    fields = homeresult->Fetch();
+    DEBUG_LOG("Setting player home position: mapID is: %d, zoneID is %d, X is %f, Y is %f, Z is %f\n",fields[0].GetUInt32(),fields[1].GetUInt32(),fields[2].GetFloat(), fields[3].GetFloat(), fields[4].GetFloat());
 
+    data.Initialize (SMSG_BINDPOINTUPDATE);
+    data << fields[2].GetFloat() << fields[3].GetFloat() << fields[4].GetFloat(); 
+    data << fields[0].GetUInt32(); 
+    data << fields[1].GetUInt32(); 
+    SendPacket (&data);
+    delete homeresult;
 
+    
+
+	
+	
+	
     data.Initialize( SMSG_TUTORIAL_FLAGS );
     
 	for (int i = 0; i < 8; i++)
 		data << uint32( GetPlayer()->GetTutorialInt(i) );
     
 	SendPacket(&data);
-    sLog.outDebug( "WORLD: Sent tutorial flags." );
-
-
-    // Proficiency more to come
-    switch (GetPlayer()->getClass())
-	{
-        case CLASS_MAGE:
-                SendProficiency (0x02, 0x00, 0x44, 0x08);
-                SendProficiency (0x04, 0x03);
-                break;
-        case CLASS_ROGUE:
-                SendProficiency (0x02, 0x00, 0xC0, 0x01);
-                SendProficiency (0x04, 0x07);
-                break;
-        case CLASS_WARRIOR:
-                SendProficiency (0x02, 0x91, 0x40);
-                SendProficiency (0x04, 0x4F);
-                break;
-        case CLASS_PALADIN:
-                SendProficiency (0x02, 0x30, 0x40);
-                SendProficiency (0x04, 0x4F);
-                break;
-        case CLASS_WARLOCK:
-                SendProficiency (0x02, 0x00, 0xC0, 0x08);
-                SendProficiency (0x04, 0x03);
-                break;
-        case CLASS_PRIEST:
-                SendProficiency (0x02, 0x10, 0x40, 0x08);
-                SendProficiency (0x04, 0x03);
-                break;
-        case CLASS_DRUID:
-                SendProficiency (0x02, 0x00, 0xC4);
-                SendProficiency (0x04, 0x07);
-                break;
-        case CLASS_HUNTER:
-                SendProficiency (0x02, 0x05, 0x40);
-                SendProficiency (0x04, 0x07);
-                break;
-        case CLASS_SHAMAN:
-                SendProficiency (0x02, 0x10, 0x44);
-                SendProficiency (0x04, 0x47);
-                break;
-        }
+    Log::getSingleton( ).outDebug( "WORLD: Sent tutorial flags." );
 
     
     GetPlayer()->smsg_InitialSpells();
+
     
     GetPlayer()->smsg_InitialActions();
+
+    
+    
+
 
 	
 	data.Initialize(SMSG_INITIALIZE_FACTIONS);
@@ -397,8 +290,13 @@ void WorldSession::HandlePlayerLoginOpcode( WorldPacket & recv_data )
 	SendPacket(&data);
 
 	
-	GetPlayer()->UpdateHonor();
+	GetPlayer()->InitializeHonor();
+	GetPlayer()->SetPatent();
 
+
+    
+
+    
 
     data.Initialize(SMSG_LOGIN_SETTIMESPEED);
     time_t minutes = sWorld.GetGameTime( ) / 60;
@@ -407,6 +305,13 @@ void WorldSession::HandlePlayerLoginOpcode( WorldPacket & recv_data )
     data << (uint32)gameTime;
     data << (float)0.017f;                          
     SendPacket( &data );
+
+    
+
+    
+    
+    
+    
 
     data.Initialize( SMSG_TRIGGER_CINEMATIC );
     uint8 theRace = GetPlayer()->getRace();         
@@ -499,10 +404,12 @@ void WorldSession::HandlePlayerLoginOpcode( WorldPacket & recv_data )
 
     Player *pCurrChar = GetPlayer();
 
+    pCurrChar->InitExploreSystem();
 
-
-
-	QueryResult *result = sDatabase.PQuery("SELECT * FROM `guilds_members` WHERE memguid = '%d';",pCurrChar->GetGUID());
+	
+	std::stringstream query;
+	query << "SELECT * FROM `guilds_members` where memguid= " << pCurrChar->GetGUID();
+	QueryResult *result = sDatabase.Query( query.str().c_str() );
 
 	if(result)
 	{
@@ -511,41 +418,42 @@ void WorldSession::HandlePlayerLoginOpcode( WorldPacket & recv_data )
 		pCurrChar->SetRank(fields[2].GetUInt32());
 	}
 
-    sLog.outError("AddObject at CharacterHandler.cpp");
+    
+    
+    
+    
+    
+    Log::getSingleton( ).outError("AddObject at CharacterHandler.cpp");
     MapManager::Instance().GetMap(pCurrChar->GetMapId())->Add(pCurrChar);
     ObjectAccessor::Instance().InsertPlayer(pCurrChar);
 
-    sDatabase.PExecute("UPDATE characters SET online = 1 WHERE guid = '%u';", pCurrChar->GetGUID());
+    std::stringstream ss;
+    ss << "UPDATE characters SET online = 1 WHERE guid = " << pCurrChar->GetGUID();
+    sDatabase.Execute(ss.str().c_str());
+
     
-	
+    for (uint16 sl = PLAYER_SKILL_INFO_1_1; sl < PLAYER_SKILL_INFO_1_1_381; sl += 3)
+    {
+        uint16 curr = 0, max = 0;
+        uint32 id = pCurrChar->GetUInt32Value(sl);
+        if (id == 0) continue;
+        curr = (uint16)pCurrChar->GetUInt32Value(sl + 1);
+        max = (uint16)(pCurrChar->GetUInt32Value(sl + 1) >> 16);
+        pCurrChar->AddSkillLine(id, curr, max, false);
+    }
+    
+
+    
+
     std::string outstring = pCurrChar->GetName();
     outstring.append( " has come online." );
     pCurrChar->BroadcastToFriends(outstring);
-
-
-        // setting new speed if dead
-    if ( pCurrChar->m_deathState == DEAD )
-    {
-	GetPlayer()->SetMovement(MOVE_WATER_WALK);
-
-        if (GetPlayer()->getRace() == RACE_NIGHT_ELF)
-        {
-            pCurrChar->SetPlayerSpeed(RUN, (float)12.75, true);
-            pCurrChar->SetPlayerSpeed(SWIM, (float)8.85, true);
-        }
-        else {
-            pCurrChar->SetPlayerSpeed(RUN, (float)10.625, true);
-            pCurrChar->SetPlayerSpeed(SWIM, (float)7.375, true);
-        }
-    }
-
-    delete result;
 
 }
 
 void WorldSession::HandleSetFactionAtWar( WorldPacket & recv_data )
 {
-	sLog.outDebug("WORLD SESSION: HandleSetFactionAtWar");
+	Log::getSingleton().outDebug("WORLD SESSION: HandleSetFactionAtWar");
 
 	uint32 FactionID;
 	uint8  Flag;
@@ -570,7 +478,7 @@ void WorldSession::HandleSetFactionAtWar( WorldPacket & recv_data )
 
 void WorldSession::HandleSetFactionCheat( WorldPacket & recv_data )
 {
-	sLog.outDebug("WORLD SESSION: HandleSetFactionCheat");
+	Log::getSingleton().outDebug("WORLD SESSION: HandleSetFactionCheat");
 
 	uint32 FactionID;
 	uint32 Standing;
@@ -595,8 +503,18 @@ void WorldSession::HandleSetFactionCheat( WorldPacket & recv_data )
 
 void WorldSession::HandleMeetingStoneInfo( WorldPacket & recv_data )
 {
-    DEBUG_LOG( "WORLD: Received CMSG_MEETING_STONE_INFO" );
+    DEBUG_LOG( "WORLD: Recieved CMSG_MEETING_STONE_INFO" );
+#ifndef _VERSION_1_7_0_                             
+    WorldPacket data;
+    data.Initialize( SMSG_MEETING_STONE_INFO );
+    data << uint32(0);
+    data << uint32(0);
+    data << uint32(0);
+    SendPacket(&data);
+#endif 
 }
+
+
 
 
 void WorldSession::HandleTutorialFlag( WorldPacket & recv_data )
@@ -611,7 +529,7 @@ void WorldSession::HandleTutorialFlag( WorldPacket & recv_data )
 	tutflag |= (1 << rInt);
 	GetPlayer()->SetTutorialInt( wInt, tutflag );
 
-	sLog.outDebug("Received Tutorial Flag Set {%u}.", iFlag);
+	Log::getSingleton().outDebug("Received Tutorial Flag Set {%u}.", iFlag);
 }
 
 

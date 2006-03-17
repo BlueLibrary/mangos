@@ -18,11 +18,9 @@
 
 #include "Common.h"
 #include "Log.h"
-#include "Policies/SingletonImp.h"
-
 #include <stdarg.h>
 
-INSTANTIATE_SINGLETON_1( Log );
+createFileSingleton( Log );
 
 void Log::outString( const char * str, ... )
 {

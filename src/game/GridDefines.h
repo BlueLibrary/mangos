@@ -31,27 +31,20 @@
 
 
 #define SIZE_OF_GRIDS            533.33333
-#define CENTER_GRID_ID           (MAX_NUMBER_OF_GRIDS/2)
+#define CENTER_GRID_ID           32
 
 
-#define CENTER_GRID_OFFSET      (SIZE_OF_GRIDS/2)
-
+#define CENTER_GRID_OFFSET      266.66666
 
 
 #define MIN_GRID_DELAY          60*1000
 
 
 #define MAX_NUMBER_OF_CELLS     4
-#define SIZE_OF_GRID_CELL       (SIZE_OF_GRIDS/MAX_NUMBER_OF_CELLS)
-
+#define SIZE_OF_GRID_CELL       133.3333325
 #define CENTER_GRID_CELL_ID     128
-#define CENTER_GRID_CELL_OFFSET (SIZE_OF_GRID_CELL/2)
-
+#define CENTER_GRID_CELL_OFFSET 66.66666625
 #define TOTAL_NUMBER_OF_CELLS_PER_MAP    (MAX_NUMBER_OF_GRIDS*MAX_NUMBER_OF_CELLS)
-
-#define MAP_RESOLUTION 256
-
-
 
 typedef TYPELIST_4(GameObject, Creature, DynamicObject, Corpse)    AllObjectTypes;
 typedef Grid<Player, AllObjectTypes> GridType;

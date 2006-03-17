@@ -19,9 +19,8 @@
 #include "Common.h"
 #include "WorldSocket.h"
 #include "WorldSocketMgr.h"
-#include "Policies/SingletonImp.h"
 
-INSTANTIATE_SINGLETON_1( WorldSocketMgr );
+createFileSingleton( WorldSocketMgr );
 
 WorldSocketMgr::WorldSocketMgr()
 {

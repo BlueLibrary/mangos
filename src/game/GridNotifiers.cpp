@@ -71,14 +71,12 @@ PlayerNotifier::BuildForMySelf()
     WorldPacket packet;
     UpdateData data;
 
-	if( !i_player.IsInWorld() )  
-	{
-        sLog.outDetail("Creating player data for himself %d", i_player.GetGUID());
-        i_player.BuildCreateUpdateBlockForPlayer(&data, &i_player);
-        data.BuildPacket(&packet);
-        i_player.GetSession()->SendPacket(&packet);
-        i_player.AddToWorld();
-	}
+    
+    sLog.outDetail("Creating player data for himself %d", i_player.GetGUID());
+    i_player.BuildCreateUpdateBlockForPlayer(&data, &i_player);
+    data.BuildPacket(&packet);
+    i_player.GetSession()->SendPacket(&packet);
+    i_player.AddToWorld();
 }
 
 

@@ -1,7 +1,5 @@
-/* Singleton.h
- *
- * Copyright (C) 2004 Wow Daemon
- * Copyright (C) 2005 MaNGOS <https://opensvn.csie.org/traccgi/MaNGOS/trac.cgi/>
+/* 
+ * Copyright (C) 2005 MaNGOS <http://www.magosproject.org/>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,12 +21,12 @@
 
 #include "Errors.h"
 
-/// Should be placed in the appropriate .cpp file somewhere
+
 #define initialiseSingleton( type ) \
 template <> type * Singleton < type > :: mSingleton = 0
 
-/// To be used as a replacement for initialiseSingleton( )
-///  Creates a file-scoped Singleton object, to be retrieved with getSingleton
+
+
 #define createFileSingleton( type ) \
 initialiseSingleton( type ); \
 type the##type
@@ -36,26 +34,26 @@ type the##type
 template < class type > class Singleton
 {
     public:
-        /// Constructor
+        
         Singleton( )
         {
                WPAssert( mSingleton == 0 );
             mSingleton = static_cast<type *>(this);
         }
-        /// Destructor
+        
         ~Singleton( )
         {
             mSingleton = 0;
         }
 
-        /// Retrieve the singleton object, if you hit this assert this singleton object doesn't exist yet
+        
         static type & getSingleton( ) { WPAssert( mSingleton ); return *mSingleton; }
 
-        /// Retrieve a pointer to the singleton object
+        
         static type * getSingletonPtr( ) { return mSingleton; }
 
     protected:
-        /// Singleton pointer, must be set to 0 prior to creating the object
+        
         static type * mSingleton;
 };
 #endif

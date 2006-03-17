@@ -48,7 +48,7 @@ class Channel
         }
         void MakeJoined(WorldPacket *data, Player *joined) { *MakeNotifyPacket(data,0x00) << joined->GetGUID(); }
         void MakeLeft(WorldPacket *data, Player *left) { *MakeNotifyPacket(data,0x01) << left->GetGUID(); }
-        void MakeYouJoined(WorldPacket *data, Player *p ) { *MakeNotifyPacket(data,0x02) << p->GetGUID(); }
+        void MakeYouJoined(WorldPacket *data) { *MakeNotifyPacket(data,0x02) << (uint32)(players.size() > 1 ? 0x01 : 0x00); }
         void MakeYouLeft(WorldPacket *data) { MakeNotifyPacket(data,0x03); }
         void MakeWrongPass(WorldPacket *data) { MakeNotifyPacket(data,0x04); }
         void MakeNotOn(WorldPacket *data) { MakeNotifyPacket(data,0x05); }

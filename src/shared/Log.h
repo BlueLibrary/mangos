@@ -20,11 +20,11 @@
 #define MANGOSSERVER_LOG_H
 
 #include "Common.h"
-#include "Policies/Singleton.h"
+#include "Singleton.h"
 
 extern uint8 loglevel;
 
-class Log 
+class Log : public Singleton< Log >
 {
     public:
         void outString( const char * str, ... );
@@ -36,11 +36,11 @@ class Log
 
 };
 
-#define sLog MaNGOS::Singleton<Log>::Instance()
+#define sLog Log::getSingleton()
 
 
 #ifdef MANGOS_DEBUG
-#define DEBUG_LOG MaNGOS::Singleton<Log>::Instance().outDebug
+#define DEBUG_LOG Log::getSingleton().outDebug
 #else
 #define DEBUG_LOG
 #endif

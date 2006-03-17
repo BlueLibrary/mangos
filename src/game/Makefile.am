@@ -21,8 +21,6 @@ noinst_LIBRARIES = libgame.a
 libgame_a_SOURCES = \
 	AggressorAI.cpp \
 	AuctionHouse.cpp \
-	Bag.cpp \
-	Base.cpp \
 	Channel.cpp \
 	ChannelHandler.cpp \
 	CharacterHandler.cpp \
@@ -36,11 +34,8 @@ libgame_a_SOURCES = \
 	CreatureAISelector.cpp \
 	Creature.cpp \
 	debugcmds.cpp \
-	DestinationHolder.cpp \
 	DuelHandler.cpp \
 	DynamicObject.cpp \
-	EventSystem.cpp \
-	FlightMaster.cpp \
 	GameObject.cpp \
 	GossipDef.cpp \
 	GridNotifiers.cpp \
@@ -65,20 +60,20 @@ libgame_a_SOURCES = \
 	MotionMaster.cpp \
 	MovementGenerator.cpp \
 	MovementHandler.cpp \
-	Mthread.cpp \
 	NPCHandler.cpp \
 	NullCreatureAI.cpp \
 	ObjectAccessor.cpp \
 	Object.cpp \
 	ObjectGridLoader.cpp \
 	ObjectMgr.cpp \
+	Opcodes_1_7_x.cpp \
+	Opcodes_1_8_x.cpp \
 	Opcodes.cpp \
-	PetHandler.cpp \
-	PetHandler.cpp \
 	Player.cpp \
 	QueryHandler.cpp \
 	QuestDef.cpp \
 	QuestHandler.cpp \
+        DestinationHolder.cpp \
 	RandomMovementGenerator.cpp \
 	ReactorAI.cpp \
 	RedZoneDistrict.cpp \
@@ -86,24 +81,21 @@ libgame_a_SOURCES = \
 	SkillHandler.cpp \
 	Spell.cpp \
 	SpellEffects.cpp \
-	SpellAuras.cpp \
 	SpellHandler.cpp \
 	TargetedMovementGenerator.cpp \
 	TaxiHandler.cpp \
 	TaxiMovementGenerator.cpp \
 	TradeHandler.cpp \
 	Unit.cpp \
+	UpdateData_1_8_x.cpp \
 	UpdateData.cpp \
-	WaypointMovementGenerator.cpp \
 	World.cpp \
-	WorldLog.cpp \
 	WorldSession.cpp \
 	WorldSocket.cpp \
 	WorldSocketMgr.cpp \
+	Affect.h \
 	AggressorAI.h \
 	AnimalRandomMovementGenerator.h \
-	Bag.h \
-	Base.h \
 	Cell.h \
 	CellImpl.h \
 	Channel.h \
@@ -117,7 +109,6 @@ libgame_a_SOURCES = \
 	CreatureAISelector.h \
 	Creature.h \
 	DynamicObject.h \
-	EventSystem.h \
 	FactionTemplateResolver.h \
 	GameObject.h \
 	GossipDef.h \
@@ -139,7 +130,6 @@ libgame_a_SOURCES = \
 	MiscHandler.h \
 	MotionMaster.h \
 	MovementGenerator.h \
-	Mthread.h \
 	NameTables.h \
 	NPCHandler.h \
 	NullCreatureAI.h \
@@ -147,6 +137,8 @@ libgame_a_SOURCES = \
 	ObjectGridLoader.h \
 	Object.h \
 	ObjectMgr.h \
+	Opcodes_1_7_x.h \
+	Opcodes_1_8_x.h \
 	Opcodes.h \
 	Path.h \
 	Player.h \
@@ -157,13 +149,17 @@ libgame_a_SOURCES = \
 	ScriptCalls.h \
 	SharedDefines.h \
 	Spell.h \
-	SpellAuras.h \
+	SpellPrototype.h \
 	Stats.h \
 	TargetedMovementGenerator.h \
 	TaxiMovementGenerator.h \
 	Unit.h \
+	UpdateData_1_8_x.h \
 	UpdateData.h \
+	UpdateFields_1_7_x.h \
+	UpdateFields_1_8_x.h \
 	UpdateFields.h \
+	UpdateMask_1_8_x.h \
 	UpdateMask.h \
 	Utilities.h \
 	World.h \
